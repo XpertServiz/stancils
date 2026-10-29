@@ -1002,3 +1002,41 @@ ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_accountId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "Review" ADD CONSTRAINT "Review_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- ── Ledger integrity: every journal entry must balance (checked at commit) ──
+CREATE OR REPLACE FUNCTION assert_journal_balanced() RETURNS trigger AS $$
+DECLARE
+  eid TEXT;
+  d BIGINT;
+  c BIGINT;
+  n INT;
+BEGIN
+  eid := COALESCE(NEW."entryId", OLD."entryId");
+  SELECT COALESCE(SUM(debit),0), COALESCE(SUM(credit),0), COUNT(*) INTO d, c, n
+    FROM "JournalLine" WHERE "entryId" = eid;
+  IF n > 0 AND d <> c THEN
+    RAISE EXCEPTION 'Journal entry % is unbalanced (debit %, credit %)', eid, d, c;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE CONSTRAINT TRIGGER journal_balanced
+  AFTER INSERT OR UPDATE OR DELETE ON "JournalLine"
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION assert_journal_balanced();
+
+-- Posted journals are immutable: no updates or deletes of lines.
+CREATE OR REPLACE FUNCTION forbid_journal_mutation() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'Posted journals are immutable; post a reversal instead';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER journal_lines_immutable
+  BEFORE UPDATE OR DELETE ON "JournalLine"
+  FOR EACH ROW EXECUTE FUNCTION forbid_journal_mutation();
+
+-- Non-negative amounts, one side per line.
+ALTER TABLE "JournalLine" ADD CONSTRAINT journal_line_one_side
+  CHECK (debit >= 0 AND credit >= 0 AND (debit = 0 OR credit = 0));
