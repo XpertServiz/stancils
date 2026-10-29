@@ -22,7 +22,7 @@ export default async function Legal({ params }: { params: Promise<{ slug: string
   if (!d) notFound();
   const s = await getSettings();
   const override = await db.pageSection.findFirst({ where: { page: `legal:${slug}`, deletedAt: null } });
-  const body = (override?.data as { body?: string } | null)?.body ?? d.body(s.business.name, s.business.email);
+  const body = (override?.data as { body?: string } | null)?.body || d.body(s.business.name, s.business.email);
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <h1 className="mb-6 text-4xl font-bold">{override?.title ?? d.title}</h1>
