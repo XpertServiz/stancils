@@ -24,7 +24,7 @@ export async function Header() {
         <MobileMenu links={NAV} />
         <Link href="/" className="flex shrink-0 items-center gap-2" aria-label={`${s.business.name} home`}>
           <Logo />
-          <span className="font-display text-lg font-bold tracking-tight">{s.business.name}</span>
+          <span className="hidden font-display text-base font-bold tracking-tight min-[370px]:inline sm:text-lg">{s.business.name}</span>
         </Link>
         <nav className="ml-4 hidden items-center gap-1 lg:flex">
           {NAV.map((l) => (

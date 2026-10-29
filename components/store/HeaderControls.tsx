@@ -14,14 +14,14 @@ export function CurrencyUnits({ currencies, current, units }: { currencies: { co
       <label className="sr-only" htmlFor="ccy">Currency</label>
       <select
         id="ccy"
-        className="rounded-lg border border-line bg-s1 px-2 py-1.5 text-xs font-semibold"
+        className="max-w-[88px] rounded-lg border border-line bg-s1 px-1.5 py-1.5 text-xs font-semibold"
         value={current}
         onChange={(e) => start(async () => { await setCurrency(e.target.value); router.refresh(); })}
       >
         {currencies.map((c) => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}
       </select>
       <button
-        className="rounded-lg border border-line bg-s1 px-2 py-1.5 text-xs font-semibold"
+        className="hidden rounded-lg border border-line bg-s1 px-2 py-1.5 text-xs font-semibold sm:inline-flex"
         aria-label={`Units: ${units}. Switch`}
         onClick={() => start(async () => { await setUnits(units === "cm" ? "in" : "cm"); router.refresh(); })}
       >
