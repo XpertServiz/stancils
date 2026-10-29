@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
     title: p.seoTitle?.replace(/ \| .*$/, "") ?? p.name,
     description: p.seoDesc ?? p.shortDesc ?? undefined,
     alternates: { canonical: `/p/${p.slug}` },
-    openGraph: { title: p.name, description: p.shortDesc ?? undefined, images: [`/p/${p.slug}/opengraph-image`] },
+    openGraph: { title: p.name, description: p.shortDesc ?? undefined, images: [`/og/${p.slug}`] },
     robots: p.status === "ACTIVE" ? undefined : { index: false },
   };
 }
@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: P) {
     name: p.name,
     description: p.shortDesc,
     sku: baseVariant?.sku,
-    image: [`${site}/p/${p.slug}/opengraph-image`],
+    image: [`${site}/og/${p.slug}`],
     brand: { "@type": "Brand", name: "Creative Corner" },
     ...(p.ratingCount > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: p.ratingAvg.toFixed(1), reviewCount: p.ratingCount } } : {}),
     offers: p.variants.map((v) => ({

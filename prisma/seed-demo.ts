@@ -44,6 +44,11 @@ export async function seedDemo(db: PrismaClient) {
         continue;
       }
       await markPaid(order.id, { provider: "card_demo", providerRef: `demo_${order.id}`, byId: admin.id });
+      // backdate demo history so charts and period reports look realistic
+      const paidAt = new Date(created.getTime() + 3600_000);
+      await db.order.update({ where: { id: order.id }, data: { paidAt } });
+      await db.journalEntry.updateMany({ where: { sourceId: order.id }, data: { date: paidAt } });
+      await db.orderEvent.updateMany({ where: { orderId: order.id }, data: { at: paidAt } });
       const jobs = await db.productionJob.findMany({ where: { orderItem: { orderId: order.id } } });
       for (const j of jobs) if (r() > 0.4) await advanceProductionJob(j.id, "ready_to_pack", admin.id);
       if (r() > 0.4 && jobs.every(() => true)) await setOrderStatus(order.id, "SHIPPED", undefined, admin.id, { carrier: "DHL", trackingNumber: `JD${100000 + i}` });

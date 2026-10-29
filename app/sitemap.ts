@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...statics.map((p) => ({ url: `${site}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.7 })),
     ...Object.keys(STUDIO_USES).map((u) => ({ url: `${site}/custom-stencils/${u}`, lastModified: now, priority: 0.8 })),
     ...collections.map((c) => ({ url: `${site}/c/${c.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 })),
-    ...products.map((p) => ({ url: `${site}/p/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "weekly" as const, priority: p.featured ? 0.9 : 0.6, images: [`${site}/p/${p.slug}/opengraph-image`] })),
+    ...products.map((p) => ({ url: `${site}/p/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "weekly" as const, priority: p.featured ? 0.9 : 0.6, images: [`${site}/og/${p.slug}`] })),
     ...posts.map((p) => ({ url: `${site}/tutorials/${p.slug}`, lastModified: p.updatedAt, priority: 0.6 })),
   ];
 }

@@ -1,10 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+const size = { width: 1200, height: 630 };
 
-export default async function OG({ params }: { params: Promise<{ slug: string }> }) {
+/** Social share image for a product: its stencil artwork on a stone tile. */
+export async function GET(_: Request, { params }: { params: Promise<{ slug: string }> }) {
   const p = await db.product.findUnique({ where: { slug: (await params).slug } });
   const svg = (p?.designSvg ?? "").replace(/var\(--l\d,currentColor\)/g, "#FF7A59");
   const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
@@ -21,6 +21,6 @@ export default async function OG({ params }: { params: Promise<{ slug: string }>
         </div>
       </div>
     ),
-    size,
+    { ...size, headers: { "Cache-Control": "public, max-age=86400" } },
   );
 }

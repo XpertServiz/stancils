@@ -411,6 +411,7 @@ async function main() {
     await postJournal(tx, {
       memo: "Opening balances — stock, materials and owner's capital",
       sourceType: "opening",
+      date: new Date(Date.now() - 60 * 86400_000),
       byId: admin.id,
       lines: [
         { code: ACC.INV_FINISHED, debit: finishedValue },
