@@ -1,0 +1,834 @@
+// Creative Corner — Stencil Commerce OS
+// Money: BigInt minor units + ISO currency code. Never floats.
+// DECISION: business logic runs in TypeScript services inside Prisma interactive
+// transactions (lib/services/*) instead of Postgres RPCs, so the app runs on any
+// Postgres (Supabase, Neon, local). Journal balance is still enforced by a
+// deferred constraint trigger in the database (see migrations).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────────── settings & money ─────────────────────────────
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+enum RoundingRule {
+  NONE
+  END_99
+  NEAREST_1
+  NEAREST_5
+  NEAREST_10
+  NEAREST_50
+  NEAREST_100
+}
+
+enum PricingMode {
+  AUTO
+  MANUAL
+}
+
+model Currency {
+  code        String       @id
+  name        String
+  symbol      String
+  exponent    Int          @default(2)
+  enabled     Boolean      @default(true)
+  isBase      Boolean      @default(false)
+  // units of this currency per 1 unit of base currency
+  rate        Float        @default(1)
+  rateFrozen  Boolean      @default(false)
+  markupPct   Float        @default(0)
+  rounding    RoundingRule @default(NONE)
+  pricingMode PricingMode  @default(AUTO)
+  sort        Int          @default(0)
+  updatedAt   DateTime     @updatedAt
+  history     FxRate[]
+  prices      VariantPrice[]
+}
+
+model FxRate {
+  id       String   @id @default(cuid())
+  code     String
+  rate     Float
+  source   String
+  asOf     DateTime @default(now())
+  currency Currency @relation(fields: [code], references: [code], onDelete: Cascade)
+
+  @@index([code, asOf])
+}
+
+model ShippingZone {
+  id        String   @id @default(cuid())
+  name      String
+  countries String[] // ISO-2; "*" = rest of world
+  sort      Int      @default(0)
+  rates     ShippingRate[]
+}
+
+model ShippingRate {
+  id           String       @id @default(cuid())
+  zoneId       String
+  name         String
+  priceBase    BigInt
+  freeOverBase BigInt?
+  minDays      Int          @default(2)
+  maxDays      Int          @default(5)
+  active       Boolean      @default(true)
+  zone         ShippingZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────── identity & access ─────────────────────────────
+
+model StaffUser {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         String     @default("manager")
+  permsGrant   String[]   @default([])
+  permsRevoke  String[]   @default([])
+  active       Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  audits       AuditLog[]
+}
+
+model AuditLog {
+  id       String     @id @default(cuid())
+  actorId  String?
+  action   String
+  entity   String
+  entityId String?
+  before   Json?
+  after    Json?
+  at       DateTime   @default(now())
+  actor    StaffUser? @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([at])
+}
+
+model Customer {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String?
+  phone         String?
+  passwordHash  String?
+  country       String?
+  currency      String?
+  loyaltyPoints Int             @default(0)
+  marketingOptIn Boolean        @default(false)
+  createdAt     DateTime        @default(now())
+  orders        Order[]
+  designs       CustomDesign[]
+  business      BusinessAccount?
+  wishlist      WishlistItem[]
+}
+
+model BusinessAccount {
+  id          String   @id @default(cuid())
+  customerId  String   @unique
+  company     String
+  country     String?
+  taxId       String?
+  discountPct Float    @default(10)
+  creditLimit BigInt   @default(0)
+  termsDays   Int      @default(0)
+  status      String   @default("pending") // pending | approved | rejected
+  notes       String?
+  createdAt   DateTime @default(now())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
+}
+
+// ───────────────────────────── catalog ─────────────────────────────
+
+enum CollectionType {
+  SURFACE
+  STYLE
+  OCCASION
+}
+
+enum ProductType {
+  STOCK_PHYSICAL
+  MADE_TO_ORDER
+  DIGITAL
+  BUNDLE
+  TOOL
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum ProductSource {
+  SEED
+  IMPORT
+  MANUAL
+  STUDIO
+}
+
+model Collection {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  name        String
+  type        CollectionType
+  description String?
+  icon        String?
+  sort        Int                 @default(0)
+  seoTitle    String?
+  seoDesc     String?
+  products    ProductCollection[]
+}
+
+model Product {
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  name          String
+  type          ProductType         @default(STOCK_PHYSICAL)
+  status        ProductStatus       @default(ACTIVE)
+  source        ProductSource       @default(MANUAL)
+  shortDesc     String?
+  description   String?
+  designSvg     String?             @db.Text
+  layers        Int                 @default(1)
+  layerColors   String[]            @default([])
+  tags          String[]            @default([])
+  foodSafe      Boolean             @default(false)
+  reusable      Boolean             @default(true)
+  featured      Boolean             @default(false)
+  repeatWmm     Int?
+  repeatHmm     Int?
+  passport      Json?
+  hsCode        String?
+  seoTitle      String?
+  seoDesc       String?
+  ratingAvg     Float               @default(0)
+  ratingCount   Int                 @default(0)
+  salesCount    Int                 @default(0)
+  needsReview   Boolean             @default(false)
+  importBatchId String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  variants      Variant[]
+  images        ProductImage[]
+  collections   ProductCollection[]
+  reviews       Review[]
+  wishlist      WishlistItem[]
+  importBatch   ImportBatch?        @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  @@index([status, type])
+}
+
+model ProductCollection {
+  productId    String
+  collectionId String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, collectionId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sort      Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Material {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  name         String
+  kind         String          // MYLAR | PET | STEEL | VINYL | PACKAGING | TOOL_PART
+  thicknessUm  Int?
+  foodSafe     Boolean         @default(false)
+  unit         String          @default("cm2") // cm2 | pcs
+  // cost of 1000 units in base minor units (e.g. per 1000 cm²)
+  costPerK     BigInt          @default(0)
+  onHand       Int             @default(0)
+  reorderLevel Int             @default(0)
+  minBridgeMm  Float           @default(1.5)
+  rateCm2Base  BigInt          @default(0) // selling rate for Studio pricing, base minor per 100 cm²
+  active       Boolean         @default(true)
+  variants     Variant[]
+  bomLines     BomLine[]
+  movements    StockMovement[]
+  designs      CustomDesign[]
+  poLines      PurchaseLine[]
+}
+
+model Variant {
+  id           String          @id @default(cuid())
+  productId    String
+  sku          String          @unique
+  name         String
+  widthMm      Int?
+  heightMm     Int?
+  materialId   String?
+  thicknessUm  Int?
+  isDigital    Boolean         @default(false)
+  basePrice    BigInt
+  compareAt    BigInt?
+  avgCost      BigInt          @default(0)
+  onHand       Int             @default(0)
+  reserved     Int             @default(0)
+  reorderLevel Int             @default(5)
+  weightG      Int             @default(60)
+  active       Boolean         @default(true)
+  sort         Int             @default(0)
+  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  material     Material?       @relation(fields: [materialId], references: [id])
+  prices       VariantPrice[]
+  bom          BomLine[]
+  movements    StockMovement[]
+  orderItems   OrderItem[]
+  poLines      PurchaseLine[]
+}
+
+model VariantPrice {
+  variantId String
+  currency  String
+  price     BigInt
+  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  cur       Currency @relation(fields: [currency], references: [code], onDelete: Cascade)
+
+  @@id([variantId, currency])
+}
+
+model BomLine {
+  id         String   @id @default(cuid())
+  variantId  String
+  materialId String
+  qty        Int
+  variant    Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id])
+}
+
+enum MovementType {
+  OPENING
+  PURCHASE
+  SALE
+  RETURN_IN
+  RETURN_OUT
+  PRODUCTION_CONSUME
+  PRODUCTION_OUTPUT
+  SCRAP
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id         String       @id @default(cuid())
+  variantId  String?
+  materialId String?
+  qty        Int
+  unitCost   BigInt       @default(0)
+  type       MovementType
+  refType    String?
+  refId      String?
+  note       String?
+  byId       String?
+  createdAt  DateTime     @default(now())
+  variant    Variant?     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  material   Material?    @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([materialId])
+  @@index([createdAt])
+}
+
+model ImportBatch {
+  id        String    @id @default(cuid())
+  kind      String
+  filename  String?
+  rows      Int       @default(0)
+  created   Int       @default(0)
+  updated   Int       @default(0)
+  status    String    @default("committed") // committed | rolled_back
+  report    Json?
+  byId      String?
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+// ───────────────────────────── purchasing ─────────────────────────────
+
+model Supplier {
+  id        String          @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  country   String?
+  currency  String          @default("USD")
+  createdAt DateTime        @default(now())
+  orders    PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id           String         @id @default(cuid())
+  number       String         @unique
+  supplierId   String
+  currency     String
+  fxRate       Float          @default(1) // supplier currency per 1 base unit
+  status       String         @default("draft") // draft | ordered | partial | received | cancelled
+  extraCharges BigInt         @default(0) // freight/customs etc in supplier currency minor
+  paidBase     BigInt         @default(0)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  supplier     Supplier       @relation(fields: [supplierId], references: [id])
+  lines        PurchaseLine[]
+}
+
+model PurchaseLine {
+  id         String        @id @default(cuid())
+  poId       String
+  variantId  String?
+  materialId String?
+  qty        Int
+  received   Int           @default(0)
+  unitCost   BigInt // supplier currency minor
+  po         PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  variant    Variant?      @relation(fields: [variantId], references: [id])
+  material   Material?     @relation(fields: [materialId], references: [id])
+}
+
+// ───────────────────────────── custom studio ─────────────────────────────
+
+model CustomDesign {
+  id              String    @id @default(cuid())
+  customerId      String?
+  email           String?
+  name            String    @default("Custom stencil")
+  svg             String    @db.Text
+  previewPng      String?   @db.Text
+  widthMm         Int
+  heightMm        Int
+  materialId      String
+  islands         Int       @default(0)
+  bridges         Int       @default(0)
+  cutLengthMm     Int       @default(0)
+  priceBase       BigInt
+  status          String    @default("draft") // draft | needs_review | approved | locked
+  rightsConfirmed Boolean   @default(false)
+  flags           String[]  @default([])
+  createdAt       DateTime  @default(now())
+  customer        Customer? @relation(fields: [customerId], references: [id])
+  material        Material  @relation(fields: [materialId], references: [id])
+  orderItems      OrderItem[]
+}
+
+// ───────────────────────────── orders ─────────────────────────────
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CONFIRMED
+  IN_PRODUCTION
+  QUALITY_CHECK
+  PACKED
+  SHIPPED
+  DELIVERED
+  FULFILLED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  RETURNED
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  number          String        @unique
+  customerId      String?
+  email           String
+  name            String
+  phone           String?
+  shipping        Json
+  country         String
+  currency        String
+  fxRate          Float // order currency per 1 base unit (snapshot)
+  subtotal        BigInt
+  discount        BigInt        @default(0)
+  shippingFee     BigInt        @default(0)
+  tax             BigInt        @default(0)
+  total           BigInt
+  totalBase       BigInt
+  status          OrderStatus   @default(PENDING_PAYMENT)
+  paymentMethod   String
+  paymentStatus   String        @default("unpaid") // unpaid | paid | refunded | partial_refund
+  shippingMethod  String?
+  discountCode    String?
+  carrier         String?
+  trackingNumber  String?
+  notes           String?
+  idempotencyKey  String?       @unique
+  expiresAt       DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+  events          OrderEvent[]
+  payments        Payment[]
+  refunds         Refund[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model OrderItem {
+  id             String          @id @default(cuid())
+  orderId        String
+  productId      String?
+  variantId      String?
+  customDesignId String?
+  kind           String // stock | made_to_order | custom | digital | tool
+  name           String
+  sku            String
+  qty            Int
+  unitPrice      BigInt // order currency
+  total          BigInt
+  unitCostBase   BigInt          @default(0)
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant        Variant?        @relation(fields: [variantId], references: [id])
+  customDesign   CustomDesign?   @relation(fields: [customDesignId], references: [id])
+  jobs           ProductionJob[]
+  downloads      Download[]
+}
+
+model OrderEvent {
+  id      String   @id @default(cuid())
+  orderId String
+  status  String
+  note    String?
+  public  Boolean  @default(true)
+  byId    String?
+  at      DateTime @default(now())
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  orderId     String
+  provider    String
+  providerRef String?  @unique
+  amount      BigInt
+  currency    String
+  status      String
+  raw         Json?
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  orderId   String
+  amount    BigInt
+  amountBase BigInt
+  reason    String?
+  restock   Boolean  @default(false)
+  byId      String?
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Download {
+  token       String    @id
+  orderItemId String
+  remaining   Int       @default(5)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+model WebhookEvent {
+  id        String   @id // provider event id (idempotency)
+  provider  String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────────── production ─────────────────────────────
+
+model ProductionJob {
+  id          String    @id @default(cuid())
+  orderItemId String
+  status      String    @default("queued") // queued | cutting | cleaning | quality_check | ready_to_pack | done
+  machine     String?
+  notes       String?
+  photoUrl    String?
+  consumedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────── accounting ─────────────────────────────
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Account {
+  id       String        @id @default(cuid())
+  code     Int           @unique
+  name     String
+  type     AccountType
+  subtype  String
+  isSystem Boolean       @default(false)
+  active   Boolean       @default(true)
+  lines    JournalLine[]
+}
+
+model JournalEntry {
+  id          String         @id @default(cuid())
+  number      Int            @default(autoincrement()) @unique
+  date        DateTime       @default(now())
+  memo        String
+  sourceType  String
+  sourceId    String?
+  currency    String?
+  fxRate      Float?
+  reversalOfId String?       @unique
+  byId        String?
+  createdAt   DateTime       @default(now())
+  lines       JournalLine[]
+  reversalOf  JournalEntry?  @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversedBy  JournalEntry?  @relation("Reversal")
+
+  @@index([sourceType, sourceId])
+  @@index([date])
+}
+
+model JournalLine {
+  id        String       @id @default(cuid())
+  entryId   String
+  accountId String
+  debit     BigInt       @default(0)
+  credit    BigInt       @default(0)
+  memo      String?
+  entry     JournalEntry @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  account   Account      @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+}
+
+model BusinessDay {
+  date     String   @id // YYYY-MM-DD in business timezone
+  closedAt DateTime @default(now())
+  byId     String?
+  report   Json
+}
+
+model PeriodLock {
+  id       String   @id @default(cuid())
+  upTo     DateTime // journals dated before this are locked
+  kind     String   // day | month | year
+  byId     String?
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  accountId String
+  paidFrom  String // account id
+  amount    BigInt
+  vendor    String?
+  memo      String?
+  receipt   String?
+  entryId   String?
+  createdAt DateTime @default(now())
+}
+
+model FixedAsset {
+  id           String   @id @default(cuid())
+  name         String
+  cost         BigInt
+  salvage      BigInt   @default(0)
+  lifeMonths   Int
+  purchasedAt  DateTime
+  depreciated  BigInt   @default(0)
+  lastRunMonth String?
+  createdAt    DateTime @default(now())
+}
+
+model GatewayPayout {
+  id         String   @id @default(cuid())
+  provider   String
+  grossBase  BigInt
+  feesBase   BigInt
+  netBase    BigInt
+  fxDiffBase BigInt   @default(0)
+  reference  String?
+  date       DateTime @default(now())
+  entryId    String?
+}
+
+// ───────────────────────────── content & engagement ─────────────────────────────
+
+model PageSection {
+  id        String    @id @default(cuid())
+  page      String    @default("home")
+  type      String
+  title     String?
+  subtitle  String?
+  data      Json      @default("{}")
+  sort      Int       @default(0)
+  visible   Boolean   @default(true)
+  deletedAt DateTime?
+  updatedAt DateTime  @updatedAt
+}
+
+model ContentVersion {
+  id        String   @id @default(cuid())
+  page      String
+  snapshot  Json
+  byId      String?
+  createdAt DateTime @default(now())
+}
+
+model Faq {
+  id       String  @id @default(cuid())
+  question String
+  answer   String  @db.Text
+  page     String  @default("home")
+  sort     Int     @default(0)
+  visible  Boolean @default(true)
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  body        String    @db.Text
+  kind        String    @default("blog") // blog | tutorial
+  videoUrl    String?
+  coverSvg    String?   @db.Text
+  tags        String[]  @default([])
+  published   Boolean   @default(true)
+  publishedAt DateTime  @default(now())
+  seoTitle    String?
+  seoDesc     String?
+  updatedAt   DateTime  @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String?
+  orderId   String?
+  name      String
+  email     String?
+  rating    Int
+  title     String?
+  body      String   @db.Text
+  media     String[] @default([])
+  status    String   @default("published") // published | pending | hidden | rejected
+  verified  Boolean  @default(false)
+  featured  Boolean  @default(false)
+  reply     String?
+  replyAt   DateTime?
+  source    String   @default("onsite")
+  createdAt DateTime @default(now())
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([productId, status])
+}
+
+model ProjectStory {
+  id        String   @id @default(cuid())
+  title     String
+  surface   String
+  summary   String   @db.Text
+  quote     String?
+  author    String?
+  hours     Int?
+  beforeSvg String?  @db.Text
+  afterSvg  String?  @db.Text
+  productSlugs String[] @default([])
+  sort      Int      @default(0)
+  visible   Boolean  @default(true)
+}
+
+model DiscountCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  kind         String // PERCENT | FIXED | FREESHIP
+  value        Float // percent or base-currency major amount for FIXED
+  minSubtotalBase BigInt @default(0)
+  usageLimit   Int?
+  used         Int       @default(0)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  active       Boolean   @default(true)
+  firstOrderOnly Boolean @default(false)
+  createdAt    DateTime  @default(now())
+}
+
+model Inquiry {
+  id         String   @id @default(cuid())
+  kind       String   @default("contact") // contact | custom | b2b | missing
+  name       String
+  email      String
+  phone      String?
+  subject    String?
+  message    String   @db.Text
+  status     String   @default("open") // open | in_progress | closed
+  assignedTo String?
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model Subscriber {
+  email     String   @id
+  createdAt DateTime @default(now())
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  type      String
+  severity  String   @default("info")
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  dedupeKey String?  @unique
+  createdAt DateTime @default(now())
+}
+
+model Redirect {
+  from      String   @id
+  to        String
+  createdAt DateTime @default(now())
+}
