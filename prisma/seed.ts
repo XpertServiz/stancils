@@ -161,6 +161,13 @@ async function main() {
     ...extra,
   });
 
+  // Products are queued, then written with limited concurrency: on a remote database each write is a
+  // network round trip, so one-by-one seeding is very slow on a first Vercel deploy.
+  const jobs: (() => Promise<unknown>)[] = [];
+  const queue = (p: Parameters<typeof addProduct>[0]) => {
+    jobs.push(() => addProduct(p));
+  };
+
   async function addProduct(p: {
     name: string; type: ProductType; design?: D.Design | null; svg?: string; cols: string[]; sizes: Size[]; mat: keyof typeof mats;
     tags?: string[]; digital?: boolean; foodSafe?: boolean; desc: string; short: string; featured?: boolean; repeat?: boolean; stock?: boolean;
@@ -222,7 +229,7 @@ async function main() {
   const FLORAL_NAMES = ["Wild Poppy", "Cherry Blossom", "Daisy Chain", "Sunflower", "Tulip Field", "Peony", "Rose Garden", "Lavender", "Camellia", "Orchid", "Magnolia", "Cosmos", "Anemone", "Primrose", "Iris", "Hibiscus", "Lily", "Wildflower", "Gardenia", "Clover", "Bluebell", "Buttercup", "Foxglove", "Hollyhock", "Freesia"];
   for (let i = 0; i < 30; i++) {
     const layered = i % 5 === 0;
-    await addProduct({
+    queue({
       name: `${MANDALA_NAMES[i]} Mandala ${layered ? "Layered " : ""}Stencil`, type: i % 3 === 0 ? "MADE_TO_ORDER" : "STOCK_PHYSICAL",
       design: D.mandala(1000 + i, layered), cols: ["mandala", "wall", i % 2 ? "furniture" : "floor-tile", "craft-journal"], sizes: WALL_SIZES, mat: "m10",
       tags: ["mandala", "boho", layered ? "multi-layer" : "single-layer"], digital: true, featured: i < 3,
@@ -231,7 +238,7 @@ async function main() {
     });
   }
   for (let i = 0; i < 30; i++) {
-    await addProduct({
+    queue({
       name: `${MOROCCAN_NAMES[i]} Allover Wall Stencil`, type: i % 4 === 0 ? "MADE_TO_ORDER" : "STOCK_PHYSICAL", design: D.moroccan(2000 + i),
       cols: ["moroccan", "wall", "floor-tile"], sizes: WALL_SIZES, mat: "m10", tags: ["allover", "moroccan", "repeat"], digital: true, repeat: true, featured: i < 2,
       short: `Repeating ${MOROCCAN_NAMES[i]} lattice that tiles seamlessly across a whole wall.`,
@@ -240,7 +247,7 @@ async function main() {
   }
   for (let i = 0; i < 30; i++) {
     const d = D.geometric(3000 + i);
-    await addProduct({
+    queue({
       name: `${GEO_NAMES[i]} Geometric Stencil`, type: "STOCK_PHYSICAL", design: d, cols: ["geometric", "wall", i % 2 ? "fabric" : "furniture"], sizes: WALL_SIZES,
       mat: i % 3 ? "m10" : "m7", tags: ["geometric", d.motif, "modern"], digital: true, repeat: true,
       short: `Modern ${d.motif} pattern — crisp, graphic and easy to repeat.`,
@@ -249,7 +256,7 @@ async function main() {
   }
   for (let i = 0; i < 25; i++) {
     const layered = i % 4 === 0;
-    await addProduct({
+    queue({
       name: `${FLORAL_NAMES[i]} ${layered ? "Layered " : ""}Stencil`, type: i % 3 === 0 ? "MADE_TO_ORDER" : "STOCK_PHYSICAL", design: D.floral(4000 + i, layered),
       cols: ["floral", "wall", "furniture", "fabric", "craft-journal"], sizes: WALL_SIZES.slice(0, 3), mat: "m7", tags: ["floral", "botanical"], digital: true,
       short: `${FLORAL_NAMES[i]} botanical silhouette for walls, furniture and fabric.`,
@@ -260,7 +267,7 @@ async function main() {
   for (let i = 0; i < 25; i++) {
     const d = D.nature(5000 + i);
     const base = { palm: "Tropical Palm", fern: "Fern Frond", waves: "Ocean Waves", mountains: "Mountain Range", birds: "Flying Birds", feather: "Boho Feather" }[d.motif] ?? NATURE_NAMES[i % 6];
-    await addProduct({
+    queue({
       name: `${base} Stencil No. ${i + 1}`, type: "STOCK_PHYSICAL", design: d, cols: ["nature", "wall", "furniture", "fabric"], sizes: WALL_SIZES.slice(0, 3),
       mat: "m10", tags: ["nature", d.motif], digital: true,
       short: `${base} motif — calm, natural and great for feature walls.`,
@@ -272,7 +279,7 @@ async function main() {
   for (const motif of Object.keys(COFFEE_NAMES)) {
     for (const mat of ["pet", "steel"] as const) {
       for (let k = 0; k < 2; k++) {
-        await addProduct({
+        queue({
           name: `${COFFEE_NAMES[motif]} Coffee Stencil${mat === "steel" ? " — Stainless" : ""}${k ? " (Café 4-pack)" : ""}`, type: "STOCK_PHYSICAL",
           design: D.coffee(6000 + coffeeI++, motif as never), cols: ["coffee", "cake-cookie"], sizes: COFFEE_SIZES.map((s) => ({ ...s, price: Math.round(s.price * (mat === "steel" ? 2.6 : 1) * (k ? 3.2 : 1)) })),
           mat, tags: ["coffee", "latte", "food-safe", motif], foodSafe: true, featured: coffeeI < 3,
@@ -292,7 +299,7 @@ async function main() {
     ["Christmas Tree Cookie", () => D.seasonal(7018, "tree")], ["Hearts Confetti", () => D.seasonal(7019, "hearts")],
   ] as const;
   for (const [i, [name, fn]] of CAKE.entries()) {
-    await addProduct({
+    queue({
       name: `${name} Stencil`, type: "STOCK_PHYSICAL", design: fn(), cols: ["cake-cookie", i > 15 ? "seasonal" : "craft-journal"], sizes: SMALL_SIZES, mat: "pet",
       tags: ["cake", "cookie", "food-safe"], foodSafe: true,
       short: `Food-safe ${name.toLowerCase()} stencil for royal icing, airbrush and dusting.`,
@@ -301,7 +308,7 @@ async function main() {
   }
   const PHRASES = ["HOME SWEET HOME", "WELCOME", "BISMILLAH", "GOOD VIBES", "DREAM BIG", "LOVE", "COFFEE", "BAKE SHOP", "KITCHEN", "FARMHOUSE", "BE KIND", "HELLO", "FAMILY", "GATHER", "CHAI", "OPEN"];
   for (const [i, phrase] of PHRASES.entries()) {
-    await addProduct({
+    queue({
       name: `"${phrase[0]}${phrase.slice(1).toLowerCase()}" Lettering Stencil`, type: "STOCK_PHYSICAL", design: D.lettering(8000 + i, phrase),
       cols: ["lettering", "sign-logo", "wall", "furniture"], sizes: [{ label: "30 cm wide", w: 300, h: 100, price: 1900 }, { label: "60 cm wide", w: 600, h: 200, price: 3400 }],
       mat: "m10", tags: ["lettering", "words", "sign"], digital: true,
@@ -313,7 +320,7 @@ async function main() {
     ["A–Z Alphabet Set", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"], ["Numbers 0–9 Set", "0123456789"], ["House Number Set", "0123456789#"], ["Uppercase A–M", "ABCDEFGHIJKLM"], ["Uppercase N–Z", "NOPQRSTUVWXYZ"],
   ] as const;
   for (const [i, [name, chars]] of ALPHA.entries()) {
-    await addProduct({
+    queue({
       name: `${name} Stencil`, type: "STOCK_PHYSICAL", design: D.alphabet(8100 + i, chars), cols: ["lettering", "sign-logo", "craft-journal"],
       sizes: [{ label: "Letters 2.5 cm", w: 200, h: 200, price: 1500 }, { label: "Letters 5 cm", w: 400, h: 400, price: 2600 }, { label: "Letters 10 cm", w: 600, h: 600, price: 4200 }],
       mat: "m10", tags: ["alphabet", "letters", "numbers"], digital: true,
@@ -323,7 +330,7 @@ async function main() {
   }
   const SIGNS = ["NO PARKING", "PRIVATE", "EXIT", "DELIVERIES", "CAFE", "STAFF ONLY", "KEEP CLEAR", "FIRE EXIT", "PARKING", "RECEPTION", "TOILETS", "PUSH", "PULL", "LOADING BAY", "OFFICE"];
   for (const [i, t] of SIGNS.entries()) {
-    await addProduct({
+    queue({
       name: `"${t}" Sign Stencil`, type: "MADE_TO_ORDER", design: D.sign(8200 + i, t), cols: ["sign-logo"],
       sizes: [{ label: "40×25 cm", w: 400, h: 250, price: 2900 }, { label: "80×50 cm", w: 800, h: 500, price: 5600 }, { label: "120×75 cm (pavement)", w: 1200, h: 750, price: 9800 }],
       mat: "m14", tags: ["sign", "business", "pavement"], digital: true,
@@ -337,7 +344,7 @@ async function main() {
   ];
   for (let i = 0; i < 18; i++) {
     const [name, motif, occ] = SEASON[i % SEASON.length];
-    await addProduct({
+    queue({
       name: `${name} Stencil${i >= 6 ? ` Vol. ${Math.floor(i / 6) + 1}` : ""}`, type: "STOCK_PHYSICAL", design: D.seasonal(9000 + i, motif), cols: ["seasonal", occ, "craft-journal", "wall"],
       sizes: SMALL_SIZES.concat(WALL_SIZES.slice(1, 2)), mat: "m7", tags: ["seasonal", occ], digital: true,
       short: `${name} motif for windows, cards, gifts and seasonal décor.`,
@@ -345,7 +352,7 @@ async function main() {
     });
   }
   for (const [i, t] of ["Ramadan Kareem", "Merry Christmas", "Happy Halloween", "Eid Mubarak", "Be Mine", "Happy Easter", "Season's Greetings"].entries()) {
-    await addProduct({
+    queue({
       name: `"${t}" Greeting Stencil`, type: "STOCK_PHYSICAL", design: D.lettering(9100 + i, t.toUpperCase()), cols: ["seasonal", "lettering", "craft-journal"],
       sizes: [{ label: "30 cm wide", w: 300, h: 100, price: 1700 }], mat: "m7", tags: ["seasonal", "greeting"], digital: true,
       short: `"${t}" lettering for windows, banners and cards.`, desc: desc(`"${t}" in bold bridged lettering.`, "Paint banners, chalkboards, windows and cards."),
@@ -355,7 +362,7 @@ async function main() {
   for (let i = 0; i < 16; i++) {
     const d = D.kids(9500 + i);
     const name = { rainbow: "Rainbow", rocket: "Rocket", clouds: "Cloud", stars: "Starry Night" }[d.motif] ?? KIDS[i % 4];
-    await addProduct({
+    queue({
       name: `${name} Kids Stencil No. ${i + 1}`, type: "STOCK_PHYSICAL", design: d, cols: ["kids", "wall", "craft-journal", "fabric"], sizes: WALL_SIZES.slice(0, 3), mat: "m7",
       tags: ["kids", "nursery", d.motif], digital: true,
       short: `Playful ${name.toLowerCase()} motif for nurseries, play rooms and kids' crafts.`,
@@ -364,7 +371,7 @@ async function main() {
   }
   for (let i = 0; i < 20; i++) {
     const d = [D.mandala, D.geometric, D.floral, D.nature, D.kids][i % 5](9700 + i);
-    await addProduct({
+    queue({
       name: `Mini ${["Mandala", "Pattern", "Bloom", "Nature", "Doodle"][i % 5]} Journal Stencil ${i + 1}`, type: "STOCK_PHYSICAL", design: d,
       cols: ["craft-journal"], sizes: [{ label: "10×10 cm", w: 100, h: 100, price: 650 }, { label: "15×15 cm", w: 150, h: 150, price: 850 }], mat: "m5",
       tags: ["mini", "journal", "mixed media"],
@@ -386,7 +393,7 @@ async function main() {
     ["Laser Level for Allover Patterns", 5200, `<rect x="90" y="150" width="220" height="110" rx="18"/><rect x="0" y="198" width="90" height="8"/><rect x="310" y="198" width="90" height="8"/>`, "Projects straight lines so your repeats stay level."],
   ];
   for (const [name, price, svg, short] of TOOLS) {
-    await addProduct({
+    queue({
       name, type: "TOOL", svg: toolSvg(svg), cols: ["tools"], sizes: [{ label: "Standard", w: 0, h: 0, price }], mat: "m10", tags: ["tool"],
       short, desc: `${short}\n\nA staple in every stencil kit — pairs with any wall, furniture or craft stencil.`,
     });
@@ -399,12 +406,20 @@ async function main() {
     ["Sign Maker Kit", 6900, "Alphabet set (5 cm) + numbers set + foam roller + adhesive spray."],
   ];
   for (const [i, [name, price, short]] of KITS.entries()) {
-    await addProduct({
+    queue({
       name, type: "STOCK_PHYSICAL", design: [() => D.moroccan(9900), () => D.coffee(9901, "cup"), () => D.coffee(9902, "heart"), () => D.mandala(9903), () => D.alphabet(9904, "ABC123")][i](), cols: ["kits"],
       sizes: [{ label: "Kit", w: 300, h: 300, price }], mat: "m10", tags: ["kit", "bundle", "gift"], featured: i < 2,
       short, desc: `${short}\n\nEverything in one box — a great gift and the easiest way to start.`,
     });
   }
+
+  const CONCURRENCY = Number(process.env.SEED_CONCURRENCY || 8);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: CONCURRENCY }, async () => {
+      while (next < jobs.length) await jobs[next++]();
+    }),
+  );
 
   // ── opening balances journal ──
   await db.$transaction(async (tx) => {
@@ -529,6 +544,8 @@ async function main() {
     await db.projectStory.create({ data: { title, surface, summary, hours, productSlugs, sort: i, afterSvg: [D.moroccan(2000).svg, D.coffee(6000, "heart").svg, D.geometric(3000).svg][i] } });
   }
 
+  // marker read by prisma/seed-if-empty.ts: a seed that was cut off mid-way is redone on the next deploy
+  await db.setting.upsert({ where: { key: "seedState" }, create: { key: "seedState", value: { completedAt: new Date().toISOString() } }, update: { value: { completedAt: new Date().toISOString() } } });
   console.log(`✔ ${await db.product.count()} products, ${await db.variant.count()} variants, ${await db.collection.count()} collections`);
   console.log(`✔ Admin user: ${admin.email} (password from ADMIN_PASSWORD${process.env.ADMIN_PASSWORD ? "" : " not set — default ChangeMe123!, change it now"})`);
 
