@@ -1,10 +1,19 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const ACCENT = "rgb(255 122 89)";
+function useAccent() {
+  const [c, setC] = useState("rgb(45 212 191)");
+  useEffect(() => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+    if (v) setC(`rgb(${v.split(/\s+/).join(",")})`);
+  }, []);
+  return c;
+}
 const tipStyle = { background: "rgb(var(--surface-2))", border: "1px solid rgb(var(--line))", borderRadius: 10, color: "rgb(var(--ink))", fontSize: 12 };
 
 export function RevenueChart({ data, currency }: { data: { day: string; value: number; orders: number }[]; currency: string }) {
+  const ACCENT = useAccent();
   return (
     <div className="h-64 w-full" role="img" aria-label="Daily revenue">
       <ResponsiveContainer>
@@ -27,6 +36,7 @@ export function RevenueChart({ data, currency }: { data: { day: string; value: n
 }
 
 export function HBar({ data, currency, label }: { data: { name: string; value: number }[]; currency?: string; label: string }) {
+  const ACCENT = useAccent();
   return (
     <div className="w-full" style={{ height: Math.max(120, data.length * 34) }} role="img" aria-label={label}>
       <ResponsiveContainer>

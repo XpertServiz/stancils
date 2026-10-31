@@ -201,6 +201,7 @@ export async function bulkProducts(fd: FormData) {
   let where: Prisma.ProductWhereInput = { id: { in: ids } };
   if (scope === "seed") where = { source: "SEED" };
   if (scope === "filtered") where = JSON.parse(String(fd.get("filter") || "{}"));
+  if (scope === "all") where = {};
   const targets = await db.product.findMany({ where, select: { id: true } });
   const tIds = targets.map((t) => t.id);
   if (tIds.length === 0) return;
@@ -246,4 +247,15 @@ async function zeroOutStockForDelete(productIds: string[], byId: string) {
   const { adjustVariant } = await import("@/lib/services/inventory");
   const variants = await db.variant.findMany({ where: { productId: { in: productIds }, onHand: { not: 0 } } });
   for (const v of variants) await db.$transaction((tx) => adjustVariant(tx, v.id, -v.onHand, "Product deleted", byId));
+}
+
+export async function deleteProduct(fd: FormData) {
+  const id = String(fd.get("id"));
+  const f = new FormData();
+  f.set("bulk", "delete");
+  f.set("scope", "selected");
+  f.append("ids", id);
+  await bulkProducts(f);
+  const still = await db.product.findUnique({ where: { id } });
+  redirect(still ? `/admin/products/${id}?archived=1` : "/admin/products?deleted=1");
 }

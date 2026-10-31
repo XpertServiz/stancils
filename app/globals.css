@@ -3,96 +3,15 @@
 @tailwind utilities;
 
 /* Theme tokens are RGB triplets so Tailwind can apply opacity. */
-:root,
-[data-theme="dusk"] {
-  --bg: 46 49 64;
-  --surface-1: 56 60 77;
-  --surface-2: 67 72 96;
-  --band-stone: 232 226 214;
-  --stone-ink: 34 36 46;
-  --line: 82 88 115;
-  --ink: 245 242 236;
-  --ink-2: 203 200 214;
-  --ink-3: 163 161 181;
-  --accent: 255 122 89;
-  --accent-2: 94 230 192;
-  --accent-3: 245 196 81;
-  --danger: 255 107 107;
-  --on-accent: 27 29 36;
-  color-scheme: dark;
-}
-[data-theme="stone"] {
-  --bg: 236 231 222;
-  --surface-1: 246 242 235;
-  --surface-2: 255 252 247;
-  --band-stone: 46 49 64;
-  --stone-ink: 245 242 236;
-  --line: 206 198 184;
-  --ink: 34 36 46;
-  --ink-2: 70 72 88;
-  --ink-3: 98 99 116;
-  --accent: 214 82 50;
-  --accent-2: 18 140 110;
-  --accent-3: 176 124 10;
-  --danger: 196 48 48;
-  --on-accent: 255 255 255;
-  color-scheme: light;
-}
-[data-theme="ink"] {
-  --bg: 18 19 26;
-  --surface-1: 27 29 38;
-  --surface-2: 37 40 53;
-  --band-stone: 46 49 64;
-  --stone-ink: 245 242 236;
-  --line: 52 56 74;
-  --ink: 240 238 233;
-  --ink-2: 190 188 204;
-  --ink-3: 150 148 168;
-  --accent: 255 122 89;
-  --accent-2: 94 230 192;
-  --accent-3: 245 196 81;
-  --danger: 255 107 107;
-  --on-accent: 27 29 36;
-  color-scheme: dark;
-}
-[data-theme="terracotta"] {
-  --bg: 61 44 40;
-  --surface-1: 74 54 49;
-  --surface-2: 89 66 59;
-  --band-stone: 240 228 212;
-  --stone-ink: 50 34 30;
-  --line: 112 86 78;
-  --ink: 250 240 230;
-  --ink-2: 222 204 192;
-  --ink-3: 190 170 158;
-  --accent: 240 150 90;
-  --accent-2: 150 210 170;
-  --accent-3: 242 200 110;
-  --danger: 255 120 110;
-  --on-accent: 40 24 20;
-  color-scheme: dark;
-}
-[data-theme="sage"] {
-  --bg: 40 52 48;
-  --surface-1: 50 64 59;
-  --surface-2: 62 78 72;
-  --band-stone: 230 232 220;
-  --stone-ink: 30 40 36;
-  --line: 84 104 96;
-  --ink: 240 244 236;
-  --ink-2: 200 212 204;
-  --ink-3: 162 180 170;
-  --accent: 240 180 90;
-  --accent-2: 140 220 190;
-  --accent-3: 250 214 120;
-  --danger: 255 120 110;
-  --on-accent: 30 32 28;
+:root {
+  /* fallback = Ocean Teal; real values come from lib/themes.ts (rendered in app/layout.tsx) */
+  --bg: 27 39 53; --surface-1: 35 50 67; --surface-2: 45 62 82; --band-stone: 226 235 240; --stone-ink: 22 32 44;
+  --line: 62 82 104; --ink: 240 246 250; --ink-2: 196 210 222; --ink-3: 150 170 188;
+  --accent: 45 212 191; --accent-2: 125 211 252; --accent-3: 250 204 21; --danger: 255 107 107; --on-accent: 20 22 28;
   color-scheme: dark;
 }
 
 :root {
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }

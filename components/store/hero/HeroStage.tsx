@@ -7,11 +7,11 @@ import type { HeroMode } from "./Scene3D";
 const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false });
 
 const SWATCHES = [
-  { name: "Coral", c: "#FF7A59" },
-  { name: "Mint", c: "#5EE6C0" },
-  { name: "Mustard", c: "#F5C451" },
-  { name: "Ink", c: "#2E3140" },
-  { name: "Clay", c: "#C8664A" },
+  { name: "Theme colour", c: "theme" },
+  { name: "Ink", c: "#1F2937" },
+  { name: "Navy", c: "#1E3A8A" },
+  { name: "Teal", c: "#0D9488" },
+  { name: "Gold", c: "#CA8A04" },
 ];
 
 /**
@@ -23,7 +23,13 @@ export function HeroStage({ svg, layers, labels }: { svg: string; layers: number
   const [tier, setTier] = useState<"poster" | "css" | "webgl">("poster");
   const [ready, setReady] = useState(false);
   const [mode, setMode] = useState<HeroMode>("auto");
-  const [paint, setPaint] = useState(SWATCHES[0].c);
+  const [themeColor, setThemeColor] = useState("#2DD4BF");
+  const [pick, setPick] = useState("theme");
+  const paint = pick === "theme" ? themeColor : pick;
+  useEffect(() => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim().split(/\s+/).map(Number);
+    if (v.length === 3 && v.every((n) => !isNaN(n))) setThemeColor(`#${v.map((n) => n.toString(16).padStart(2, "0")).join("")}`);
+  }, []);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -72,11 +78,11 @@ export function HeroStage({ svg, layers, labels }: { svg: string; layers: number
             <button
               key={s.c}
               role="radio"
-              aria-checked={paint === s.c}
+              aria-checked={pick === s.c}
               aria-label={s.name}
-              onClick={() => setPaint(s.c)}
-              className={`h-7 w-7 rounded-full border-2 transition-transform ${paint === s.c ? "scale-110 border-ink" : "border-line"}`}
-              style={{ background: s.c }}
+              onClick={() => setPick(s.c)}
+              className={`h-7 w-7 rounded-full border-2 transition-transform ${pick === s.c ? "scale-110 border-ink" : "border-line"}`}
+              style={{ background: s.c === "theme" ? themeColor : s.c }}
             />
           ))}
         </div>

@@ -26,7 +26,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <CartProvider>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-onaccent">Skip to content</a>
-      {s.splash.enabled && <Splash name={s.business.name} />}
+      {s.splash.enabled && <Splash name={s.business.name} style={s.splash.style} />}
       <Announcement />
       <Header />
       {surfaceCol && <SurfaceBar surface={surfaceCol.slug} name={surfaceCol.name} />}

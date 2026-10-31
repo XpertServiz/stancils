@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS = {
     facebook: "",
     youtube: "",
   },
-  theme: { preset: "dusk" },
+  theme: { preset: "ocean", accent: "", displayFont: "Poppins", bodyFont: "Poppins" },
   hero: {
     mode: "3d", // 3d | video | image
     eyebrow: "Laser-cut · Reusable · Made to order",
@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS = {
     imageUrl: "",
     trust: ["Free design checks", "Ships worldwide", "Pay in your currency"],
   },
-  splash: { enabled: true },
+  splash: { enabled: true, style: "cube" as "cube" | "laser" | "layers" | "spray" },
   announcement: { enabled: true, text: "Free shipping over {threshold} · Code WELCOME10 for 10% off your first order" },
   tax: { ratePct: 0, inclusive: true, label: "Tax" },
   payments: {

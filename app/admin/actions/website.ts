@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { setSetting } from "@/lib/settings";
 import { pingIndexNow } from "@/lib/seo";
 import { SECTION_LIBRARY } from "@/lib/sections";
+import { DEFAULT_THEME, FONTS, THEMES, hexToTriplet } from "@/lib/themes";
 
 type R = { ok: boolean; msg: string } | null;
 
@@ -108,11 +109,21 @@ export async function saveSiteSettings(_: R, fd: FormData): Promise<R> {
   } catch (e) { return { ok: false, msg: (e as Error).message }; }
 }
 
-export async function saveTheme(fd: FormData) {
+export async function saveAppearance(_: R, fd: FormData): Promise<R> {
   const s = await requirePermission("appearance.manage");
-  await setSetting("theme", { preset: String(fd.get("preset")) });
-  await audit(s.id, "theme.update", "settings", "theme", undefined, { preset: fd.get("preset") });
+  const preset = String(fd.get("preset") || DEFAULT_THEME);
+  if (!THEMES.some((t) => t.id === preset)) return { ok: false, msg: "Unknown theme." };
+  const accent = fd.get("useAccent") === "on" ? String(fd.get("accent") || "") : "";
+  if (accent && !hexToTriplet(accent)) return { ok: false, msg: "Main colour must be a hex colour like #2563EB." };
+  const displayFont = String(fd.get("displayFont"));
+  const bodyFont = String(fd.get("bodyFont"));
+  if (!FONTS[displayFont] || !FONTS[bodyFont]) return { ok: false, msg: "Unknown font." };
+  const style = String(fd.get("splashStyle") || "cube") as "cube" | "laser" | "layers" | "spray";
+  await setSetting("theme", { preset, accent, displayFont, bodyFont });
+  await setSetting("splash", { enabled: fd.get("splash") === "on", style });
+  await audit(s.id, "appearance.update", "settings", "theme", undefined, { preset, accent, displayFont, bodyFont, splash: style });
   refresh();
+  return { ok: true, msg: "Applied to the live site." };
 }
 
 export async function saveFaq(_: R, fd: FormData): Promise<R> {

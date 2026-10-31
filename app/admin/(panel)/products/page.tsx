@@ -40,6 +40,8 @@ export default async function Products({ searchParams }: { searchParams: Promise
           {can("inventory.edit") && <Link href="/admin/products/new" className="btn btn-primary btn-sm">New product</Link>}
         </>}
       />
+      {sp.deleted && <p className="mb-4 rounded-xl bg-mint/15 p-3 text-sm text-mint">Product deleted.</p>}
+      <p className="mb-3 text-xs text-ink3">To delete products: tick them and choose <b>Delete</b> below (or pick <b>ALL products</b>). Products that have been sold are archived instead, to keep order history and accounts correct. To wipe test data, use Settings → Reset data.</p>
       <form className="mb-4 flex flex-wrap gap-2">
         <input name="q" defaultValue={sp.q} placeholder="Name, SKU or tag" className="input max-w-xs" />
         <select name="status" defaultValue={sp.status ?? ""} className="select max-w-[140px]"><option value="">Any status</option><option>ACTIVE</option><option>DRAFT</option><option>ARCHIVED</option></select>
@@ -62,7 +64,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
           </select>
           <select name="collectionId" className="select !w-auto !py-1.5" defaultValue=""><option value="">(collection)</option>{collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
           <input name="pct" type="number" step="0.1" placeholder="% e.g. 10 or -5" className="input !w-36 !py-1.5" />
-          <select name="scope" className="select !w-auto !py-1.5"><option value="selected">Selected rows</option><option value="filtered">All {total} matching filter</option><option value="seed">All seeded products</option></select>
+          <select name="scope" className="select !w-auto !py-1.5"><option value="selected">Selected rows</option><option value="filtered">All {total} matching filter</option><option value="seed">All seeded products</option><option value="all">ALL products</option></select>
           <input type="hidden" name="filter" value={JSON.stringify(where)} />
           <Submit className="btn btn-primary btn-sm" confirm="Apply this bulk action?">Apply</Submit>
         </div>

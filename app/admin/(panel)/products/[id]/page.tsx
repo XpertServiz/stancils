@@ -10,11 +10,12 @@ import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { Submit } from "@/components/admin/Submit";
 import { DesignArt } from "@/components/DesignArt";
-import { deleteImage, deleteVariant, saveBom, saveProduct, saveVariants, uploadImages } from "@/app/admin/actions/products";
+import { deleteImage, deleteProduct, deleteVariant, saveBom, saveProduct, saveVariants, uploadImages } from "@/app/admin/actions/products";
 
-export default async function EditProduct({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditProduct({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ archived?: string }> }) {
   const staff = await requireStaff("inventory.view");
   const { id } = await params;
+  const archivedNotice = (await searchParams).archived;
   const [p, collections, materials, { list, base }] = await Promise.all([
     db.product.findUnique({
       where: { id },
@@ -32,10 +33,21 @@ export default async function EditProduct({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
+      {archivedNotice && <p className="rounded-xl bg-mustard/15 p-3 text-sm text-mustard">This product has orders or stock history, so it was archived (hidden from the shop) instead of deleted. Your order history and accounts stay intact.</p>}
       <PageHeader
         title={p.name}
         sub={<>{p.source.toLowerCase()} · updated {p.updatedAt.toLocaleString()}</>}
-        actions={<Link href={`/p/${p.slug}`} target="_blank" className="btn btn-ghost btn-sm"><ExternalLink size={15} />View on site</Link>}
+        actions={<>
+          <Link href={`/p/${p.slug}`} target="_blank" className="btn btn-ghost btn-sm"><ExternalLink size={15} />View on site</Link>
+          {can("inventory.delete") && (
+            <form action={deleteProduct}>
+              <input type="hidden" name="id" value={p.id} />
+              <Submit className="btn btn-ghost btn-sm text-danger" confirm="Delete this product? If it has been sold it will be archived instead, to keep your order history.">
+                <Trash2 size={15} />Delete product
+              </Submit>
+            </form>
+          )}
+        </>}
       />
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Panel title="Details">

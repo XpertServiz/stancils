@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getSettings } from "@/lib/settings";
+import { companionOf, googleFontsHref, themeById, themeCss } from "@/lib/themes";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -22,19 +23,18 @@ export const viewport: Viewport = { themeColor: "#2E3140", width: "device-width"
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const s = await getSettings();
+  const theme = themeById(s.theme.preset);
   return (
-    <html lang="en" data-theme={s.theme.preset || "dusk"} suppressHydrationWarning>
+    <html lang="en" data-theme={theme.id} data-owner={theme.id} data-alt={companionOf(theme)} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Big+Shoulders+Stencil+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Saira+Stencil+One&family=Space+Grotesk:wght@500;600;700&display=swap"
-        />
+        <link rel="stylesheet" href={googleFontsHref(s.theme.displayFont, s.theme.bodyFont)} />
+        <style dangerouslySetInnerHTML={{ __html: themeCss(s.theme) }} />
         <script
           // visitor light/dark override, applied before paint to avoid a flash
-          dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('cc_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}` }}
+          dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('cc_alt')==='1'){var d=document.documentElement;d.dataset.theme=d.dataset.alt}}catch(e){}` }}
         />
       </head>
       <body className="min-h-screen">{children}</body>

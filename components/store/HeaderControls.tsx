@@ -31,6 +31,7 @@ export function CurrencyUnits({ currencies, current, units }: { currencies: { co
   );
 }
 
+/** Visitor lighter/darker toggle: swaps between the owner's theme and its companion. */
 export function ThemeToggle() {
   return (
     <button
@@ -38,13 +39,15 @@ export function ThemeToggle() {
       aria-label="Toggle lighter / darker"
       onClick={() => {
         const el = document.documentElement;
-        const next = el.dataset.theme === "stone" ? "dusk" : "stone";
-        el.dataset.theme = next;
-        try { localStorage.setItem("cc_theme", next); } catch {}
+        const owner = el.dataset.owner!;
+        const alt = el.dataset.alt!;
+        const useAlt = el.dataset.theme === owner;
+        el.dataset.theme = useAlt ? alt : owner;
+        try { localStorage.setItem("cc_alt", useAlt ? "1" : "0"); } catch {}
       }}
     >
-      <Sun size={18} className="hidden [[data-theme=stone]_&]:block" />
-      <Moon size={18} className="[[data-theme=stone]_&]:hidden" />
+      <Sun size={18} />
+      <Moon size={18} className="-ml-1 opacity-60" />
     </button>
   );
 }

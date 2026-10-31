@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { bankReady, getSettings, getCurrencies } from "@/lib/settings";
 import { BankAccountsTab } from "./BankAccountsTab";
+import { DangerZone } from "./DangerZone";
+import { AppearanceBody } from "@/components/admin/AppearanceBody";
 import { majorString } from "@/lib/money";
 import { stripeEnabled, paypalEnabled } from "@/lib/payments";
 import { PageHeader, Panel, Field, Tabs } from "@/components/admin/ui";
@@ -15,7 +17,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const tab = (await searchParams).tab ?? "business";
   const s = await getSettings();
   const { list, base } = await getCurrencies();
-  const tabs = [["business", "Business & tax"], ["currencies", "Currencies & FX"], ["shipping", "Shipping"], ["payments", "Payments & Studio pricing"], ["banks", "Bank accounts"]].map(([key, label]) => ({ key, label, href: `/admin/settings?tab=${key}` }));
+  const tabs = [["business", "Business & tax"], ["currencies", "Currencies & FX"], ["shipping", "Shipping"], ["theme", "Theme & fonts"], ["payments", "Payments & Studio pricing"], ["banks", "Bank accounts"], ["danger", "Reset data"]].map(([key, label]) => ({ key, label, href: `/admin/settings?tab=${key}` }));
 
   if (tab === "currencies") {
     const journals = await db.journalEntry.count();
@@ -101,6 +103,27 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             </ActionForm>
           </Panel>
         ))}
+      </div>
+    );
+  }
+
+  if (tab === "theme") {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Settings" sub="Pick a theme, your main colour, fonts and the 3D splash screen. Changes go live as soon as you apply them." />
+        <Tabs tabs={tabs} active={tab} />
+        <AppearanceBody />
+      </div>
+    );
+  }
+
+  if (tab === "danger") {
+    const counts = { orders: await db.order.count(), customers: await db.customer.count(), journals: await db.journalEntry.count(), products: await db.product.count() };
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Settings" sub="Remove test data before launch." />
+        <Tabs tabs={tabs} active={tab} />
+        <DangerZone counts={counts} />
       </div>
     );
   }
