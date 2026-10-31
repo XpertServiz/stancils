@@ -19,6 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = { themeColor: "#2E3140", width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

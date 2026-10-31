@@ -6,13 +6,14 @@
 // DECISION: opt-out with SEED_ON_DEPLOY=false; a non-empty or unreachable database is never seeded.
 import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
+import { databaseUrl } from "../lib/db-url";
 
 async function main() {
   if (process.env.SEED_ON_DEPLOY === "false") {
     console.log("seed-if-empty: SEED_ON_DEPLOY=false — skipping.");
     return;
   }
-  const db = new PrismaClient();
+  const db = new PrismaClient({ datasourceUrl: databaseUrl() });
   let products = -1;
   let orders = -1;
   let completed = false;

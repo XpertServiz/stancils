@@ -81,7 +81,11 @@ export const bankReady = (banks: BankAccount[]) => (banks ?? []).some(usable);
 export type SettingKey = keyof Settings;
 
 export const getSettings = cache(async (): Promise<Settings> => {
-  const rows = await db.setting.findMany();
+  // DECISION: fall back to defaults if the database is unreachable (e.g. during a build) instead of failing the page
+  const rows = await db.setting.findMany().catch((e) => {
+    console.error("getSettings: using defaults —", (e as Error).message.split("\n")[0]);
+    return [] as { key: string; value: unknown }[];
+  });
   const out: Record<string, unknown> = structuredClone(DEFAULT_SETTINGS);
   for (const r of rows) {
     const def = (DEFAULT_SETTINGS as Record<string, unknown>)[r.key];

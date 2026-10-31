@@ -3,11 +3,12 @@
 // images or copy), the chart of accounts, currencies, shipping, content and an admin user.
 // Set SEED_DEMO=true to also create demo customers/orders (for testing only — do not use in production).
 import { PrismaClient, type ProductType } from "@prisma/client";
+import { databaseUrl } from "../lib/db-url";
 import bcrypt from "bcryptjs";
 import { CHART, ACC, postJournal } from "../lib/accounting";
 import * as D from "../lib/designs";
 
-const db = new PrismaClient();
+const db = new PrismaClient({ datasourceUrl: databaseUrl() });
 const BASE = (process.env.SEED_BASE_CURRENCY || "PKR").toUpperCase();
 
 // rates expressed as "units per 1 PKR"; re-based below if another base is chosen
