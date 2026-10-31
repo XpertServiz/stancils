@@ -17,6 +17,8 @@
 }
 
 html { background: rgb(var(--bg)); }
+html, body { overflow-x: clip; }
+body { overflow-wrap: break-word; }
 body {
   background: rgb(var(--bg));
   color: rgb(var(--ink));

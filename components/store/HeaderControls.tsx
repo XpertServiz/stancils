@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { ShoppingBag, Menu, X, Search, Sun, Moon, User } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./CartContext";
@@ -77,20 +78,33 @@ export function SearchBox({ className = "" }: { className?: string }) {
   );
 }
 
+/**
+ * Full-screen mobile menu. Rendered into <body> with a portal: the header uses backdrop-blur,
+ * which would otherwise trap a position:fixed child inside the header's 64px box.
+ */
 export function MobileMenu({ links }: { links: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [open]);
   return (
     <>
-      <button className="rounded-lg p-2 lg:hidden" aria-label="Menu" onClick={() => setOpen(true)}><Menu size={20} /></button>
-      {open && (
-        <div className="fixed inset-0 z-[70] bg-bg/95 p-5 backdrop-blur lg:hidden">
+      <button className="rounded-lg p-2 lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={20} /></button>
+      {open && createPortal(
+        <div role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-[90] overflow-y-auto bg-bg p-5 lg:hidden">
           <div className="mb-6 flex justify-end"><button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)} aria-label="Close"><X size={16} /></button></div>
           <SearchBox className="mb-6" />
           <nav className="flex flex-col gap-1">
             {links.map((l) => <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-lg font-semibold hover:bg-s1">{l.label}</Link>)}
             <Link href="/account" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-lg font-semibold hover:bg-s1"><User size={18} className="mr-2 inline" />Account</Link>
           </nav>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

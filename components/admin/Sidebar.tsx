@@ -36,7 +36,7 @@ export function Sidebar({ items, brand }: { items: NavItem[]; brand: string }) {
         {nav}
       </aside>
       {open && (
-        <div className="fixed inset-0 z-50 bg-bg/95 lg:hidden">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-bg lg:hidden" role="dialog" aria-modal="true" aria-label="Admin menu">
           <div className="flex items-center justify-between border-b border-line px-5 py-4"><span className="font-bold">{brand}</span><button onClick={() => setOpen(false)} aria-label="Close"><X /></button></div>
           {nav}
         </div>

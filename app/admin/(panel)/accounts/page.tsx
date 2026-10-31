@@ -30,7 +30,7 @@ export default async function Journals({ searchParams }: { searchParams: Promise
       <PageHeader title="Accounts" sub={<>Double-entry ledger in {base.code}. Journals are immutable — corrections are made by reversal. {lock && <>Books locked up to <b>{lock.upTo.toISOString().slice(0, 10)}</b>.</>}</>} />
       <AccountsTabs active="journals" />
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <div>
+        <div className="min-w-0">
           <form className="mb-3 flex flex-wrap gap-2">
             <input name="q" defaultValue={sp.q} placeholder="Search memo" className="input max-w-xs" />
             <select name="source" defaultValue={sp.source ?? ""} className="select max-w-[200px]"><option value="">All sources</option>{sources.map((s) => <option key={s.sourceType} value={s.sourceType}>{s.sourceType} ({s._count})</option>)}</select>
@@ -43,15 +43,15 @@ export default async function Journals({ searchParams }: { searchParams: Promise
               return (
                 <div key={j.id} className="card p-4">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm"><b className="font-mono">#{j.number}</b> · {j.memo} <span className="text-xs text-ink3">· {j.date.toLocaleString()} · {j.sourceType}{j.currency && j.currency !== base.code ? ` · ${j.currency}` : ""}</span>{j.reversalOfId && <span className="badge badge-muted ml-2">reversal</span>}{j.reversedBy && <span className="badge badge-danger ml-2">reversed by #{j.reversedBy.number}</span>}</p>
+                    <p className="min-w-0 break-words text-sm"><b className="font-mono">#{j.number}</b> · {j.memo} <span className="text-xs text-ink3">· {j.date.toLocaleString()} · {j.sourceType}{j.currency && j.currency !== base.code ? ` · ${j.currency}` : ""}</span>{j.reversalOfId && <span className="badge badge-muted ml-2">reversal</span>}{j.reversedBy && <span className="badge badge-danger ml-2">reversed by #{j.reversedBy.number}</span>}</p>
                     {!j.reversedBy && !j.reversalOfId && staff.perms.has("accounts.journal.create") && j.sourceType === "manual" && (
                       <form action={reverse}><input type="hidden" name="id" value={j.id} /><Submit className="btn btn-ghost btn-sm" confirm="Post a reversing entry?">Reverse</Submit></form>
                     )}
                   </div>
-                  <table className="tbl"><tbody>
+                  <div className="-mx-1 overflow-x-auto"><table className="tbl"><tbody>
                     {j.lines.map((l) => <tr key={l.id}><td className="w-20 font-mono text-xs">{l.account.code}</td><td>{l.account.name}{l.memo && <span className="text-xs text-ink3"> — {l.memo}</span>}</td><td className="num">{l.debit ? majorString(l.debit, base.exponent) : ""}</td><td className="num">{l.credit ? majorString(l.credit, base.exponent) : ""}</td></tr>)}
                     <tr><td /><td className="text-right text-xs text-ink3">Total</td><td className="num font-semibold">{majorString(dr, base.exponent)}</td><td className="num font-semibold">{majorString(dr, base.exponent)}</td></tr>
-                  </tbody></table>
+                  </tbody></table></div>
                 </div>
               );
             })}
