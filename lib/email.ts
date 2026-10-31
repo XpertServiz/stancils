@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { formatMoney } from "./money";
-import { getSettings } from "./settings";
+import { banksFor, getSettings } from "./settings";
 
 const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -39,6 +39,14 @@ export async function sendOrderEmail(orderId: string, kind: keyof typeof COPY) {
     .join("");
   const downloads = order.items.flatMap((i) => i.downloads.map((d) => `<li><a href="${SITE()}/download/${d.token}">${escape(i.name)}</a></li>`)).join("");
   const c = COPY[kind];
+  const row = (k: string, v: string) => (v ? `<tr><td style="padding:3px 12px 3px 0;color:#666">${k}</td><td><strong>${escape(v)}</strong></td></tr>` : "");
+  const accounts = banksFor(s.payments.banks, order.currency)
+    .map((b) => `<table style="margin:6px 0 10px">${row("Bank", b.bankName)}${row("Account title", b.accountTitle)}${row("Account number", b.accountNumber)}${row("IBAN", b.iban)}${row("Branch code", b.branchCode)}${row("SWIFT / BIC", b.swift)}</table>`)
+    .join("");
+  const bankBlock =
+    kind === "placed" && order.paymentMethod === "bank" && order.paymentStatus !== "paid" && accounts
+      ? `<div style="border:1px solid #F5C451;border-radius:10px;padding:12px;margin:16px 0"><p style="margin:0 0 8px"><strong>Please transfer to${s.payments.banks.length > 1 ? " any of these accounts" : ""}:</strong></p>${accounts}<table>${row("Amount", formatMoney(order.total, order.currency, exp))}${row("Payment reference", order.number)}</table>${s.payments.bankInstructions ? `<p style="margin:8px 0 0">${escape(s.payments.bankInstructions)}</p>` : ""}</div>`
+      : "";
   const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#22242E">
     <h2 style="margin:0 0 8px">${escape(s.business.name)}</h2>
     <p>${c.lead}</p>
@@ -46,9 +54,10 @@ export async function sendOrderEmail(orderId: string, kind: keyof typeof COPY) {
     <table style="width:100%;border-collapse:collapse">${rows}
       <tr><td style="border-top:1px solid #ddd;padding-top:8px"><strong>Total</strong></td><td style="border-top:1px solid #ddd;text-align:right"><strong>${formatMoney(order.total, order.currency, exp)}</strong></td></tr>
     </table>
+    ${bankBlock}
     ${order.trackingNumber ? `<p>Tracking: ${escape(order.carrier ?? "")} ${escape(order.trackingNumber)}</p>` : ""}
     ${downloads ? `<p>Your downloads:</p><ul>${downloads}</ul>` : ""}
-    <p><a href="${SITE()}/track?order=${order.number}&email=${encodeURIComponent(order.email)}">Track your order</a></p>
+    <p><a href="${SITE()}/track?order=${order.number}&email=${encodeURIComponent(order.email)}">${bankBlock ? "Upload your receipt / track your order" : "Track your order"}</a></p>
   </div>`;
   await sendEmail(order.email, `${c.subject} (${order.number})`, html);
 }

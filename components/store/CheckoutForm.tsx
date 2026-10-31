@@ -6,6 +6,8 @@ import { useQuote } from "./useQuote";
 import { DesignArtClient } from "./DesignArtClient";
 import { checkout, methodsFor } from "@/app/actions/checkout";
 import type { Method } from "@/lib/payments";
+import type { BankAccount } from "@/lib/settings";
+import { BankDetailsCard } from "./BankDetailsCard";
 
 type Props = {
   currency: string;
@@ -13,9 +15,11 @@ type Props = {
   countries: [string, string][];
   initialMethods: Method[];
   customer: { email: string; name: string; phone: string } | null;
+  banks: BankAccount[];
+  bankInstructions: string;
 };
 
-export function CheckoutForm({ currency, defaultCountry, countries, initialMethods, customer }: Props) {
+export function CheckoutForm({ currency, defaultCountry, countries, initialMethods, customer, banks, bankInstructions }: Props) {
   const { lines, clear, ready } = useCart();
   const [country, setCountry] = useState(defaultCountry);
   const [methods, setMethods] = useState(initialMethods);
@@ -118,6 +122,12 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
               <span><span className="block font-semibold">{m.label}</span><span className="text-xs text-ink3">{m.hint}</span></span>
             </label>
           ))}
+          {method === "bank" && (
+            <div className="pt-2">
+              <BankDetailsCard banks={banks} instructions={bankInstructions} amount={quote?.total} />
+              <p className="mt-2 text-xs text-ink3">After you place the order you&apos;ll get your order number to use as the payment reference, and a place to upload your receipt.</p>
+            </div>
+          )}
           <label className="block pt-2"><span className="label">Order notes (optional)</span><textarea name="notes" rows={2} className="textarea" /></label>
         </fieldset>
       </div>
@@ -154,7 +164,7 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
           )}
           {error && <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">{error}</p>}
           <button className="btn btn-primary w-full !py-3.5 text-base" disabled={pending || loading || !quote || !method || (quote?.errors.length ?? 0) > 0}>
-            <Lock size={16} />{pending ? "Placing order…" : `Pay ${quote?.total ?? ""}`}
+            <Lock size={16} />{pending ? "Placing order…" : method === "bank" || method === "cod" ? `Place order · ${quote?.total ?? ""}` : `Pay ${quote?.total ?? ""}`}
           </button>
           <p className="text-center text-xs text-ink3">Charged in {currency}. Your details are encrypted.</p>
         </div>

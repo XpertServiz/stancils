@@ -122,6 +122,13 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
 
           {o.paymentStatus === "unpaid" && o.status !== "CANCELLED" && can("orders.verify_payment") && (
             <Panel title="Record payment">
+              {o.paymentProofUrl ? (
+                <a href={o.paymentProofUrl} target="_blank" rel="noopener" className="mb-3 block rounded-xl border border-mustard/50 p-2 text-sm hover:border-accent">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={o.paymentProofUrl} alt="Customer's payment receipt" className="mb-2 max-h-56 w-full rounded-lg object-contain" />
+                  Receipt uploaded {o.paymentProofAt?.toLocaleString()} — check it against your bank statement
+                </a>
+              ) : o.paymentMethod === "bank" && <p className="mb-3 text-sm text-ink3">No receipt uploaded yet.</p>}
               <ActionForm action={verifyPayment}>
                 <input type="hidden" name="id" value={o.id} />
                 <select name="provider" defaultValue={o.paymentMethod === "cod" ? "cod" : "bank"} className="select"><option value="bank">Bank transfer</option><option value="cod">Cash on delivery (courier)</option><option value="manual">Other / manual</option></select>

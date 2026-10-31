@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { OrderView, orderInclude } from "@/components/store/OrderView";
+import { orderToken } from "@/lib/tokens";
 
 export const metadata: Metadata = { title: "Track your order", description: "Track your Creative Corner order — production, shipping and delivery.", alternates: { canonical: "/track" } };
 
@@ -19,7 +20,7 @@ export default async function Track({ searchParams }: { searchParams: Promise<{ 
         <button className="btn btn-primary">Track</button>
       </form>
       {number && email && !order && <p className="text-danger">We couldn&apos;t find that order. Check the number and email.</p>}
-      {order && <OrderView order={order} exponent={cur?.exponent ?? 2} />}
+      {order && <OrderView order={order} exponent={cur?.exponent ?? 2} token={orderToken(order.id)} />}
     </div>
   );
 }

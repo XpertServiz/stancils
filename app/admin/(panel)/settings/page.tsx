@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { getSettings, getCurrencies } from "@/lib/settings";
+import { bankReady, getSettings, getCurrencies } from "@/lib/settings";
+import { BankAccountsTab } from "./BankAccountsTab";
 import { majorString } from "@/lib/money";
 import { stripeEnabled, paypalEnabled } from "@/lib/payments";
 import { PageHeader, Panel, Field, Tabs } from "@/components/admin/ui";
@@ -14,7 +15,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const tab = (await searchParams).tab ?? "business";
   const s = await getSettings();
   const { list, base } = await getCurrencies();
-  const tabs = [["business", "Business & tax"], ["currencies", "Currencies & FX"], ["shipping", "Shipping"], ["payments", "Payments & Studio pricing"]].map(([key, label]) => ({ key, label, href: `/admin/settings?tab=${key}` }));
+  const tabs = [["business", "Business & tax"], ["currencies", "Currencies & FX"], ["shipping", "Shipping"], ["payments", "Payments & Studio pricing"], ["banks", "Bank accounts"]].map(([key, label]) => ({ key, label, href: `/admin/settings?tab=${key}` }));
 
   if (tab === "currencies") {
     const journals = await db.journalEntry.count();
@@ -104,6 +105,16 @@ export default async function Settings({ searchParams }: { searchParams: Promise
     );
   }
 
+  if (tab === "banks") {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Settings" sub={bankReady(s.payments.banks) ? "Customers see every active account below when they choose bank transfer." : "Bank transfer is hidden at checkout until at least one active account has a title and an account number or IBAN."} />
+        <Tabs tabs={tabs} active={tab} />
+        <BankAccountsTab banks={s.payments.banks} instructions={s.payments.bankInstructions} currencies={list.map((c) => c.code)} />
+      </div>
+    );
+  }
+
   if (tab === "payments") {
     return (
       <div className="space-y-6">
@@ -120,7 +131,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <label className="flex items-center gap-2"><input type="checkbox" name="bankTransfer" defaultChecked={s.payments.bankTransfer} />Bank transfer</label>
               <label className="flex items-center gap-2"><input type="checkbox" name="cod" defaultChecked={s.payments.cod} />Cash on delivery</label>
               <Field label="COD countries"><input name="codCountries" defaultValue={s.payments.codCountries.join(", ")} className="input" /></Field>
-              <Field label="Bank details shown to customers"><textarea name="bankDetails" defaultValue={s.payments.bankDetails} rows={4} className="textarea font-mono text-sm" /></Field>
+              <p className="text-xs text-ink3">Bank accounts shown at checkout are managed in the <a href="/admin/settings?tab=banks" className="text-accent underline">Bank accounts</a> tab.</p>
             </div>
           </Panel>
           <Panel title={`Custom Studio pricing (${base.code})`}>

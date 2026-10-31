@@ -38,7 +38,8 @@ export const DEFAULT_SETTINGS = {
     bankTransfer: true,
     cod: true,
     codCountries: ["PK"],
-    bankDetails: "Bank: Example Bank\nAccount title: Creative Corner\nIBAN: PK00 EXMP 0000 0000 0000 0000",
+    banks: [] as BankAccount[],
+    bankInstructions: "Use your order number as the payment reference, then upload your receipt on your order page.",
   },
   orders: { expiryHours: 24, lowStockDefault: 5 },
   studio: { baseFeeBase: 50000, complexityPerMeterBase: 8000, setupFeeBase: 0, minMm: 30, maxMm: 1200 },
@@ -50,6 +51,33 @@ export const DEFAULT_SETTINGS = {
 };
 
 export type Settings = typeof DEFAULT_SETTINGS;
+
+export type BankAccount = {
+  id: string;
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  iban: string;
+  branchCode: string;
+  swift: string;
+  currency: string; // "" = any currency
+  active: boolean;
+};
+
+const usable = (b: BankAccount) => b.active && Boolean(b.accountTitle && (b.accountNumber || b.iban));
+
+/**
+ * Accounts to show a customer paying in `currency`: active, complete accounts tagged with that
+ * currency or with no currency. Falls back to every usable account if none match.
+ */
+export function banksFor(banks: BankAccount[], currency?: string) {
+  const ok = (banks ?? []).filter(usable);
+  const matching = ok.filter((b) => !b.currency || b.currency === currency);
+  return matching.length ? matching : ok;
+}
+
+/** Bank transfer is only offered once at least one complete, active account exists. */
+export const bankReady = (banks: BankAccount[]) => (banks ?? []).some(usable);
 export type SettingKey = keyof Settings;
 
 export const getSettings = cache(async (): Promise<Settings> => {
@@ -59,7 +87,9 @@ export const getSettings = cache(async (): Promise<Settings> => {
     const def = (DEFAULT_SETTINGS as Record<string, unknown>)[r.key];
     out[r.key] = def && typeof def === "object" && !Array.isArray(def) ? { ...(def as object), ...(r.value as object) } : r.value;
   }
-  return out as Settings;
+  const merged = out as Settings;
+  if (!Array.isArray(merged.payments.banks)) merged.payments.banks = [];
+  return merged;
 });
 
 export async function setSetting<K extends SettingKey>(key: K, value: Partial<Settings[K]>) {

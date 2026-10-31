@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Check, Download, Package, Truck } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { formatMoney } from "@/lib/money";
-import { getSettings } from "@/lib/settings";
+import { banksFor, getSettings } from "@/lib/settings";
 import { DesignArt } from "../DesignArt";
+import { BankDetailsCard } from "./BankDetailsCard";
+import { PaymentProofForm } from "./PaymentProofForm";
 
 export type OrderFull = Prisma.OrderGetPayload<{
   include: { items: { include: { downloads: true; jobs: true; customDesign: true; variant: { include: { product: true } } } }; events: true };
@@ -20,7 +22,7 @@ const STEPS = [
 ];
 const RANK: Record<string, number> = { PENDING_PAYMENT: 0, CONFIRMED: 1, PAID: 1, IN_PRODUCTION: 2, QUALITY_CHECK: 3, PACKED: 4, SHIPPED: 5, DELIVERED: 6, FULFILLED: 6 };
 
-export async function OrderView({ order, exponent }: { order: OrderFull; exponent: number }) {
+export async function OrderView({ order, exponent, token }: { order: OrderFull; exponent: number; token?: string }) {
   const s = await getSettings();
   const fm = (m: bigint) => formatMoney(m, order.currency, exponent);
   const hasProduction = order.items.some((i) => i.kind === "custom" || i.kind === "made_to_order");
@@ -65,10 +67,11 @@ export async function OrderView({ order, exponent }: { order: OrderFull; exponen
         </div>
 
         {order.paymentStatus !== "paid" && order.paymentMethod === "bank" && !cancelled && (
-          <div className="card border-mustard/50 p-6">
-            <h2 className="font-bold">Bank transfer details</h2>
-            <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-s2 p-4 font-mono text-sm">{s.payments.bankDetails}</pre>
-            <p className="mt-3 text-sm text-ink2">Amount: <b>{fm(order.total)}</b> · Reference: <b>{order.number}</b>. Send your receipt to {s.business.email} or WhatsApp. We hold your items until {order.expiresAt?.toLocaleString() ?? "payment arrives"}.</p>
+          <div className="card space-y-4 p-6">
+            <h2 className="font-bold">Complete your bank transfer</h2>
+            <BankDetailsCard banks={banksFor(s.payments.banks, order.currency)} instructions={s.payments.bankInstructions} amount={fm(order.total)} reference={order.number} />
+            <p className="text-sm text-ink2">We hold your items until <b>{order.expiresAt?.toLocaleString() ?? "payment arrives"}</b>. Questions? Email {s.business.email} or WhatsApp {s.business.phone}.</p>
+            <PaymentProofForm number={order.number} token={token} uploaded={Boolean(order.paymentProofUrl)} />
           </div>
         )}
 

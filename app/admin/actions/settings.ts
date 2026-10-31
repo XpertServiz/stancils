@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
-import { setSetting } from "@/lib/settings";
+import { getSettings, setSetting, type BankAccount } from "@/lib/settings";
+import { randomBytes } from "crypto";
 import { parseMajor } from "@/lib/money";
 import { refreshFxRates } from "@/lib/fx";
 
@@ -25,7 +26,7 @@ export async function savePayments(_: R, fd: FormData): Promise<R> {
   const s = await requirePermission("settings.manage");
   await setSetting("payments", {
     demoCard: fd.get("demoCard") === "on", bankTransfer: fd.get("bankTransfer") === "on", cod: fd.get("cod") === "on",
-    codCountries: String(fd.get("codCountries") || "").split(",").map((x) => x.trim().toUpperCase()).filter(Boolean), bankDetails: String(fd.get("bankDetails") || ""),
+    codCountries: String(fd.get("codCountries") || "").split(",").map((x) => x.trim().toUpperCase()).filter(Boolean), 
   });
   await setSetting("studio", { baseFeeBase: Number(parseMajor(String(fd.get("baseFee") || "0"))), complexityPerMeterBase: Number(parseMajor(String(fd.get("perMeter") || "0"))), setupFeeBase: Number(parseMajor(String(fd.get("setupFee") || "0"))) });
   await audit(s.id, "settings.payments", "settings", "payments");
@@ -93,4 +94,56 @@ export async function saveZone(_: R, fd: FormData): Promise<R> {
   }
   await audit(s.id, "shipping.save", "shipping_zone", zone.id);
   return done("Shipping saved.");
+}
+
+// ── bank accounts for bank-transfer checkout ──
+
+export async function saveBank(_: R, fd: FormData): Promise<R> {
+  const s = await requirePermission("settings.manage");
+  const id = String(fd.get("id") || "");
+  const acc: BankAccount = {
+    id: id || randomBytes(6).toString("hex"),
+    bankName: String(fd.get("bankName") || "").trim(),
+    accountTitle: String(fd.get("accountTitle") || "").trim(),
+    accountNumber: String(fd.get("accountNumber") || "").trim(),
+    iban: String(fd.get("iban") || "").replace(/\s+/g, " ").trim().toUpperCase(),
+    branchCode: String(fd.get("branchCode") || "").trim(),
+    swift: String(fd.get("swift") || "").trim().toUpperCase(),
+    currency: String(fd.get("currency") || "").trim().toUpperCase(),
+    active: fd.get("active") === "on",
+  };
+  if (!acc.bankName || !acc.accountTitle) return { ok: false, msg: "Bank name and account title are required." };
+  if (!acc.accountNumber && !acc.iban) return { ok: false, msg: "Enter an account number or an IBAN." };
+  const current = (await getSettings()).payments.banks;
+  const before = current.find((b) => b.id === id);
+  const banks = id ? current.map((b) => (b.id === id ? acc : b)) : [...current, acc];
+  await setSetting("payments", { banks });
+  await audit(s.id, id ? "bank.update" : "bank.create", "bank_account", acc.id, before, acc);
+  return done(id ? "Bank account saved." : "Bank account added.");
+}
+
+export async function bankOp(fd: FormData) {
+  const s = await requirePermission("settings.manage");
+  const id = String(fd.get("id"));
+  const op = String(fd.get("op"));
+  const banks = [...(await getSettings()).payments.banks];
+  const i = banks.findIndex((b) => b.id === id);
+  if (i < 0) return;
+  const before = banks[i];
+  if (op === "remove") banks.splice(i, 1);
+  if (op === "toggle") banks[i] = { ...banks[i], active: !banks[i].active };
+  if ((op === "up" && i > 0) || (op === "down" && i < banks.length - 1)) {
+    const j = op === "up" ? i - 1 : i + 1;
+    [banks[i], banks[j]] = [banks[j], banks[i]];
+  }
+  await setSetting("payments", { banks });
+  await audit(s.id, `bank.${op}`, "bank_account", id, before);
+  revalidatePath("/", "layout");
+}
+
+export async function saveBankInstructions(_: R, fd: FormData): Promise<R> {
+  const s = await requirePermission("settings.manage");
+  await setSetting("payments", { bankInstructions: String(fd.get("bankInstructions") || "").trim() });
+  await audit(s.id, "bank.instructions", "settings", "payments");
+  return done("Saved.");
 }

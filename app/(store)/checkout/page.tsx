@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getActiveCurrency, getCountry } from "@/lib/currency";
 import { availableMethods } from "@/lib/payments";
 import { getCustomer } from "@/lib/auth";
+import { banksFor, getSettings } from "@/lib/settings";
 import { CheckoutForm } from "@/components/store/CheckoutForm";
 import { COUNTRIES } from "@/lib/countries";
 
@@ -21,6 +22,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
         defaultCountry={country}
         countries={COUNTRIES}
         initialMethods={methods}
+        banks={banksFor((await getSettings()).payments.banks, cur.code)}
+        bankInstructions={(await getSettings()).payments.bankInstructions}
         customer={customer ? { email: customer.email, name: customer.name ?? "", phone: customer.phone ?? "" } : null}
       />
     </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { checkOrderToken } from "@/lib/tokens";
+import { checkOrderToken, orderToken } from "@/lib/tokens";
 import { getCustomer, getStaff } from "@/lib/auth";
 import { OrderView, orderInclude } from "@/components/store/OrderView";
 import { markPaid } from "@/lib/services/orders";
@@ -34,7 +34,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <ClearCart />
       {sp.payment === "failed" && <p className="mb-4 rounded-xl bg-danger/10 p-3 text-sm text-danger">The payment didn&apos;t go through. You can try again from checkout.</p>}
-      <OrderView order={order} exponent={cur?.exponent ?? 2} />
+      <OrderView order={order} exponent={cur?.exponent ?? 2} token={orderToken(order.id)} />
     </div>
   );
 }
