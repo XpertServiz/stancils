@@ -530,7 +530,7 @@ async function main() {
   }
 
   console.log(`✔ ${await db.product.count()} products, ${await db.variant.count()} variants, ${await db.collection.count()} collections`);
-  console.log(`✔ Admin login: ${admin.email} / ${process.env.ADMIN_PASSWORD || "ChangeMe123!"}`);
+  console.log(`✔ Admin user: ${admin.email} (password from ADMIN_PASSWORD${process.env.ADMIN_PASSWORD ? "" : " not set — default ChangeMe123!, change it now"})`);
 
   if (process.env.SEED_DEMO === "true") {
     const { seedDemo } = await import("./seed-demo");

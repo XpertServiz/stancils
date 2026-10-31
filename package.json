@@ -13,7 +13,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "prisma generate && prisma migrate deploy && tsx prisma/seed-if-empty.ts && next build",
+    "db:seed:if-empty": "tsx prisma/seed-if-empty.ts",
     "db:seed:demo": "SEED_DEMO=true tsx prisma/seed.ts"
   },
   "prisma": {

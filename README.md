@@ -58,7 +58,7 @@ Tests: `npm test` · Typecheck: `npm run typecheck`
 
 1. Create a Supabase project. Copy the **Transaction pooler** connection string into `DATABASE_URL` (add `?pgbouncer=true`) and the **direct/session** string into `DIRECT_URL`.
 2. Import this GitHub repo into Vercel. Add the environment variables from `.env.example`. Vercel uses `npm run vercel-build`, which runs database migrations automatically.
-3. Seed once from your computer: `DATABASE_URL=... DIRECT_URL=... npm run db:seed`.
+3. Seeding is automatic on the first deploy: `vercel-build` runs `prisma/seed-if-empty.ts`, which seeds the original catalogue, accounts and admin user **only when the database has no products and no orders** (it never touches a live store). It needs `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `SEED_BASE_CURRENCY` set in Vercel for that first build; remove `ADMIN_PASSWORD` from Vercel afterwards if you like. Set `SEED_ON_DEPLOY=false` to disable. (Manual alternative from your computer: `DATABASE_URL=... DIRECT_URL=... npm run db:seed:if-empty`.)
 4. Add `UPLOADTHING_TOKEN` (media uploads), `RESEND_API_KEY` (emails), Stripe and/or PayPal keys, and `CRON_SECRET`.
 5. In Stripe, add a webhook to `https://your-domain.com/api/webhooks/stripe` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
 6. In admin → Settings → Payments, turn **off** the test card before launch.
