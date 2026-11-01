@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme tokens are RGB triplets so Tailwind can apply opacity. */
+:root {
+  /* fallback = Ocean Teal; real values come from lib/themes.ts (rendered in app/layout.tsx) */
+  --bg: 27 39 53; --surface-1: 35 50 67; --surface-2: 45 62 82; --band-stone: 226 235 240; --stone-ink: 22 32 44;
+  --line: 62 82 104; --ink: 240 246 250; --ink-2: 196 210 222; --ink-3: 150 170 188;
+  --accent: 45 212 191; --accent-2: 125 211 252; --accent-3: 250 204 21; --danger: 255 107 107; --on-accent: 20 22 28;
+  color-scheme: dark;
+}
+
+:root {
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html { background: rgb(var(--bg)); }
+html, body { overflow-x: clip; }
+body { overflow-wrap: break-word; }
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+.tabular { font-variant-numeric: tabular-nums; }
+::selection { background: rgb(var(--accent) / 0.35); }
+
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 6px; }
+
+/* Stone bands: light rhythm sections with subtle paper grain */
+.band-stone {
+  background-color: rgb(var(--band-stone));
+  color: rgb(var(--stone-ink));
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .035 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.band-stone .muted { color: rgb(var(--stone-ink) / 0.72); }
+
+@layer components {
+.card { background: rgb(var(--surface-1)); border: 1px solid rgb(var(--line) / 0.7); border-radius: 18px; }
+.glass { background: rgb(var(--surface-1) / 0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgb(var(--line) / 0.6); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  border-radius: 12px; padding: 0.7rem 1.15rem; font-weight: 600; font-size: 0.95rem;
+  transition: transform 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.2s var(--ease), opacity 0.2s;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: rgb(var(--accent)); color: rgb(var(--on-accent)); }
+.btn-primary:hover { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.35), 0 0 40px rgb(var(--accent) / 0.25); }
+.btn-ghost { background: transparent; color: inherit; border: 1px solid rgb(var(--line)); }
+.btn-ghost:hover { background: rgb(var(--surface-2) / 0.6); }
+.btn-soft { background: rgb(var(--surface-2)); color: rgb(var(--ink)); }
+.btn-soft:hover { background: rgb(var(--line)); }
+.btn-sm { padding: 0.45rem 0.8rem; font-size: 0.85rem; border-radius: 10px; }
+.btn-danger { background: rgb(var(--danger)); color: #1b1d24; }
+
+.input, .select, .textarea {
+  width: 100%; background: rgb(var(--surface-2)); color: rgb(var(--ink)); border: 1px solid rgb(var(--line));
+  border-radius: 12px; padding: 0.62rem 0.85rem; font-size: 0.95rem; transition: border-color 0.2s;
+}
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: rgb(var(--accent)); box-shadow: 0 0 0 3px rgb(var(--accent) / 0.18); }
+.input::placeholder, .textarea::placeholder { color: rgb(var(--ink-3)); }
+.label { display: block; font-size: 0.8rem; font-weight: 600; color: rgb(var(--ink-2)); margin-bottom: 0.35rem; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.3rem 0.7rem;
+  font-size: 0.78rem; font-weight: 600; border: 1px solid rgb(var(--line)); background: rgb(var(--surface-1) / 0.6);
+}
+.badge { display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.01em; }
+.badge-mint { background: rgb(var(--accent-2) / 0.16); color: rgb(var(--accent-2)); }
+.badge-coral { background: rgb(var(--accent) / 0.16); color: rgb(var(--accent)); }
+.badge-mustard { background: rgb(var(--accent-3) / 0.18); color: rgb(var(--accent-3)); }
+.badge-muted { background: rgb(var(--surface-2)); color: rgb(var(--ink-2)); }
+.badge-danger { background: rgb(var(--danger) / 0.16); color: rgb(var(--danger)); }
+
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(var(--accent-3)); }
+
+}
+
+/* stencil artwork */
+.art svg { width: 100%; height: 100%; display: block; }
+.art-tile {
+  background:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.06), transparent 60%),
+    rgb(var(--surface-2));
+}
+
+/* tilt cards */
+.tilt { transform-style: preserve-3d; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s; }
+.tilt:hover { border-color: rgb(var(--accent) / 0.55); }
+
+/* holographic passport sheen */
+.holo { position: relative; overflow: hidden; }
+.holo::after {
+  content: ""; position: absolute; inset: -50%;
+  background: linear-gradient(115deg, transparent 40%, rgb(255 255 255 / 0.16) 48%, rgb(var(--accent-2) / 0.18) 52%, transparent 60%);
+  animation: sheen 6s var(--ease) infinite; pointer-events: none;
+}
+@keyframes sheen { 0% { transform: translateX(-30%) translateY(-10%); } 100% { transform: translateX(30%) translateY(10%); } }
+
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee { animation: marquee 40s linear infinite; }
+
+@keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 0 rgb(var(--accent) / 0.6); } 50% { box-shadow: 0 0 0 8px rgb(var(--accent) / 0); } }
+.pulse-dot { animation: pulse-dot 1.8s var(--ease) infinite; }
+
+@keyframes paint-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.paint-in { animation: paint-in 2.4s var(--ease) both; }
+
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.skeleton { background: linear-gradient(90deg, rgb(var(--surface-1)) 0px, rgb(var(--surface-2)) 120px, rgb(var(--surface-1)) 240px); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
+
+.prose-cc h2 { font-size: 1.35rem; font-weight: 700; margin: 1.6rem 0 0.6rem; }
+.prose-cc p { margin: 0.7rem 0; line-height: 1.75; color: rgb(var(--ink-2)); }
+.prose-cc ul { list-style: disc; padding-left: 1.25rem; color: rgb(var(--ink-2)); line-height: 1.8; }
+.prose-cc strong { color: rgb(var(--ink)); }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+@layer components {
+/* admin tables */
+.tbl { width: 100%; font-size: 0.875rem; border-collapse: separate; border-spacing: 0; }
+.tbl th { text-align: left; font-weight: 600; color: rgb(var(--ink-3)); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.6rem 0.75rem; border-bottom: 1px solid rgb(var(--line)); white-space: nowrap; }
+.tbl td { padding: 0.6rem 0.75rem; border-bottom: 1px solid rgb(var(--line) / 0.45); vertical-align: middle; }
+.tbl tr:hover td { background: rgb(var(--surface-2) / 0.35); }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+}
+
+/* text tones inside stone bands (but not inside dusk cards placed on them) */
+.band-stone :is(.text-ink2, .text-ink3):not(.card *, .card) { color: rgb(var(--stone-ink) / 0.74); }
+.band-stone .eyebrow:not(.card *) { color: rgb(var(--accent)); filter: brightness(0.82); }
+.band-stone .card { color: rgb(var(--ink)); }
