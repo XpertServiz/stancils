@@ -16,12 +16,12 @@ export default async function Hero() {
       <ActionForm action={saveSiteSettings} className="grid gap-6 xl:grid-cols-2">
         <Panel title="Hero">
           <div className="space-y-3">
-            <Field label="Media"><select name="mode" defaultValue={h.mode} className="select"><option value="3d">3D stencil (Light Through the Stencil)</option><option value="video">Full video</option><option value="image">Image</option></select></Field>
+            <Field label="Media"><select name="mode" defaultValue={h.mode} className="select"><option value="collage">Cover image with 3D tilt (default)</option><option value="3d">3D stencil (Light Through the Stencil)</option><option value="video">Full video</option><option value="image">Image</option></select></Field>
             <Field label="Featured product slug for the 3D hero" hint="Leave blank to use the first layered design."><input name="featuredSlug" defaultValue={h.featuredSlug} className="input" /></Field>
             <Field label="Video URL (MP4, muted autoplay)"><input name="videoUrl" defaultValue={h.videoUrl} className="input" /></Field>
             <Field label="Image URL"><input name="imageUrl" defaultValue={h.imageUrl} className="input" /></Field>
             <Field label="Eyebrow"><input name="eyebrow" defaultValue={h.eyebrow} maxLength={60} className="input" /></Field>
-            <Field label="Headline"><input name="headline" defaultValue={h.headline} maxLength={70} className="input" /></Field>
+            <Field label="Headline (wrap words in *stars* for the pink italic accent)"><input name="headline" defaultValue={h.headline} maxLength={70} className="input" /></Field>
             <Field label="Sub-text"><textarea name="sub" defaultValue={h.sub} maxLength={280} rows={3} className="textarea" /></Field>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Primary button"><input name="p_label" defaultValue={h.primaryCta.label} className="input" /></Field>

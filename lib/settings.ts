@@ -17,18 +17,18 @@ export const DEFAULT_SETTINGS = {
     facebook: "",
     youtube: "",
   },
-  theme: { preset: "ocean", accent: "", displayFont: "Poppins", bodyFont: "Poppins" },
+  theme: { preset: "studio", accent: "", displayFont: "Playfair Display", bodyFont: "Poppins" },
   hero: {
-    mode: "3d", // 3d | video | image
-    eyebrow: "Laser-cut · Reusable · Made to order",
-    headline: "Stencils that are exactly right.",
-    sub: "Pick from hundreds of original designs or turn your own logo, lettering or sketch into a cut-ready stencil in two minutes — and see it on your wall, cake or coffee before you pay.",
-    primaryCta: { label: "Shop stencils", href: "/shop" },
-    secondaryCta: { label: "Make a custom stencil", href: "/custom-stencils" },
+    mode: "collage", // collage | 3d | video | image
+    eyebrow: "Stencils · Gifts · Custom made",
+    headline: "Make something *beautifully yours.*", // *text* = italic accent
+    sub: "Original stencils, personalised gifts and custom designs — cut to order, made with care and shipped to your door.",
+    primaryCta: { label: "Explore collections", href: "/shop" },
+    secondaryCta: { label: "Make something custom", href: "/custom-stencils" },
     featuredSlug: "",
     videoUrl: "",
-    imageUrl: "",
-    trust: ["Free design checks", "Ships worldwide", "Pay in your currency"],
+    imageUrl: "/hero/studio-collage.webp",
+    trust: ["Made to order", "Ships worldwide", "Pay in your currency"],
   },
   splash: { enabled: true, style: "cube" as "cube" | "laser" | "layers" | "spray" },
   announcement: { enabled: true, text: "Free shipping over {threshold} · Code WELCOME10 for 10% off your first order" },

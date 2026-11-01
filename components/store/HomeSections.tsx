@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Minus, ShieldCheck, Sparkles, Ruler, Layers, Truck, Star, Coffee, Building2 } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Minus, ShieldCheck, Sparkles, Ruler, Layers, Truck, Star, Coffee, Building2 } from "lucide-react";
 import type { PageSection } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
@@ -9,6 +9,7 @@ import { DesignArt } from "../DesignArt";
 import { ProductGrid } from "./ProductCard";
 import { Section, SectionHead } from "./Section";
 import { HeroStage } from "./hero/HeroStage";
+import { HeroCollage } from "./hero/HeroCollage";
 import { Tabs } from "./Tabs";
 import { StudioDrop } from "./StudioDrop";
 import { LayerExplorer } from "./LayerExplorer";
@@ -353,42 +354,50 @@ async function Hero() {
   const shipped = await db.order.count({ where: { status: { in: ["SHIPPED", "DELIVERED", "FULFILLED"] } } });
   const trust = [...h.trust];
   if (shipped >= 50) trust.unshift(`${shipped.toLocaleString()} orders shipped`);
+  const parts = h.headline.split(/\*([^*]+)\*/); // "*word*" renders as the italic accent
+  const badges = [
+    { text: `Wall · ${counts[0]} patterns`, href: "/c/wall" },
+    { text: `Coffee · ${counts[1]} designs`, href: "/c/coffee" },
+    { text: "Custom · upload yours", href: "/custom-stencils" },
+  ];
+  const media =
+    (h.mode === "collage" || h.mode === "image") && h.imageUrl ? (
+      <HeroCollage src={h.imageUrl} alt={`${s.business.name} — stencils, gifts and custom designs`} badges={badges} />
+    ) : h.mode === "video" && h.videoUrl ? (
+      <video src={h.videoUrl} autoPlay muted loop playsInline className="aspect-square w-full rounded-[28px] object-cover" />
+    ) : featured?.designSvg ? (
+      <HeroStage svg={featured.designSvg} layers={featured.layers} labels={badges} />
+    ) : null;
   return (
-    <section className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: "radial-gradient(800px 400px at 80% 10%, rgb(var(--accent) / .16), transparent 60%), radial-gradient(600px 300px at 0% 80%, rgb(var(--accent-2) / .10), transparent 60%)" }} />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-10 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pb-24 lg:pt-16">
-        <div>
-          <p className="eyebrow mb-4">{h.eyebrow}</p>
-          <h1 className="text-4xl font-bold leading-[1.02] sm:text-5xl lg:text-6xl xl:text-7xl">{h.headline}</h1>
-          <p className="mt-6 max-w-xl text-lg text-ink2">{h.sub}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={h.primaryCta.href} className="btn btn-primary !px-6 !py-3.5 text-base">{h.primaryCta.label}<ArrowRight size={18} /></Link>
-            <Link href={h.secondaryCta.href} className="btn btn-ghost !px-6 !py-3.5 text-base">{h.secondaryCta.label}</Link>
+    <>
+    <section className="relative overflow-hidden" style={{ background: "radial-gradient(circle at 76% 35%, rgb(160 120 240 / .16) 0%, transparent 28%), radial-gradient(circle at 3% 55%, rgb(var(--accent) / .07) 0%, transparent 30%), linear-gradient(125deg, rgb(var(--bg)) 6%, rgb(var(--surface-2)) 45%, rgb(var(--bg)) 100%)" }}>
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-10 sm:px-6 lg:grid-cols-[1fr_1fr] lg:gap-14 lg:pb-20 lg:pt-16">
+        <div className="min-w-0">
+          <p className="mb-5 text-[11px] font-extrabold uppercase tracking-[0.24em] text-accent">{h.eyebrow}</p>
+          <h1 className="font-display text-[44px] font-semibold leading-[1.04] tracking-[-0.04em] sm:text-6xl xl:text-[76px]">
+            {parts.map((t, i) => (i % 2 ? <em key={i} className="block font-medium italic text-accent">{t}</em> : <span key={i}>{t}</span>))}
+          </h1>
+          <p className="mt-6 max-w-lg text-base leading-relaxed text-ink2 sm:text-lg">{h.sub}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <Link href={h.primaryCta.href} className="btn btn-primary !rounded-full !px-7 !py-3.5 text-base shadow-[0_14px_30px_-12px_rgb(var(--accent)/.7)]">{h.primaryCta.label}<ArrowUpRight size={18} /></Link>
+            <Link href={h.secondaryCta.href} className="group inline-flex items-center gap-1.5 font-semibold text-ink hover:text-accent">{h.secondaryCta.label}<ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></Link>
           </div>
-          <div className="mt-8"><SurfaceFinder /></div>
-          <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink2">
-            {trust.map((t) => <li key={t} className="flex items-center gap-1.5"><Check size={16} className="text-mint" />{t}</li>)}
-          </ul>
+          <p className="mt-7 text-sm text-ink3">{trust.join(" · ")}</p>
         </div>
-        <div>
-          {h.mode === "image" && h.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={h.imageUrl} alt="" className="aspect-[5/4] w-full rounded-[28px] object-cover" />
-          ) : h.mode === "video" && h.videoUrl ? (
-            <video src={h.videoUrl} autoPlay muted loop playsInline className="aspect-[5/4] w-full rounded-[28px] object-cover" />
-          ) : featured?.designSvg ? (
-            <HeroStage
-              svg={featured.designSvg}
-              layers={featured.layers}
-              labels={[
-                { text: `Wall · ${counts[0]} patterns`, href: "/c/wall" },
-                { text: `Coffee · ${counts[1]} designs`, href: "/c/coffee" },
-                { text: "Custom · upload yours", href: "/custom-stencils" },
-              ]}
-            />
-          ) : null}
-        </div>
+        <div className="min-w-0">{media}</div>
       </div>
     </section>
+    <section aria-label="Why shop with us" className="border-y border-line/70 bg-s1">
+      <ol className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-5 px-4 py-6 sm:px-6 lg:grid-cols-4">
+        {["Original designs", "Personalisation", "Made with care", "Ships worldwide"].map((t, i) => (
+          <li key={t} className="flex items-center gap-3">
+            <span className="font-display text-lg italic text-accent">{String(i + 1).padStart(2, "0")}</span>
+            <span className="text-sm font-semibold">{t}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+    <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6"><SurfaceFinder /></div>
+    </>
   );
 }

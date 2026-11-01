@@ -12,6 +12,7 @@ const dark = (v: Omit<Vars, "danger" | "onAccent"> & Partial<Pick<Vars, "danger"
 const light = (v: Omit<Vars, "danger" | "onAccent"> & Partial<Pick<Vars, "danger" | "onAccent">>): Vars => ({ danger: "196 48 48", onAccent: "255 255 255", ...v });
 
 export const THEMES: Theme[] = [
+  { id: "studio", name: "Gift Studio", note: "Simple & elegant — white, blush pink and lavender", mode: "light", vars: light({ bg: "255 252 253", s1: "255 255 255", s2: "255 246 250", band: "246 241 255", bandInk: "41 34 60", line: "238 224 233", ink: "41 34 60", ink2: "84 76 106", ink3: "112 104 132", accent: "222 64 122", accent2: "13 128 118", accent3: "168 104 0" }) },
   { id: "ocean", name: "Ocean Teal", note: "Deep navy with fresh teal", mode: "dark", vars: dark({ bg: "27 39 53", s1: "35 50 67", s2: "45 62 82", band: "226 235 240", bandInk: "22 32 44", line: "62 82 104", ink: "240 246 250", ink2: "196 210 222", ink3: "150 170 188", accent: "45 212 191", accent2: "125 211 252", accent3: "250 204 21" }) },
   { id: "midnight", name: "Midnight Blue", note: "Classic dark blue, calm and premium", mode: "dark", vars: dark({ bg: "21 27 45", s1: "29 36 58", s2: "39 48 76", band: "229 233 243", bandInk: "21 27 45", line: "56 67 102", ink: "238 242 255", ink2: "196 204 230", ink3: "150 160 194", accent: "96 165 250", accent2: "52 211 153", accent3: "251 191 36" }) },
   { id: "forest", name: "Forest Gold", note: "Rich green with warm gold", mode: "dark", vars: dark({ bg: "29 43 37", s1: "37 54 47", s2: "47 67 58", band: "236 233 220", bandInk: "28 38 33", line: "68 92 80", ink: "241 245 238", ink2: "203 214 200", ink3: "160 178 160", accent: "234 179 8", accent2: "110 231 183", accent3: "253 224 71" }) },
@@ -28,7 +29,7 @@ export const THEMES: Theme[] = [
   { id: "blush", name: "Blush Rose", note: "Elegant rose on soft pink", mode: "light", vars: light({ bg: "250 240 242", s1: "253 247 248", s2: "255 255 255", band: "60 28 40", bandInk: "253 242 246", line: "236 210 218", ink: "48 20 32", ink2: "92 56 70", ink3: "124 90 104", accent: "190 24 93", accent2: "15 118 110", accent3: "161 98 7" }) },
 ];
 
-export const DEFAULT_THEME = "ocean";
+export const DEFAULT_THEME = "studio";
 
 /** Most popular Google Fonts worldwide, with the weights each one actually ships (Google rejects missing weights). */
 export const FONTS: Record<string, { weights: string; kind: "sans" | "serif" | "display" }> = {
@@ -76,7 +77,7 @@ export const DEFAULT_FONT = "Poppins";
 export const themeById = (id?: string) => THEMES.find((t) => t.id === id) ?? THEMES.find((t) => t.id === DEFAULT_THEME)!;
 
 /** The visitor light/dark toggle switches to this companion theme. */
-export const companionOf = (t: Theme) => (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" ? "plum" : "dusk");
+export const companionOf = (t: Theme) => (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" || t.id === "studio" ? "plum" : "dusk");
 
 export function hexToTriplet(hex: string): string | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -108,7 +109,10 @@ export function themeCss(opts: { accent?: string; displayFont?: string; bodyFont
 export function googleFontsHref(displayFont: string, bodyFont: string) {
   const fam = (f: string) => {
     const name = FONTS[f] ? f : DEFAULT_FONT;
-    return `family=${name.replace(/ /g, "+")}:wght@${FONTS[name].weights}`;
+    const w = FONTS[name].weights;
+    // serif headings use an italic accent word, so load the italic cut too
+    if (FONTS[name].kind === "serif") return `family=${name.replace(/ /g, "+")}:ital,wght@${w.split(";").map((x) => `0,${x}`).join(";")};${w.split(";").map((x) => `1,${x}`).join(";")}`;
+    return `family=${name.replace(/ /g, "+")}:wght@${w}`;
   };
   const fonts = new Set([fam(displayFont), fam(bodyFont), "family=IBM+Plex+Mono:wght@400;500", "family=Allerta+Stencil", "family=Big+Shoulders+Stencil+Display:wght@700;800", "family=Saira+Stencil+One"]);
   return `https://fonts.googleapis.com/css2?${[...fonts].join("&")}&display=swap`;

@@ -15,5 +15,5 @@ export async function Announcement() {
   const threshold = free ? formatMoney(convertMinor(free, base, cur), cur.code, cur.exponent) : "";
   const text = free ? s.announcement.text.replace("{threshold}", threshold) : s.announcement.text.replace(/[^·]*\{threshold\}[^·]*·?\s*/, "").trim();
   if (!text) return null;
-  return <div className="bg-accent px-4 py-2 text-center text-xs font-semibold text-onaccent sm:text-sm">{text}</div>;
+  return <div className="px-4 py-2 text-center text-xs font-semibold tracking-wide text-white sm:text-sm" style={{ background: "linear-gradient(90deg, rgb(var(--accent)), rgb(150 110 230))" }}>{text}</div>;
 }
