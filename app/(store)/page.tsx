@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { HomeSections } from "@/components/store/HomeSections";
 import { getSettings } from "@/lib/settings";
+import { memo } from "@/lib/memo";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const [sections, s] = await Promise.all([
-    db.pageSection.findMany({ where: { page: "home", visible: true, deletedAt: null }, orderBy: { sort: "asc" } }),
+    memo("home-sections", () => db.pageSection.findMany({ where: { page: "home", visible: true, deletedAt: null }, orderBy: { sort: "asc" } })),
     getSettings(),
   ]);
   const site = process.env.NEXT_PUBLIC_SITE_URL || "";

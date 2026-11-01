@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { db } from "./db";
+import { clearMemo, memo } from "./memo";
 import type { CurrencyInfo } from "./money";
 
 export const DEFAULT_SETTINGS = {
@@ -82,7 +83,7 @@ export type SettingKey = keyof Settings;
 
 export const getSettings = cache(async (): Promise<Settings> => {
   // DECISION: fall back to defaults if the database is unreachable (e.g. during a build) instead of failing the page
-  const rows = await db.setting.findMany().catch((e) => {
+  const rows = await memo("settings", () => db.setting.findMany()).catch((e) => {
     console.error("getSettings: using defaults —", (e as Error).message.split("\n")[0]);
     return [] as { key: string; value: unknown }[];
   });
@@ -100,10 +101,11 @@ export async function setSetting<K extends SettingKey>(key: K, value: Partial<Se
   const current = (await db.setting.findUnique({ where: { key } }))?.value ?? {};
   const merged = { ...(DEFAULT_SETTINGS[key] as object), ...(current as object), ...(value as object) };
   await db.setting.upsert({ where: { key }, create: { key, value: merged }, update: { value: merged } });
+  clearMemo("settings");
 }
 
 export const getCurrencies = cache(async () => {
-  const list = await db.currency.findMany({ orderBy: [{ isBase: "desc" }, { sort: "asc" }, { code: "asc" }] });
+  const list = await memo("currencies", () => db.currency.findMany({ orderBy: [{ isBase: "desc" }, { sort: "asc" }, { code: "asc" }] }));
   const base = list.find((c) => c.isBase) ?? list[0];
   return { list, enabled: list.filter((c) => c.enabled), base };
 });

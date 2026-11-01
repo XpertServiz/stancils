@@ -1,4 +1,5 @@
 "use server";
+import { clearMemo } from "@/lib/memo";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -9,7 +10,7 @@ import { parseMajor } from "@/lib/money";
 import { refreshFxRates } from "@/lib/fx";
 
 type R = { ok: boolean; msg: string } | null;
-const done = (msg: string): R => { revalidatePath("/", "layout"); return { ok: true, msg }; };
+const done = (msg: string): R => { clearMemo(); revalidatePath("/", "layout"); return { ok: true, msg }; };
 
 export async function saveBusiness(_: R, fd: FormData): Promise<R> {
   const s = await requirePermission("settings.manage");
@@ -138,7 +139,7 @@ export async function bankOp(fd: FormData) {
   }
   await setSetting("payments", { banks });
   await audit(s.id, `bank.${op}`, "bank_account", id, before);
-  revalidatePath("/", "layout");
+  clearMemo(); revalidatePath("/", "layout");
 }
 
 export async function saveBankInstructions(_: R, fd: FormData): Promise<R> {

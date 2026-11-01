@@ -49,7 +49,7 @@ export function HeroCollage({ src, alt, badges }: { src: string; alt: string; ba
       <div className="hc-card relative">
         <div className="relative overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgb(41_34_60/0.45)] ring-1 ring-black/5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={alt} width={1254} height={1254} fetchPriority="high" decoding="async" className="block aspect-square w-full object-cover" />
+          <img src={src} srcSet={src === "/hero/studio-collage.webp" ? "/hero/studio-collage-720.webp 720w, /hero/studio-collage.webp 1254w" : undefined} sizes="(min-width: 1024px) 600px, 92vw" alt={alt} width={1254} height={1254} fetchPriority="high" decoding="async" className="block aspect-square w-full object-cover" />
           <div aria-hidden className="hc-sheen pointer-events-none absolute inset-0" />
         </div>
         {badges[0] && (

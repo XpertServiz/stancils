@@ -1,6 +1,7 @@
 "use server";
 // Danger zone: owner-only resets. Journal lines are immutable by trigger, but TRUNCATE bypasses
 // row triggers, so a reset clears the whole ledger and re-posts opening balances from what is kept.
+import { clearMemo } from "@/lib/memo";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -65,7 +66,7 @@ export async function resetTransactions(_: R, fd: FormData): Promise<R> {
     await db.fixedAsset.updateMany({ data: { depreciated: 0n, lastRunMonth: null } });
     await postOpeningBalances(s.id);
     await audit(s.id, "data.reset_transactions", "system", null, counts);
-    revalidatePath("/", "layout");
+    clearMemo(); revalidatePath("/", "layout");
     return { ok: true, msg: `Cleared ${counts.orders} orders, ${counts.customers} customers and ${counts.journals} journal entries. Products, stock, settings and staff were kept; opening balances were re-posted.` };
   } catch (e) {
     return { ok: false, msg: (e as Error).message };
@@ -84,7 +85,7 @@ export async function deleteCatalogue(_: R, fd: FormData): Promise<R> {
     await db.fixedAsset.updateMany({ data: { depreciated: 0n, lastRunMonth: null } });
     await postOpeningBalances(s.id);
     await audit(s.id, "data.delete_catalogue", "system", null, { products });
-    revalidatePath("/", "layout");
+    clearMemo(); revalidatePath("/", "layout");
     return { ok: true, msg: `Deleted all ${products} products along with all orders and accounting entries. Raw materials, settings, content and staff were kept.` };
   } catch (e) {
     return { ok: false, msg: (e as Error).message };

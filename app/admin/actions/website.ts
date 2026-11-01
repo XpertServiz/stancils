@@ -1,6 +1,7 @@
 "use server";
 // DECISION: content edits publish immediately and every change snapshots the page into
 // ContentVersion, so "rollback" covers the draft/preview need with far less machinery.
+import { clearMemo } from "@/lib/memo";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
@@ -19,7 +20,7 @@ async function snapshot(page: string, byId: string) {
 }
 
 const refresh = () => {
-  revalidatePath("/", "layout");
+  clearMemo(); revalidatePath("/", "layout");
   revalidatePath("/admin/website");
 };
 

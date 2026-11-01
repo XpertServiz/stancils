@@ -4,6 +4,7 @@ import { Upload, Type, Wand2, AlertTriangle, Check, Ruler, ShieldCheck, Loader2 
 import { useCart } from "./CartContext";
 import { autoBridge, cutRatio, edgeLengthPx, imageToMask, maskToPng, renderMask, thinFeatureRatio, type Mask } from "@/lib/studio-image";
 import { createDesign, priceStudio } from "@/app/actions/studio";
+import { STENCIL_FONTS_HREF } from "@/lib/themes";
 
 export type StudioMaterial = { id: string; name: string; kind: string; foodSafe: boolean; minBridgeMm: number; thicknessUm: number | null };
 
@@ -176,6 +177,8 @@ export function Studio({ materials, defaultMaterialKind, units: initialUnits, cu
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.25fr_1fr]">
+      {/* stencil fonts are only needed here, so they are not part of the site-wide font load */}
+      <link rel="stylesheet" href={STENCIL_FONTS_HREF} precedence="default" />
       {/* preview */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">

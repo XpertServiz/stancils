@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 export type SplashStyle = "cube" | "laser" | "layers" | "spray";
 
 const MARK = "M32 10a22 22 0 1 0 0 44 22 22 0 0 0 0-44Zm0 9a13 13 0 0 1 11.3 6.6l-7 4A5 5 0 1 0 36.3 38l7 4A13 13 0 1 1 32 19Z";
-const DURATION = 1800;
+const DURATION = 1300;
 
 /**
  * 3D intro shown once per browser session (≤1.8s, skippable with any tap or key).

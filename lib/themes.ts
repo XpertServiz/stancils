@@ -114,6 +114,9 @@ export function googleFontsHref(displayFont: string, bodyFont: string) {
     if (FONTS[name].kind === "serif") return `family=${name.replace(/ /g, "+")}:ital,wght@${w.split(";").map((x) => `0,${x}`).join(";")};${w.split(";").map((x) => `1,${x}`).join(";")}`;
     return `family=${name.replace(/ /g, "+")}:wght@${w}`;
   };
-  const fonts = new Set([fam(displayFont), fam(bodyFont), "family=IBM+Plex+Mono:wght@400;500", "family=Allerta+Stencil", "family=Big+Shoulders+Stencil+Display:wght@700;800", "family=Saira+Stencil+One"]);
+  const fonts = new Set([fam(displayFont), fam(bodyFont), "family=IBM+Plex+Mono:wght@400;500"]);
   return `https://fonts.googleapis.com/css2?${[...fonts].join("&")}&display=swap`;
 }
+
+/** Stencil fonts used only by the Custom Stencil Studio (loaded on that page, not site-wide). */
+export const STENCIL_FONTS_HREF = "https://fonts.googleapis.com/css2?family=Allerta+Stencil&family=Big+Shoulders+Stencil+Display:wght@700;800&family=Saira+Stencil+One&display=swap";

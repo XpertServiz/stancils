@@ -18,12 +18,9 @@ import { SurfaceFinder } from "./SurfaceFinder";
 const STONE = new Set(["problem_solution", "styles", "testimonials", "why_us", "faq"]);
 
 export async function HomeSections({ sections }: { sections: PageSection[] }) {
-  const out = [];
-  for (const s of sections) {
-    const node = await renderSection(s);
-    if (node) out.push(<div key={s.id} data-section={s.type}>{node}</div>);
-  }
-  return <>{out}</>;
+  // render every section's queries in parallel (sequential awaits cost one DB round-trip each)
+  const nodes = await Promise.all(sections.map((s) => renderSection(s)));
+  return <>{sections.map((s, i) => (nodes[i] ? <div key={s.id} data-section={s.type}>{nodes[i]}</div> : null))}</>;
 }
 
 async function renderSection(s: PageSection) {
@@ -346,12 +343,19 @@ async function renderSection(s: PageSection) {
 async function Hero() {
   const s = await getSettings();
   const h = s.hero;
-  const featured =
-    (h.featuredSlug && (await db.product.findUnique({ where: { slug: h.featuredSlug } }))) ||
-    (await db.product.findFirst({ where: { status: "ACTIVE", layers: { gte: 3 }, designSvg: { not: null } }, orderBy: { createdAt: "asc" } })) ||
-    (await db.product.findFirst({ where: { status: "ACTIVE", designSvg: { not: null } } }));
-  const counts = await Promise.all(["wall", "coffee"].map((slug) => db.productCollection.count({ where: { collection: { slug } } })));
-  const shipped = await db.order.count({ where: { status: { in: ["SHIPPED", "DELIVERED", "FULFILLED"] } } });
+  const needsArt = !((h.mode === "collage" || h.mode === "image") && h.imageUrl) && !(h.mode === "video" && h.videoUrl);
+  const [featured, wall, coffee, shipped] = await Promise.all([
+    needsArt
+      ? (async () =>
+          (h.featuredSlug && (await db.product.findUnique({ where: { slug: h.featuredSlug } }))) ||
+          (await db.product.findFirst({ where: { status: "ACTIVE", layers: { gte: 3 }, designSvg: { not: null } }, orderBy: { createdAt: "asc" } })) ||
+          (await db.product.findFirst({ where: { status: "ACTIVE", designSvg: { not: null } } })))()
+      : null,
+    db.productCollection.count({ where: { collection: { slug: "wall" } } }),
+    db.productCollection.count({ where: { collection: { slug: "coffee" } } }),
+    db.order.count({ where: { status: { in: ["SHIPPED", "DELIVERED", "FULFILLED"] } } }),
+  ]);
+  const counts = [wall, coffee];
   const trust = [...h.trust];
   if (shipped >= 50) trust.unshift(`${shipped.toLocaleString()} orders shipped`);
   const parts = h.headline.split(/\*([^*]+)\*/); // "*word*" renders as the italic accent
