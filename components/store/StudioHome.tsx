@@ -35,7 +35,7 @@ export async function StudioHome() {
       href: `/p/${c.slug}`,
       cta: "Customize +",
       art: (
-        <div className="h-full w-full p-8 text-[#e95387]">
+        <div className="h-full w-full text-[#e95387]">
           <DesignArt svg={c.svg} colors={c.colors} uid={`sh${c.id}`} title={c.name} className="h-full w-full" />
         </div>
       ),

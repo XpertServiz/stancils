@@ -49,9 +49,9 @@ export function ShopStudio({ items, departments }: { items: ShopItem[]; departme
         <div className="grid grid-cols-1 gap-[17px] min-[481px]:grid-cols-2 lg:grid-cols-4">
           {shown.map((p, i) => (
             <article key={p.key} className="overflow-hidden rounded-[15px] border border-[#f0e8f5] bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-[0_16px_30px_#00000010]">
-              <Link href={p.href} className="relative grid h-[215px] place-items-center" style={{ background: BG[i % BG.length] }} aria-label={p.name}>
+              <Link href={p.href} className="relative block h-[215px] overflow-hidden" style={{ background: BG[i % BG.length] }} aria-label={p.name}>
                 <b className="absolute left-3 top-3 z-[1] rounded-md bg-[#fffefa] px-2 py-1.5 text-[10px] font-bold uppercase tracking-[.07em] shadow-[0_4px_10px_#00000010]">{p.tag}</b>
-                {p.art}
+                <div className="absolute inset-0 flex items-center justify-center p-7 pt-10">{p.art}</div>
               </Link>
               <div className="p-4">
                 <div className="text-[10px] font-extrabold uppercase tracking-[.09em] text-[#a36d10]">{p.dept}</div>
