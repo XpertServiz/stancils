@@ -6,12 +6,7 @@ const nextConfig: NextConfig = {
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
   async rewrites() {
     const key = process.env.INDEXNOW_KEY;
-    return {
-      // DECISION: the homepage is the owner's approved design file served exactly as provided (public/home.html)
-      beforeFiles: [{ source: "/", destination: "/home.html" }],
-      afterFiles: key ? [{ source: `/${key}.txt`, destination: "/api/indexnow-key" }] : [],
-      fallback: [],
-    };
+    return key ? [{ source: `/${key}.txt`, destination: "/api/indexnow-key" }] : [];
   },
   async headers() {
     return [
