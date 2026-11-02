@@ -59,7 +59,6 @@ async function applyStudioLookOnce(db: PrismaClient) {
     await db.setting.update({ where: { key }, data: { value: { ...cur, ...patch } as object } });
   };
   await merge("theme", { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" });
-  await merge("home", { layout: "studio" });
   await merge("business", { name: "Stencil & Gift Studio", tagline: "CREATIVE DECOR · GIFTS · APPAREL" });
   await merge("announcement", { enabled: true, text: "Made to brighten your world — beautifully personal • Shipping across the United States & Canada" });
   await merge("splash", { enabled: false });

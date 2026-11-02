@@ -19,7 +19,6 @@ export const DEFAULT_SETTINGS = {
     youtube: "",
   },
   theme: { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" },
-  home: { layout: "studio" as "studio" | "sections" }, // studio = approved Stencil & Gift Studio page; sections = CMS blocks
   hero: {
     mode: "collage", // collage | 3d | video | image
     eyebrow: "Your ideas, our creative touch",

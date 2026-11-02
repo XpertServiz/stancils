@@ -103,7 +103,6 @@ export async function saveSiteSettings(_: R, fd: FormData): Promise<R> {
     });
     await setSetting("announcement", { enabled: fd.get("ann_enabled") === "on", text: String(fd.get("ann_text") || "") });
     await setSetting("splash", { enabled: fd.get("splash") === "on" });
-    await setSetting("home", { layout: fd.get("home_layout") === "sections" ? "sections" : "studio" });
     await setSetting("seo", { title: String(fd.get("seo_title")), description: String(fd.get("seo_desc")) });
     await audit(s.id, "site.settings", "settings", "hero");
     refresh();
