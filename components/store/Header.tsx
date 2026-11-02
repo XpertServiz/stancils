@@ -1,44 +1,54 @@
 import Link from "next/link";
-import { User } from "lucide-react";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrency, getUnits } from "@/lib/currency";
-import { CartButton, CurrencyUnits, MobileMenu, SearchBox, ThemeToggle } from "./HeaderControls";
-import { Logo } from "./Logo";
+import { CartButton, CurrencyUnits, MobileMenu } from "./HeaderControls";
 
 export const NAV = [
-  { href: "/shop", label: "Shop" },
-  { href: "/c/wall", label: "Wall" },
-  { href: "/c/coffee", label: "Coffee" },
-  { href: "/c/cake-cookie", label: "Cake & Cookie" },
-  { href: "/custom-stencils", label: "Custom Studio" },
-  { href: "/c/kits", label: "Kits" },
-  { href: "/tutorials", label: "Tutorials" },
-  { href: "/business", label: "Business" },
+  { href: "/#stencil-categories", label: "Stencils" },
+  { href: "/#gift-categories", label: "Gifts" },
+  { href: "/#shirt-categories", label: "T-Shirt Printing" },
+  { href: "/#cyber-categories", label: "Cybersigilism Art" },
+  { href: "/shop", label: "Shop All" },
 ];
+
+const MOBILE_EXTRA = [
+  { href: "/custom-stencils", label: "Create a custom order" },
+  { href: "/track", label: "Track an order" },
+  { href: "/contact", label: "Contact" },
+];
+
+/** Brand name with the "&" in the accent colour, as in the approved design. */
+export function BrandName({ name }: { name: string }) {
+  const i = name.indexOf("&");
+  if (i < 0) return <>{name}</>;
+  return <>{name.slice(0, i)}<span className="text-accent">&amp;</span>{name.slice(i + 1)}</>;
+}
 
 export async function Header() {
   const [s, { cur, enabled }, units] = await Promise.all([getSettings(), getActiveCurrency(), getUnits()]);
   return (
-    <header className="sticky top-0 z-50 border-b border-line/60 bg-bg/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <MobileMenu links={NAV} />
-        <Link href="/" className="flex shrink-0 items-center gap-2" aria-label={`${s.business.name} home`}>
-          <Logo />
-          <span className="hidden font-display text-lg font-semibold tracking-tight min-[370px]:inline sm:text-xl">{s.business.name}</span>
-        </Link>
-        <nav className="mx-auto hidden items-center gap-1 lg:flex">
-          {NAV.map((l) => (
-            <Link key={l.href} href={l.href} className={`whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-ink2 hover:text-ink ${l.href === "/custom-stencils" ? "!text-accent" : ""} ${["/tutorials", "/business", "/c/kits"].includes(l.href) ? "hidden xl:block" : ""}`}>{l.label}</Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-1.5 lg:ml-0">
-          <SearchBox className="hidden w-52 2xl:block" />
+    <header className="sticky top-0 z-50 border-b border-[#e9e9f7] bg-white/95 shadow-[0_3px_20px_#8977ad0b] backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[72px] max-w-[1280px] items-center justify-between gap-3 px-4 sm:min-h-[92px] sm:px-[22px]">
+        <div className="flex min-w-0 items-center gap-2">
+          <MobileMenu links={[...NAV, ...MOBILE_EXTRA]} />
+          <Link href="/" className="min-w-0" aria-label={`${s.business.name} home`}>
+            <span className="block truncate font-display text-[18px] leading-none tracking-[-.06em] min-[400px]:text-[21px] text-[#302747] sm:text-[clamp(23px,2.2vw,31px)]">
+              <BrandName name={s.business.name} />
+            </span>
+            {s.business.tagline && <small className="mt-1.5 hidden truncate text-[8px] font-semibold tracking-[.3em] text-accent min-[400px]:block sm:text-[9px]">{s.business.tagline.toUpperCase()}</small>}
+          </Link>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-[19px]">
+          <Link href="/custom-stencils" className="hidden text-xs font-semibold text-[#6256b7] hover:text-accent md:inline">Create a custom order <span className="text-base">↗</span></Link>
           <CurrencyUnits currencies={enabled.map((c) => ({ code: c.code, symbol: c.symbol }))} current={cur.code} units={units} />
-          <ThemeToggle />
-          <Link href="/account" className="hidden rounded-lg p-2 hover:bg-s1 sm:inline-flex" aria-label="Account"><User size={20} /></Link>
-          <CartButton />
+          <CartButton pill />
         </div>
       </div>
+      <nav className="mx-auto hidden min-h-[49px] max-w-[1280px] items-center justify-center gap-[clamp(16px,3.4vw,53px)] border-t border-[#f0eaf6] px-[22px] lg:flex" aria-label="Main navigation">
+        {NAV.map((l) => (
+          <Link key={l.href} href={l.href} className="whitespace-nowrap text-xs font-semibold text-[#504b6b] hover:text-[#df417c]">{l.label}</Link>
+        ))}
+      </nav>
     </header>
   );
 }

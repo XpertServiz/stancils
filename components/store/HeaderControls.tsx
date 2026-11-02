@@ -15,14 +15,14 @@ export function CurrencyUnits({ currencies, current, units }: { currencies: { co
       <label className="sr-only" htmlFor="ccy">Currency</label>
       <select
         id="ccy"
-        className="max-w-[88px] rounded-lg border border-line bg-s1 px-1.5 py-1.5 text-xs font-semibold"
+        className="max-w-[88px] rounded-lg border-0 bg-transparent px-1 py-1.5 text-xs font-medium text-[#574e77]"
         value={current}
         onChange={(e) => start(async () => { await setCurrency(e.target.value); router.refresh(); })}
       >
-        {currencies.map((c) => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}
+        {currencies.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
       </select>
       <button
-        className="hidden rounded-lg border border-line bg-s1 px-2 py-1.5 text-xs font-semibold sm:inline-flex"
+        className="hidden rounded-lg px-1.5 py-1.5 text-xs font-medium text-[#574e77] hover:text-accent sm:inline-flex"
         aria-label={`Units: ${units}. Switch`}
         onClick={() => start(async () => { await setUnits(units === "cm" ? "in" : "cm"); router.refresh(); })}
       >
@@ -53,8 +53,14 @@ export function ThemeToggle() {
   );
 }
 
-export function CartButton() {
+export function CartButton({ pill = false }: { pill?: boolean }) {
   const { count, setOpen } = useCart();
+  if (pill)
+    return (
+      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[#edb7d2] px-2.5 py-2 text-xs sm:px-3.5 sm:py-2.5 font-bold text-[#5b3b64] hover:border-accent" aria-label={`Cart, ${count} items`}>
+        Cart <span className="inline-grid h-[19px] min-w-[19px] place-items-center rounded-full bg-[#ee5688] px-1 text-[11px] text-white">{count}</span>
+      </button>
+    );
   return (
     <button onClick={() => setOpen(true)} className="relative rounded-lg p-2 hover:bg-s1" aria-label={`Cart, ${count} items`}>
       <ShoppingBag size={20} />

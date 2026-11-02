@@ -5,8 +5,8 @@ import type { CurrencyInfo } from "./money";
 
 export const DEFAULT_SETTINGS = {
   business: {
-    name: "Creative Corner",
-    tagline: "Stencils that are exactly right.",
+    name: "Stencil & Gift Studio",
+    tagline: "CREATIVE DECOR · GIFTS · APPAREL",
     email: "hello@creativecorner.shop",
     phone: "+92 300 0000000",
     whatsapp: "923000000000",
@@ -18,21 +18,22 @@ export const DEFAULT_SETTINGS = {
     facebook: "",
     youtube: "",
   },
-  theme: { preset: "studio", accent: "", displayFont: "Playfair Display", bodyFont: "Poppins" },
+  theme: { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" },
+  home: { layout: "studio" as "studio" | "sections" }, // studio = approved Stencil & Gift Studio page; sections = CMS blocks
   hero: {
     mode: "collage", // collage | 3d | video | image
-    eyebrow: "Stencils · Gifts · Custom made",
+    eyebrow: "Your ideas, our creative touch",
     headline: "Make something *beautifully yours.*", // *text* = italic accent
-    sub: "Original stencils, personalised gifts and custom designs — cut to order, made with care and shipped to your door.",
-    primaryCta: { label: "Explore collections", href: "/shop" },
+    sub: "Expressive stencils, joyful gifts, custom T-shirts and bold artwork. Designed with personality and made for the moments that matter.",
+    primaryCta: { label: "Explore collections", href: "/#collections" },
     secondaryCta: { label: "Make something custom", href: "/custom-stencils" },
     featuredSlug: "",
     videoUrl: "",
     imageUrl: "/hero/studio-collage.webp",
-    trust: ["Made to order", "Ships worldwide", "Pay in your currency"],
+    trust: ["Made to order", "USA & Canada"],
   },
-  splash: { enabled: true, style: "cube" as "cube" | "laser" | "layers" | "spray" },
-  announcement: { enabled: true, text: "Free shipping over {threshold} · Code WELCOME10 for 10% off your first order" },
+  splash: { enabled: false, style: "cube" as "cube" | "laser" | "layers" | "spray" },
+  announcement: { enabled: true, text: "Made to brighten your world — beautifully personal • Shipping across the United States & Canada" },
   tax: { ratePct: 0, inclusive: true, label: "Tax" },
   payments: {
     demoCard: true,

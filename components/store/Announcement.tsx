@@ -15,5 +15,12 @@ export async function Announcement() {
   const threshold = free ? formatMoney(convertMinor(free, base, cur), cur.code, cur.exponent) : "";
   const text = free ? s.announcement.text.replace("{threshold}", threshold) : s.announcement.text.replace(/[^·]*\{threshold\}[^·]*·?\s*/, "").trim();
   if (!text) return null;
-  return <div className="px-4 py-2 text-center text-xs font-semibold tracking-wide text-white sm:text-sm" style={{ background: "linear-gradient(90deg, rgb(var(--accent)), rgb(150 110 230))" }}>{text}</div>;
+  const parts = text.split("•");
+  return (
+    <div className="px-[18px] py-3 text-center text-[11px] tracking-[.055em] text-white" style={{ background: "linear-gradient(100deg,#e85082,#ed6d7c 50%,#7c82d9)" }}>
+      {parts.map((t, i) => (
+        <span key={i}>{i > 0 && <span className="px-2 text-[#ffefb9]">•</span>}{t.trim()}</span>
+      ))}
+    </div>
+  );
 }

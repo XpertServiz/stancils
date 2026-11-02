@@ -4,7 +4,8 @@ import { InquiryForm } from "@/components/store/SimpleForms";
 
 export const metadata: Metadata = { title: "Contact us", description: "Questions about stencils, custom orders or shipping? We reply within one business day.", alternates: { canonical: "/contact" } };
 
-export default async function Contact() {
+export default async function Contact({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
+  const subject = String((await searchParams).subject ?? "").slice(0, 120);
   const s = await getSettings();
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1fr_1.3fr]">
@@ -17,7 +18,7 @@ export default async function Contact() {
           <div><dt className="text-ink3">Studio</dt><dd>{s.business.address}</dd></div>
         </dl>
       </div>
-      <InquiryForm />
+      <InquiryForm subject={subject} />
     </div>
   );
 }

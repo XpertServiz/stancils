@@ -44,31 +44,38 @@ async function main() {
 }
 
 /**
- * One-time switch of an existing store to the "Gift Studio" look the owner asked for (white/pink theme,
- * serif headings, collage hero). Runs once, marked by the "uiRefresh" setting, so later owner edits stick.
- * DECISION: only theme fonts/preset and hero media/copy change; business data is never touched.
+ * One-time switch of an existing store to the owner's approved "Stencil & Gift Studio" page (theme,
+ * fonts, hero copy, brand name, announcement, splash off). Runs once per version, marked by the
+ * "uiRefresh" setting, so the owner's later edits in Admin stick.
+ * DECISION: only presentation settings change; products, orders and accounts are never touched.
  */
+const UI_VERSION = "studio-v2";
 async function applyStudioLookOnce(db: PrismaClient) {
   const done = await db.setting.findUnique({ where: { key: "uiRefresh" } });
-  if (done) return;
+  if ((done?.value as { version?: string } | null)?.version === UI_VERSION) return;
   const merge = async (key: string, patch: Record<string, unknown>) => {
     const cur = ((await db.setting.findUnique({ where: { key } }))?.value ?? {}) as Record<string, unknown>;
     if (Object.keys(cur).length === 0) return; // nothing saved — the new defaults already apply
-    const value = { ...cur, ...patch };
-    await db.setting.update({ where: { key }, data: { value: value as object } });
+    await db.setting.update({ where: { key }, data: { value: { ...cur, ...patch } as object } });
   };
-  await merge("theme", { preset: "studio", accent: "", displayFont: "Playfair Display", bodyFont: "Poppins" });
+  await merge("theme", { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" });
+  await merge("home", { layout: "studio" });
+  await merge("business", { name: "Stencil & Gift Studio", tagline: "CREATIVE DECOR · GIFTS · APPAREL" });
+  await merge("announcement", { enabled: true, text: "Made to brighten your world — beautifully personal • Shipping across the United States & Canada" });
+  await merge("splash", { enabled: false });
   await merge("hero", {
     mode: "collage",
     imageUrl: "/hero/studio-collage.webp",
-    eyebrow: "Stencils · Gifts · Custom made",
+    eyebrow: "Your ideas, our creative touch",
     headline: "Make something *beautifully yours.*",
-    sub: "Original stencils, personalised gifts and custom designs — cut to order, made with care and shipped to your door.",
-    primaryCta: { label: "Explore collections", href: "/shop" },
+    sub: "Expressive stencils, joyful gifts, custom T-shirts and bold artwork. Designed with personality and made for the moments that matter.",
+    primaryCta: { label: "Explore collections", href: "/#collections" },
     secondaryCta: { label: "Make something custom", href: "/custom-stencils" },
+    trust: ["Made to order", "USA & Canada"],
   });
-  await db.setting.create({ data: { key: "uiRefresh", value: { version: "studio-v1", at: new Date().toISOString() } } });
-  console.log("seed-if-empty: applied the Gift Studio look (one time).");
+  const value = { version: UI_VERSION, at: new Date().toISOString() };
+  await db.setting.upsert({ where: { key: "uiRefresh" }, create: { key: "uiRefresh", value }, update: { value } });
+  console.log(`seed-if-empty: applied the Stencil & Gift Studio page (${UI_VERSION}, one time).`);
 }
 
 main().catch((e) => {

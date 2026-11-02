@@ -1,41 +1,32 @@
 import Link from "next/link";
 import { getSettings } from "@/lib/settings";
-import { Logo } from "./Logo";
-import { NewsletterForm } from "./NewsletterForm";
+import { BrandName } from "./Header";
+
+const LINKS: [string, string][] = [
+  ["Shop all", "/shop"], ["Custom order", "/custom-stencils"], ["Track order", "/track"], ["Account", "/account"], ["FAQ", "/faq"],
+  ["Shipping & Returns", "/legal/shipping"], ["Privacy", "/legal/privacy"], ["Terms", "/legal/terms"], ["Contact", "/contact"],
+];
 
 export async function Footer() {
   const s = await getSettings();
-  const cols = [
-    { title: "Shop", links: [["All stencils", "/shop"], ["Wall", "/c/wall"], ["Furniture", "/c/furniture"], ["Coffee & latte", "/c/coffee"], ["Cake & cookie", "/c/cake-cookie"], ["Lettering & signs", "/c/sign-logo"], ["Tools & kits", "/c/tools"]] },
-    { title: "Make", links: [["Custom Stencil Studio", "/custom-stencils"], ["Logo stencils", "/custom-stencils/logo"], ["Coffee logo stencils", "/custom-stencils/coffee"], ["Digital cut files", "/shop?digital=1"], ["For business", "/business"]] },
-    { title: "Help", links: [["Track an order", "/track"], ["Tutorials", "/tutorials"], ["FAQ", "/faq"], ["Contact", "/contact"], ["Shipping", "/legal/shipping"], ["Returns", "/legal/returns"]] },
-  ];
   return (
-    <footer className="border-t border-line bg-s1/50">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <footer className="bg-[#faf0f7] py-[38px] text-xs text-[#796b77]">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap justify-between gap-[22px] px-4 sm:px-[22px]">
         <div>
-          <div className="mb-3 flex items-center gap-2"><Logo /><span className="font-display text-lg font-bold">{s.business.name}</span></div>
-          <p className="mb-5 max-w-xs text-sm text-ink2">{s.business.tagline} Laser-cut, reusable stencils — shipped worldwide or delivered instantly as cut files.</p>
-          <NewsletterForm />
+          <strong className="font-display text-base font-normal text-[#302747]"><BrandName name={s.business.name} /></strong>
+          <p className="mt-1.5">Creative goods · {s.business.address}</p>
+          <p className="mt-3">
+            <a className="hover:text-accent" href={`mailto:${s.business.email}`}>{s.business.email}</a>
+            {s.business.phone && <> · <a className="hover:text-accent" href={`https://wa.me/${s.business.whatsapp}`}>{s.business.phone}</a></>}
+          </p>
         </div>
-        {cols.map((c) => (
-          <div key={c.title}>
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-ink3">{c.title}</h3>
-            <ul className="space-y-2 text-sm">
-              {c.links.map(([l, h]) => <li key={h}><Link className="text-ink2 hover:text-accent" href={h}>{l}</Link></li>)}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-line/60">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-ink3 sm:flex-row sm:px-6">
-          <p>© {new Date().getFullYear()} {s.business.name}. {s.business.address}</p>
-          <div className="flex gap-4">
-            <Link href="/legal/privacy" className="hover:text-ink">Privacy</Link>
-            <Link href="/legal/terms" className="hover:text-ink">Terms</Link>
-            <Link href="/legal/returns" className="hover:text-ink">Returns</Link>
-            <Link href="/sitemap.xml" className="hover:text-ink">Sitemap</Link>
-          </div>
+        <div className="max-w-xl sm:text-right">
+          <nav aria-label="Footer" className="leading-7">
+            {LINKS.map(([l, h], i) => (
+              <span key={h}>{i > 0 && " · "}<Link className="hover:text-accent" href={h}>{l}</Link></span>
+            ))}
+          </nav>
+          <p className="mt-2 text-[11px]">© {new Date().getFullYear()} {s.business.name}</p>
         </div>
       </div>
     </footer>

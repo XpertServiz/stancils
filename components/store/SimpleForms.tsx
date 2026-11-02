@@ -4,7 +4,7 @@ import { applyBusiness, submitInquiry } from "@/app/actions/store";
 
 type S = null | { ok: boolean; msg: string };
 
-export function InquiryForm({ kind = "contact" }: { kind?: string }) {
+export function InquiryForm({ kind = "contact", subject = "" }: { kind?: string; subject?: string }) {
   const [state, action, pending] = useActionState(submitInquiry, null as S);
   if (state?.ok) return <div className="card p-6 text-mint">{state.msg}</div>;
   return (
@@ -16,7 +16,7 @@ export function InquiryForm({ kind = "contact" }: { kind?: string }) {
         <input name="email" type="email" required placeholder="Email" className="input" aria-label="Email" />
       </div>
       <input name="phone" placeholder="Phone / WhatsApp (optional)" className="input" aria-label="Phone" />
-      <input name="subject" placeholder="Subject" className="input" aria-label="Subject" />
+      <input name="subject" defaultValue={subject} placeholder="Subject" className="input" aria-label="Subject" />
       <textarea name="message" required rows={5} placeholder="How can we help?" className="textarea" aria-label="Message" />
       {state && !state.ok && <p className="text-sm text-danger">{state.msg}</p>}
       <button className="btn btn-primary" disabled={pending}>Send message</button>

@@ -23,7 +23,7 @@ const rgb = (t: string) => `rgb(${t.split(" ").join(",")})`;
 function useFont(name: string, weights: string) {
   useEffect(() => {
     const id = `gf-${name.replace(/\W/g, "")}`;
-    if (document.getElementById(id)) return;
+    if (!weights || document.getElementById(id)) return; // system fonts (e.g. Georgia) need no download
     const l = document.createElement("link");
     l.id = id;
     l.rel = "stylesheet";
