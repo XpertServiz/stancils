@@ -24,7 +24,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
   };
   const [total, products, collections, { base }] = await Promise.all([
     db.product.count({ where }),
-    db.product.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * 50, take: 50, include: { variants: { where: { active: true } }, _count: { select: { collections: true } } } }),
+    db.product.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * 50, take: 50, include: { variants: { where: { active: true } }, images: { orderBy: { sort: "asc" }, take: 1 }, _count: { select: { collections: true } } } }),
     db.collection.findMany({ orderBy: [{ type: "asc" }, { sort: "asc" }] }),
     getCurrencies(),
   ]);
@@ -37,7 +37,8 @@ export default async function Products({ searchParams }: { searchParams: Promise
         sub={`${total} products · prices in ${base.code}`}
         actions={<>
           {can("inventory.import") && <Link href="/admin/inventory/import" className="btn btn-ghost btn-sm">Import / export</Link>}
-          {can("inventory.edit") && <Link href="/admin/products/new" className="btn btn-primary btn-sm">New product</Link>}
+          {can("inventory.edit") && <Link href="/admin/products/bulk" className="btn btn-soft btn-sm">Add many from photos</Link>}
+          {can("inventory.edit") && <Link href="/admin/products/new" className="btn btn-primary btn-sm">Add a product</Link>}
         </>}
       />
       {sp.deleted && <p className="mb-4 rounded-xl bg-mint/15 p-3 text-sm text-mint">Product deleted.</p>}
@@ -80,7 +81,12 @@ export default async function Products({ searchParams }: { searchParams: Promise
                   return (
                     <tr key={p.id}>
                       <td><input type="checkbox" name="ids" value={p.id} aria-label={`Select ${p.name}`} /></td>
-                      <td className="w-12"><div className="art-tile h-10 w-10 rounded-lg p-1 text-accent"><DesignArt svg={p.designSvg} colors={p.layerColors} uid={`al${p.id}`} /></div></td>
+                      <td className="w-12">{p.images[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.images[0].url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="art-tile h-10 w-10 rounded-lg p-1 text-accent" title="No photo — hidden from the website"><DesignArt svg={p.designSvg} colors={p.layerColors} uid={`al${p.id}`} /></div>
+                      )}</td>
                       <td><Link href={`/admin/products/${p.id}`} className="font-medium hover:text-accent">{p.name}</Link>{p.needsReview && <span className="badge badge-mustard ml-2">review copy</span>}{p.featured && <span className="badge badge-coral ml-1">featured</span>}<div className="text-xs text-ink3">/p/{p.slug}</div></td>
                       <td className="text-xs">{p.type.replace("_", " ").toLowerCase()}</td>
                       <td><StatusBadge s={p.status} /></td>

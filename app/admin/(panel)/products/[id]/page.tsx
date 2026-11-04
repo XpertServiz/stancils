@@ -10,6 +10,9 @@ import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { Submit } from "@/components/admin/Submit";
 import { DesignArt } from "@/components/DesignArt";
+import { ProductPhotos } from "@/components/admin/ProductPhotos";
+import { CategoryPicker } from "@/components/admin/AddProductForm";
+import { quickSaveProduct } from "@/app/admin/actions/quick";
 import { deleteImage, deleteProduct, deleteVariant, saveBom, saveProduct, saveVariants, uploadImages } from "@/app/admin/actions/products";
 
 export default async function EditProduct({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ archived?: string }> }) {
@@ -49,6 +52,28 @@ export default async function EditProduct({ params, searchParams }: { params: Pr
           )}
         </>}
       />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="The basics">
+          <ActionForm action={quickSaveProduct}>
+            <input type="hidden" name="id" value={p.id} />
+            <Field label="Name"><input name="name" defaultValue={p.name} required maxLength={120} className="input" /></Field>
+            <Field label="Category"><CategoryPicker cats={collections.map((c) => ({ id: c.id, name: c.name }))} current={p.collections[0]?.collectionId} /></Field>
+            <Field label={`Price (${base.code})`} hint={p.variants.filter((v) => !v.isDigital).length > 1 ? "For the smallest size — the bigger sizes follow automatically." : undefined}>
+              <input name="price" defaultValue={p.variants.filter((v) => !v.isDigital)[0] ? majorString(p.variants.filter((v) => !v.isDigital).reduce((a, v) => (v.basePrice < a ? v.basePrice : a), p.variants.filter((v) => !v.isDigital)[0].basePrice), base.exponent) : ""} inputMode="decimal" className="input max-w-[220px]" />
+            </Field>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="visible" defaultChecked={p.status === "ACTIVE"} />Show on my website</label>
+            <button className="btn btn-primary">Save</button>
+          </ActionForm>
+        </Panel>
+        <Panel title="Photos">
+          <ProductPhotos productId={p.id} images={p.images.map((i) => ({ id: i.id, url: i.url }))} />
+        </Panel>
+      </div>
+
+      <details className="rounded-xl border border-line p-4">
+        <summary className="cursor-pointer font-semibold">Advanced settings — sizes, stock, materials, SEO and more</summary>
+        <p className="mt-1 text-sm text-ink3">You do not need anything in here to sell a product.</p>
+        <div className="mt-5 space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Panel title="Details">
           <ActionForm action={saveProduct} className="space-y-4">
@@ -202,6 +227,8 @@ export default async function EditProduct({ params, searchParams }: { params: Pr
           </div>
         </Panel>
       )}
+        </div>
+      </details>
       <p className="text-xs text-ink3">Lowest price: {formatMoney(p.variants.reduce((a, v) => (v.basePrice < a ? v.basePrice : a), p.variants[0]?.basePrice ?? 0n), base.code, base.exponent)}</p>
     </div>
   );

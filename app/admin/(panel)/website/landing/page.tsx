@@ -1,41 +1,34 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getCurrencies } from "@/lib/settings";
-import { getLandingProducts, getLandingSettings } from "@/lib/landing";
-import { DEFAULT_LANDING_PRODUCTS } from "@/lib/landing/defaults";
+import { getLandingSettings } from "@/lib/landing";
 import { getHome } from "@/lib/storefront";
-import { ProductFields } from "@/components/admin/SimpleProductFields";
 import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { WebsiteTabs } from "@/components/admin/WebsiteTabs";
 import { ActionForm } from "@/components/admin/ActionForm";
-import { landingProductOp, resetLanding, saveLandingPage, saveLandingProduct, syncLanding } from "@/app/admin/actions/landing";
+import { saveLandingPage } from "@/app/admin/actions/landing";
 import { saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
 
 export default async function LandingProducts() {
   await requireStaff("content.edit");
-  const [list, seo, home, { base }, reviewCount, cols] = await Promise.all([
-    getLandingProducts(), getLandingSettings(), getHome(), getCurrencies(),
+  const [seo, home, reviewCount, cols] = await Promise.all([
+    getLandingSettings(), getHome(),
     db.review.count({ where: { status: "published" } }),
     db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], select: { name: true, slug: true } }),
   ]);
-  const names = cols.map((c) => c.name);
-  const notReady = list.filter((p) => p.price > 0 && !p.variantId).length;
-  const noPrice = list.filter((p) => p.price <= 0).length;
   const rows = [...home.rows, { title: "", intro: "", collection: "", banner: "", count: 8 }];
   return (
     <div>
       <PageHeader title="Homepage" sub="Everything on your homepage in one place. Changes go live within about 30 seconds." />
       <WebsiteTabs active="landing" />
       <div className="space-y-6">
-        <Panel title="1. Add a product">
-          <ActionForm action={saveLandingProduct}>
-            <ProductFields base={base.code} collections={names} />
-            <div className="flex flex-wrap items-center gap-3">
-              <button className="btn btn-primary">Add product</button>
-              <span className="text-xs text-ink3">It shows in its category on the homepage and in the shop. Adding many? <Link href="/admin/inventory/import" className="text-accent underline">Use the spreadsheet</Link>.</span>
-            </div>
-          </ActionForm>
+        <Panel title="1. Your products">
+          <p className="text-sm text-ink2">Products show up on the homepage by their category. Add them in two clicks:</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/admin/products/new" className="btn btn-primary">Add a product</Link>
+            <Link href="/admin/products/bulk" className="btn btn-soft">Add many from photos</Link>
+            <Link href="/admin/inventory/import" className="btn btn-ghost">Use a spreadsheet</Link>
+          </div>
         </Panel>
 
         <Panel title="2. Top of the page">
@@ -115,70 +108,6 @@ export default async function LandingProducts() {
           <div className="mt-3 flex flex-wrap gap-2"><Link href="/admin/reviews" className="btn btn-soft btn-sm">Manage reviews</Link><Link href="/admin/reviews#add" className="btn btn-ghost btn-sm">Add a review I received</Link></div>
         </Panel>
 
-        {(notReady > 0 || noPrice > 0) && (
-          <Panel title="Make products ready to sell">
-            <ActionForm action={syncLanding}>
-              <p className="text-sm text-ink2">
-                {notReady > 0 && <>{notReady} product{notReady === 1 ? " has" : "s have"} a price but customers can’t buy {notReady === 1 ? "it" : "them"} yet. </>}
-                {noPrice > 0 && <>{noPrice} {noPrice === 1 ? "has" : "have"} no price yet. Open a product below and type a price to sell it. </>}
-              </p>
-              {notReady > 0 && <button className="btn btn-primary">Make all {notReady} ready to sell</button>}
-            </ActionForm>
-          </Panel>
-        )}
-
-        <Panel title={`Products added here (${list.length})`}>
-          <ul className="divide-y divide-line/60">
-            {list.map((p, i) => (
-              <li key={p.id} className="py-3">
-                <details>
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg text-xl" style={{ background: p.bg }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.icon}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">{p.name}</span>
-                      <span className="block truncate text-xs text-ink3">{p.cat}{p.subcat ? ` · ${p.subcat}` : ""}</span>
-                    </span>
-                    <span className="tabular text-sm">{p.price ? `${base.code} ${p.price.toFixed(2)}` : "No price"}</span>
-                    {p.variantId ? <span className="badge badge-mint">For sale</span> : <span className="badge badge-muted">Not for sale</span>}
-                    <span className="btn btn-soft btn-sm">Edit</span>
-                  </summary>
-                  <div className="mt-4 rounded-xl border border-line/60 p-4">
-                    <ActionForm action={saveLandingProduct}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <ProductFields p={p} base={base.code} collections={names} />
-                      <button className="btn btn-primary btn-sm">Save changes</button>
-                    </ActionForm>
-                  </div>
-                </details>
-                <div className="mt-2 flex gap-2">
-                  {(["up", "down", "delete"] as const).map((op) => (
-                    <form key={op} action={landingProductOp}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <input type="hidden" name="op" value={op} />
-                      <button
-                        className={`btn btn-sm ${op === "delete" ? "btn-ghost text-danger" : "btn-ghost"}`}
-                        disabled={(op === "up" && i === 0) || (op === "down" && i === list.length - 1)}
-                        aria-label={`${op === "delete" ? "Delete" : `Move ${op}`} ${p.name}`}
-                      >
-                        {op === "up" ? "↑" : op === "down" ? "↓" : "Delete"}
-                      </button>
-                    </form>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-
-        <Panel title="Start over">
-          <ActionForm action={resetLanding} confirm="Replace the products added here with the starter list? Your own products will be hidden from the shop.">
-            <p className="text-sm text-ink2">Brings back the {DEFAULT_LANDING_PRODUCTS.length} starter products. Products you added here are hidden from the shop.</p>
-            <button className="btn btn-ghost btn-sm">Restore starter products</button>
-          </ActionForm>
-        </Panel>
       </div>
     </div>
   );

@@ -12,4 +12,5 @@ fi
 prisma generate
 prisma migrate deploy
 tsx prisma/seed-if-empty.ts
+tsx prisma/catalog-refresh.ts
 next build

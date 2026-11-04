@@ -108,3 +108,22 @@ describe("simple import file", () => {
     expect(parseCsv("name,slug,type,sku,price\nA,a,STOCK_PHYSICAL,A-1,5\n").format).toBe("template");
   });
 });
+
+describe("starter catalogue data", () => {
+  it("every product points at a real collection, and slugs and names are unique", async () => {
+    const { COLLECTIONS, PRODUCTS, SIZES } = await import("../prisma/catalog-data");
+    const slugs = new Set(COLLECTIONS.map((c) => c.slug));
+    expect(slugs.size).toBe(COLLECTIONS.length);
+    for (const p of PRODUCTS) expect(slugs.has(p.collection)).toBe(true);
+    expect(new Set(PRODUCTS.map((p) => slugify(p.name))).size).toBe(PRODUCTS.length);
+    expect(SIZES.map((s) => s.mult)).toEqual([...SIZES.map((s) => s.mult)].sort((a, b) => a - b));
+  });
+  it("every collection the default menu links to exists in the catalogue data", async () => {
+    const { COLLECTIONS } = await import("../prisma/catalog-data");
+    const have = new Set(COLLECTIONS.map((c) => c.slug));
+    for (const m of parseMenu(DEFAULT_MENU_TEXT).flatMap((x) => [x, ...x.children])) {
+      const mm = /^\/c\/([a-z0-9-]+)$/.exec(m.href);
+      if (mm) expect(have.has(mm[1]), m.href).toBe(true);
+    }
+  });
+});
