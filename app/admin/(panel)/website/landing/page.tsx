@@ -77,7 +77,7 @@ export default async function LandingProducts() {
                     </Field>
                     <Field label="Short line under the heading" className="sm:col-span-2"><input name={`intro_${i}`} maxLength={200} defaultValue={r.intro} className="input" /></Field>
                     <Field label="How many products"><input name={`count_${i}`} type="number" min={2} max={12} defaultValue={r.count} className="input" /></Field>
-                    <Field label="Banner photo" hint="Optional. Without one we show a colour panel."><input name={`banner_${i}`} type="file" accept="image/*" className="input" /></Field>
+                    <Field label="Banner picture (shown above the products)" hint="A wide picture with the title written on it, about 2000 × 1100. Without one, the heading is shown as text."><input name={`banner_${i}`} type="file" accept="image/*" className="input" /></Field>
                     <input type="hidden" name={`keep_${i}`} value={r.banner} />
                     {r.title && (
                       <div className="flex flex-wrap items-center gap-4 text-sm sm:col-span-2">

@@ -111,7 +111,7 @@ function Chips({ chips }: { chips: StoreHome["chips"] }) {
                     <span className="absolute inset-0 bg-gradient-to-br from-accent to-[rgb(var(--band-stone))]" />
                   )}
                   {(!c.baked || !img) && (
-                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center [font-size:4.6cqw] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
+                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center [font-size:5.8cqw] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
                   )}
                 </Link>
               </li>
@@ -123,31 +123,30 @@ function Chips({ chips }: { chips: StoreHome["chips"] }) {
   );
 }
 
-function Row({ row, cards, flip, alt }: { row: HomeRow; cards: Card[]; flip: boolean; alt: boolean }) {
+/** One product section: the girl banner first (title and text are written on it), then the products. */
+function Row({ row, cards }: { row: HomeRow; cards: Card[] }) {
   const banner = exists(row.banner) ? row.banner : "";
   return (
-    <section className={`fade-up ${alt ? "bg-s1" : ""}`}>
-      <div className="mx-auto max-w-[1280px] px-4 py-10 md:px-6 md:py-16">
-        <SectionTitle sub={row.intro}>{row.title}</SectionTitle>
-        <div className={`grid grid-cols-1 gap-6 [&>*]:min-w-0 ${flip ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-[300px_minmax(0,1fr)]"}`}>
-          <Link href={`/c/${row.collection}`} aria-label={`Shop ${row.title}`} className={`group relative block h-36 overflow-hidden rounded-[10px] lg:h-auto lg:min-h-full ${flip ? "lg:order-2" : ""}`}>
-            {banner ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={banner} alt={row.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-[400ms] group-hover:scale-[1.04]" />
-            ) : (
-              <span className="absolute inset-0 bg-gradient-to-br from-accent to-[rgb(var(--band-stone))]" />
-            )}
-            <span className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-5 text-white">
-              <span className="font-display text-2xl font-bold leading-tight">{row.title}</span>
-              <span className="mt-1 inline-flex items-center gap-1 text-sm font-semibold">Shop the collection <ArrowRight size={15} /></span>
-            </span>
-          </Link>
-          <div className={flip ? "lg:order-1" : ""}>
-            <ProductGrid cards={cards} cols={3} />
-            <div className="mt-8 text-center">
-              <Link href={`/c/${row.collection}`} className="inline-flex h-11 items-center rounded-lg border-2 border-accent px-6 font-semibold text-accent transition hover:-translate-y-px hover:bg-accent hover:text-onaccent">View all</Link>
+    <section className="fade-up">
+      <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-6 md:py-12">
+        {banner ? (
+          <>
+            {/* on a phone the writing on the picture is too small, so the title and text are shown as normal text there */}
+            <div className="mb-3 sm:sr-only">
+              <h2 className="text-center font-display text-[26px] font-bold">{row.title}</h2>
+              {row.intro && <p className="mt-2 text-center text-ink2">{row.intro}</p>}
             </div>
-          </div>
+            <Link href={`/c/${row.collection}`} className="mb-6 block" aria-label={`${row.title} — view the collection`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={banner} alt={`${row.title}. ${row.intro}`} loading="lazy" decoding="async" className="h-auto w-full mix-blend-multiply" />
+            </Link>
+          </>
+        ) : (
+          <SectionTitle sub={row.intro}>{row.title}</SectionTitle>
+        )}
+        <ProductGrid cards={cards} />
+        <div className="mt-8 text-center">
+          <Link href={`/c/${row.collection}`} className="inline-flex h-11 items-center rounded-lg border-2 border-accent px-6 font-semibold text-accent transition hover:-translate-y-px hover:bg-accent hover:text-onaccent">View all</Link>
         </div>
       </div>
     </section>
@@ -184,12 +183,11 @@ export async function HomePage() {
     const fb = await Promise.all(busy.map((c) => listProducts({ collection: c.slug, perPage: 6 }, cur, base).then((x) => ({ r: { title: c.name, intro: "", collection: c.slug, banner: "", count: 6 }, cards: x.cards }))));
     shown = fb.filter((x) => x.cards.length > 0);
   }
-  let n = 0;
   return (
     <>
       <Hero h={h} off={best ? `${Math.round(best)}% OFF` : ""} />
       <Chips chips={h.chips} />
-      {shown.map(({ r, cards }, i) => <Row key={r.title} row={r} cards={cards} flip={i % 2 === 1} alt={n++ % 2 === 1} />)}
+            {shown.map(({ r, cards }) => <Row key={r.title} row={r} cards={cards} />)}
       {shown.length === 0 && latestCards.length === 0 && (
         <section className="mx-auto max-w-[1280px] px-4 py-24 text-center md:px-6"><p className="text-lg text-ink2">Our new designs are on their way. Check back soon.</p></section>
       )}
