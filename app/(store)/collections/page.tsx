@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function Collections() {
   const cols = await db.collection.findMany({
     orderBy: [{ sort: "asc" }, { name: "asc" }],
-    include: { _count: { select: { products: true } }, products: { take: 1, include: { product: { select: { images: { take: 1, orderBy: { sort: "asc" } } } } } } },
+    include: { _count: { select: { products: { where: { product: { images: { some: {} }, status: "ACTIVE" } } } } }, products: { take: 1, where: { product: { images: { some: {} }, status: "ACTIVE" } }, include: { product: { select: { images: { take: 1, orderBy: { sort: "asc" } } } } } } },
   });
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-10 md:px-6">

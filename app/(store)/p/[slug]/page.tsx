@@ -5,7 +5,7 @@ import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { getActiveCurrency, getCountry, getUnits } from "@/lib/currency";
 import { variantPrice } from "@/lib/services/pricing";
-import { cardInclude, toCard } from "@/lib/catalog";
+import { cardInclude, SHOWN, toCard } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { getLiveSales, saleCovers } from "@/lib/sales";
@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: P) {
   const zone = zones.find((z) => z.countries.includes(country)) ?? zones.find((z) => z.countries.includes("*"));
   const fastest = zone?.rates.reduce((a, r) => (r.minDays < a.minDays ? r : a), zone.rates[0]);
   const related = await db.product.findMany({
-    where: { status: "ACTIVE", id: { not: p.id }, collections: { some: { collectionId: { in: p.collections.map((c) => c.collectionId) } } } },
+    where: { ...SHOWN, id: { not: p.id }, collections: { some: { collectionId: { in: p.collections.map((c) => c.collectionId) } } } },
     include: cardInclude, orderBy: { salesCount: "desc" }, take: 4,
   });
   const isWall = p.collections.some((c) => ["wall", "floor-tile", "wall-and-canvas-stencils"].includes(c.collection.slug)) && p.repeatWmm;

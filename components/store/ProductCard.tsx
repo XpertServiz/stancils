@@ -29,16 +29,15 @@ export function ProductCard({ p, priority = false }: { p: Card; priority?: boole
       <Link href={`/p/${p.slug}`} className="relative block aspect-square overflow-hidden bg-s1" aria-label={p.name}>
         <CardImage p={p} priority={priority} />
         {p.soldOut && <span className="absolute inset-0 bg-white/50" />}
-        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-          {p.off > 0 && <span className="rounded bg-accent px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-onaccent">{p.off}% off</span>}
-          {p.soldOut && <span className="rounded bg-[#1c1b1a] px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Sold out</span>}
-        </div>
+        {p.off > 0 && !p.soldOut && <span className="absolute right-2 top-2 -rotate-6 rounded-md bg-accent px-2 py-1 text-[10px] font-extrabold uppercase leading-tight tracking-wide text-onaccent shadow">Big<br />Sale</span>}
+        {p.soldOut && <span className="absolute left-2 top-2 rounded bg-[#1c1b1a] px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Sold out</span>}
       </Link>
       <div className="flex flex-1 flex-col gap-1.5 p-3">
         <Link href={`/p/${p.slug}`} className="line-clamp-2 text-[14px] font-semibold leading-snug hover:text-accent">{p.name}</Link>
         <div className="flex items-center gap-1 text-xs text-ink3">
           {p.ratingCount > 0 ? <><Star size={12} className="fill-mustard text-mustard" /><span>{p.rating.toFixed(1)} · {p.ratingCount} review{p.ratingCount === 1 ? "" : "s"}</span></> : "No reviews"}
         </div>
+        {p.off > 0 && <span className="w-fit rounded bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-onaccent">{p.off}% discount</span>}
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div className="tabular leading-tight">
             <span className="mr-1.5 text-[15px] font-bold">{p.from ? "from " : ""}{p.price}</span>

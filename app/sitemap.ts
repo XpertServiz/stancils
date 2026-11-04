@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const [products, collections, posts] = await Promise.all([
-    db.product.findMany({ where: { status: "ACTIVE" }, select: { slug: true, updatedAt: true, featured: true } }),
+    db.product.findMany({ where: { status: "ACTIVE", images: { some: {} } }, select: { slug: true, updatedAt: true, featured: true } }),
     db.collection.findMany({ select: { slug: true } }),
     db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
   ]);

@@ -14,7 +14,7 @@ export function ProductFields({ p, base, collections }: { p?: LandingProduct; ba
         </select>
       </Field>
       <Field label={`3. Price (${base})`} hint="Leave 0 if you will quote each customer."><input name="price" type="number" inputMode="decimal" min={0} step="0.01" defaultValue={p?.price ?? ""} placeholder="0" className="input" /></Field>
-      <Field label="4. Photo" hint="JPG or PNG. Optional.">
+      <Field label="4. Photo" hint="Needed — the shop only shows products that have a photo.">
         <input name="photo" type="file" accept="image/*" className="input" />
       </Field>
       {p?.image && (

@@ -5,7 +5,7 @@ import { ArrowRight, Check, Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrency } from "@/lib/currency";
-import { cardInclude, listProducts, toCard, type Card } from "@/lib/catalog";
+import { cardInclude, listProducts, SHOWN, toCard, type Card } from "@/lib/catalog";
 import { getHome, getMenu, parseHours, slugsFor, type HomeRow, type StoreHome } from "@/lib/storefront";
 import { getLiveSales } from "@/lib/sales";
 import { ProductGrid } from "./ProductCard";
@@ -121,7 +121,7 @@ export async function HomePage() {
 
   const [rowCards, latest, reviewRows, agg] = await Promise.all([
     Promise.all(h.rows.map((r) => listProducts({ collections: slugsFor(r.collection, menu), perPage: r.count }, cur, base).then((x) => x.cards))),
-    db.product.findMany({ where: { status: "ACTIVE" }, include: cardInclude, orderBy: { createdAt: "desc" }, take: 8 }),
+    db.product.findMany({ where: SHOWN, include: cardInclude, orderBy: { createdAt: "desc" }, take: 8 }),
     db.review.findMany({ where: { status: "published" }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }], take: 12 }),
     db.review.aggregate({ where: { status: "published" }, _avg: { rating: true }, _count: true }),
   ]);
@@ -139,7 +139,7 @@ export async function HomePage() {
   if (shown.length === 0) {
     // none of the configured rows has products yet (new store, or collections not filled): show the busiest collections instead
     const busy = await db.collection.findMany({
-      where: { products: { some: { product: { status: "ACTIVE" } } } },
+      where: { products: { some: { product: SHOWN } } },
       orderBy: { products: { _count: "desc" } }, take: 4, select: { slug: true, name: true },
     });
     const fb = await Promise.all(busy.map((c) => listProducts({ collection: c.slug, perPage: 6 }, cur, base).then((x) => ({ r: { title: c.name, intro: "", collection: c.slug, banner: "", count: 6 }, cards: x.cards }))));

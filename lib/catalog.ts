@@ -3,6 +3,9 @@ import { db } from "./db";
 import { formatMoney, toBaseMinor, type CurrencyInfo } from "./money";
 import { variantPrice } from "./services/pricing";
 
+/** The storefront only shows products that have a real photo (like a photo catalogue). Products without one stay in the admin, hidden. */
+export const SHOWN = { status: "ACTIVE", images: { some: {} } } satisfies Prisma.ProductWhereInput;
+
 export const cardInclude = {
   variants: { where: { active: true }, include: { prices: true }, orderBy: { sort: "asc" } },
   images: { orderBy: { sort: "asc" }, take: 2 },
@@ -95,7 +98,7 @@ export type ListFilters = {
 };
 
 export async function listProducts(f: ListFilters, cur: CurrencyInfo, base: CurrencyInfo) {
-  const and: Prisma.ProductWhereInput[] = [{ status: "ACTIVE" }];
+  const and: Prisma.ProductWhereInput[] = [SHOWN];
   if (f.collections?.length) and.push({ collections: { some: { collection: { slug: { in: f.collections } } } } });
   else if (f.collection) and.push({ collections: { some: { collection: { slug: f.collection } } } });
   if (f.type) and.push({ type: f.type as never });
