@@ -86,7 +86,7 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
   };
 
   return (
-    <form action={submit} className="mx-auto grid max-w-[1100px] lg:grid-cols-[1.15fr_1fr]">
+    <form action={submit} className="mx-auto grid max-w-[1100px] grid-cols-1 lg:grid-cols-[1.15fr_1fr] [&>*]:min-w-0">
       <div className="space-y-8 px-4 py-8 md:px-6 lg:py-10 lg:pr-12">
         <Section title="Contact">
           <label><span className="sr-only">Email</span><input name="email" type="email" required placeholder="Email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>

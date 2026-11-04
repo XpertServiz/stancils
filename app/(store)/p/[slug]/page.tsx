@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: P) {
         {first && <> / <Link href={`/c/${first.slug}`} className="hover:text-ink">{first.name}</Link></>}
         {" "}/ <span>{p.name}</span>
       </nav>
-      <div className="grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12 [&>*]:min-w-0">
         <ProductGallery
           name={p.name}
           images={p.images.map((i) => ({ url: i.url, alt: i.alt ?? p.name }))}
@@ -136,7 +136,7 @@ export default async function ProductPage({ params }: P) {
 
       <section id="reviews" className="mt-16">
         <h2 className="mb-6 text-2xl font-bold">Customer reviews {p.ratingCount > 0 && <span className="text-ink3">({p.ratingCount})</span>}</h2>
-        <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr] [&>*]:min-w-0">
           <div className="space-y-4">
             {p.reviews.length === 0 && <p className="text-ink2">No reviews yet — be the first to share your project.</p>}
             {p.reviews.map((r) => (

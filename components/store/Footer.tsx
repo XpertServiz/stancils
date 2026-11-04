@@ -16,7 +16,7 @@ export async function Footer() {
   const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(home.mapQuery || b.address)}`;
   return (
     <footer className="bg-stone text-stone-ink">
-      <div className="mx-auto grid max-w-[1280px] gap-x-10 px-4 py-10 md:grid-cols-4 md:px-6 md:py-14">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-10 px-4 py-10 md:grid-cols-4 md:px-6 md:py-14 [&>*]:min-w-0">
         <FooterColumn title="Our store">
           <p className="opacity-80">{b.address}</p>
           <table className="mt-3 text-[13px] opacity-90">

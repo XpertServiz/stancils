@@ -34,7 +34,7 @@ function Hero({ h, off }: { h: StoreHome; off: string }) {
   const img = exists(h.heroImage) ? h.heroImage : "";
   return (
     <section className="overflow-hidden bg-s1">
-      <div className="mx-auto grid max-w-[1280px] items-center gap-8 px-4 py-10 md:px-6 lg:grid-cols-2 lg:gap-12 lg:py-16">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-8 px-4 py-10 md:px-6 lg:grid-cols-2 lg:gap-12 lg:py-16 [&>*]:min-w-0">
         <div className="order-2 lg:order-1">
           {h.eyebrow && <span className="inline-block rounded-full bg-accent/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-accent">{h.eyebrow}</span>}
           <h1 className="mt-4 text-[34px] font-bold leading-[1.1] md:text-[52px]">{h.headline}</h1>
@@ -90,7 +90,7 @@ function Row({ row, cards, flip, alt }: { row: HomeRow; cards: Card[]; flip: boo
     <section className={`fade-up ${alt ? "bg-s1" : ""}`}>
       <div className="mx-auto max-w-[1280px] px-4 py-10 md:px-6 md:py-16">
         <SectionTitle sub={row.intro}>{row.title}</SectionTitle>
-        <div className={`grid gap-6 lg:grid-cols-[300px_1fr] ${flip ? "lg:grid-cols-[1fr_300px]" : ""}`}>
+        <div className={`grid grid-cols-1 gap-6 [&>*]:min-w-0 ${flip ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-[300px_minmax(0,1fr)]"}`}>
           <Link href={`/c/${row.collection}`} aria-label={`Shop ${row.title}`} className={`group relative block h-36 overflow-hidden rounded-[10px] lg:h-auto lg:min-h-full ${flip ? "lg:order-2" : ""}`}>
             {banner ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -180,7 +180,7 @@ export async function HomePage() {
       )}
 
       <section className="fade-up bg-s1">
-        <div className="mx-auto grid max-w-[1280px] gap-8 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-2 [&>*]:min-w-0">
           <div>
             <h2 className="font-display text-[28px] font-bold md:text-[36px]">Our store</h2>
             <span className="mt-2 block h-[3px] w-12 rounded bg-accent" />

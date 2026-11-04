@@ -44,7 +44,7 @@ export async function ShopView({ sp, collection, basePath }: { sp: SP; collectio
   const stockOn = one(sp.stock) === "1";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[230px_1fr]">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[230px_minmax(0,1fr)] [&>*]:min-w-0">
       <aside className="space-y-6 text-sm" aria-label="Filters">
         <details className="group lg:open:block" open>
           <summary className="mb-2 flex cursor-pointer list-none items-center justify-between font-bold uppercase tracking-wider lg:pointer-events-none">Availability</summary>

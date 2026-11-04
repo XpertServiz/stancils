@@ -24,7 +24,7 @@ export function CartPage() {
     );
   }
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr] [&>*]:min-w-0">
       <div>
         {lines.length > 0 && !quote && <div className="space-y-3">{lines.map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)}</div>}
         <ul className="divide-y divide-line border-y border-line">
