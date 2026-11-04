@@ -2,10 +2,16 @@ import { describe, expect, it } from "vitest";
 import { cleanLandingSettings, cleanProduct, LANDING_DEFAULTS, matchCategory, splitCategory } from "../lib/landing";
 import { DEFAULT_LANDING_PRODUCTS, SUBCATEGORIES } from "../lib/landing/defaults";
 import { cleanHome, DEFAULT_MENU_TEXT, HOME_DEFAULTS, parseHours, parseMenu, slugify, slugsFor } from "../lib/storefront";
+import { DEFAULT_THEME, THEMES, themeById } from "../lib/themes";
 import { cleanSale, isLive, landingPercent, saleDiscount } from "../lib/sales";
 import { parseCsv } from "../lib/services/importer";
 
 describe("storefront menu and homepage", () => {
+  it("the default theme exists, and every theme has a distinct id", () => {
+    expect(THEMES.some((t) => t.id === DEFAULT_THEME)).toBe(true);
+    expect(themeById("nonsense").id).toBe(DEFAULT_THEME);
+    expect(new Set(THEMES.map((t) => t.id)).size).toBe(THEMES.length);
+  });
   const menu = parseMenu(DEFAULT_MENU_TEXT);
   it("builds the dropdown menu from indented text", () => {
     expect(menu.map((m) => m.label)).toEqual(["All Collections", "All Stencils", "Calligraphy Stencils", "Wall & Canvas Stencils", "Carpet Design Stencils", "Art & Craft Stencils", "Acrylic Wall Decoration", "Art Supplies"]);
