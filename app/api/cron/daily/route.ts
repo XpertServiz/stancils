@@ -15,6 +15,8 @@ export async function GET(req: Request) {
     return String(e);
   });
   out.close = await runDailyClose(null).then((d) => d.date).catch((e) => String(e));
+  // visitor statistics are kept for 180 days
+  out.visitsPruned = await db.visit.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 180 * 86_400_000) } } }).then((r) => r.count).catch((e) => String(e));
   const now = new Date();
   if (now.getUTCDate() === 1) {
     const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));

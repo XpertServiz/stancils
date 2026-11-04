@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { CartProvider } from "@/components/store/CartContext";
+import { Track } from "@/components/store/Track";
 import { LogoMark } from "@/components/store/Header";
 import { getSettings } from "@/lib/settings";
 
@@ -19,6 +20,7 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
         </div>
       </header>
       <main id="main">{children}</main>
+      <Track />
       <footer className="border-t border-line py-5 text-center text-xs text-ink3">
         <Link href="/legal/refunds" className="mx-2 hover:text-ink">Refund policy</Link>
         <Link href="/legal/shipping" className="mx-2 hover:text-ink">Shipping</Link>

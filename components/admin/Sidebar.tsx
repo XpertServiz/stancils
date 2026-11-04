@@ -4,10 +4,10 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, ShoppingCart, Scissors, Package, Boxes, Truck, Users, Building2, Percent, Star, Globe, Inbox,
-  BookOpen, BarChart3, UserCog, History, Settings, Menu, X, Bell,
+  BookOpen, BarChart3, UserCog, History, Settings, Menu, X, Bell, Eye,
 } from "lucide-react";
 
-const ICONS = { LayoutDashboard, ShoppingCart, Scissors, Package, Boxes, Truck, Users, Building2, Percent, Star, Globe, Inbox, BookOpen, BarChart3, UserCog, History, Settings, Bell };
+const ICONS = { LayoutDashboard, ShoppingCart, Scissors, Package, Boxes, Truck, Users, Building2, Percent, Star, Globe, Inbox, BookOpen, BarChart3, UserCog, History, Settings, Bell, Eye };
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number };
 
 export function Sidebar({ items, brand }: { items: NavItem[]; brand: string }) {

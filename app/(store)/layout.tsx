@@ -4,6 +4,7 @@ import { Header } from "@/components/store/Header";
 import { Footer } from "@/components/store/Footer";
 import { Announcement } from "@/components/store/Announcement";
 import { WhatsAppBubble } from "@/components/store/WhatsApp";
+import { Track } from "@/components/store/Track";
 import { getSettings } from "@/lib/settings";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <Footer />
       <CartDrawer />
       <WhatsAppBubble />
+      <Track />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org).replace(/</g, "\u003c") }} />
     </CartProvider>
   );

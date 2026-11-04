@@ -16,8 +16,7 @@ export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: st
   const [added, setAdded] = useState(false);
   const { add } = useCart();
   const v = useMemo(() => variants.find((x) => x.id === vid)!, [vid, variants]);
-  const dim = (mm: number | null) => (mm ? (units === "in" ? `${(mm / 25.4).toFixed(0)}` : `${(mm / 10).toFixed(0)}`) : "");
-  const label = (x: BuyVariant) => (x.widthMm ? `${dim(x.widthMm)}x${dim(x.heightMm)} ${units === "in" ? "inches" : "cm"} (L×W) — ${x.price}` : `${x.name} — ${x.price}`);
+  const label = (x: BuyVariant) => `${x.name} — ${x.price}`; // same size names as the cart and the order
   const out = v && v.available !== null && v.available <= 0;
   const q = Math.max(1, Math.min(v?.available ?? 999, qty || 1));
 

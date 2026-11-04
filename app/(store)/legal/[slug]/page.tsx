@@ -11,6 +11,8 @@ const DEFAULTS: Record<string, { title: string; body: (n: string, e: string) => 
   returns: { title: "Returns & refunds", body: () => `Unused stock stencils can be returned within 30 days.\n\nCustom stencils and digital files are made for you and can't be returned — unless they arrive damaged or incorrect, in which case we'll remake them free.\n\nRefunds are issued in the currency you paid in.` },
 };
 
+DEFAULTS.refunds = { ...DEFAULTS.returns, title: "Refund policy" };
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const d = DEFAULTS[(await params).slug];
   return d ? { title: d.title, alternates: { canonical: `/legal/${(await params).slug}` } } : {};

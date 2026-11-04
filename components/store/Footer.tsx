@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram } from "lucide-react";
 import { getSettings } from "@/lib/settings";
-import { getHome, parseHours } from "@/lib/storefront";
 import { getActiveCurrency } from "@/lib/currency";
 import { CurrencySelect, FooterColumn } from "./Chrome";
 import { NewsletterForm } from "./NewsletterForm";
@@ -10,20 +9,11 @@ const QUICK: [string, string][] = [["Search", "/shop"], ["Contact Us", "/contact
 const HELP: [string, string][] = [["How to Order", "/faq"], ["Returns & Exchanges", "/legal/returns"], ["Shipping Details", "/legal/shipping"], ["Privacy Policy", "/legal/privacy"], ["FAQ", "/faq"], ["Track an order", "/track"]];
 
 export async function Footer() {
-  const [s, home, { cur, enabled }] = await Promise.all([getSettings(), getHome(), getActiveCurrency()]);
-  const hours = parseHours(home.hours);
+  const [s, { cur, enabled }] = await Promise.all([getSettings(), getActiveCurrency()]);
   const b = s.business;
-  const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(home.mapQuery || b.address)}`;
   return (
     <footer className="bg-stone text-stone-ink">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-10 px-4 py-10 md:grid-cols-4 md:px-6 md:py-14 [&>*]:min-w-0">
-        <FooterColumn title="Our store">
-          <p className="opacity-80">{b.address}</p>
-          <table className="mt-3 text-[13px] opacity-90">
-            <tbody>{hours.map((h) => <tr key={h.day}><td className="pr-4 font-semibold">{h.day}</td><td>{h.time}</td></tr>)}</tbody>
-          </table>
-          <a href={map} target="_blank" rel="noopener" className="mt-4 inline-block rounded-lg bg-mustard px-4 py-2 text-sm font-bold text-[#1c1b1a] hover:brightness-95">Get Directions</a>
-        </FooterColumn>
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-10 px-4 py-10 md:grid-cols-3 md:px-6 md:py-14 [&>*]:min-w-0">
         <FooterColumn title="Quick links">
           <ul className="space-y-2 opacity-90">
             {QUICK.map(([l, h]) => <li key={l}><Link href={h} className="hover:text-mustard">{l}</Link></li>)}

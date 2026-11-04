@@ -834,3 +834,27 @@ model Redirect {
   to        String
   createdAt DateTime @default(now())
 }
+
+/// One page view on the public website (no IP addresses are stored). Used for Admin → Visitors.
+model Visit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  visitorId String // random id kept in the visitor's browser
+  sessionId String // random id for one visit (until the tab is closed)
+  path      String
+  country   String? // ISO code from the host's geo header
+  region    String?
+  city      String?
+  referrer  String? // website the visitor came from (host name only)
+  source    String? // utm_source, or the referrer host
+  device    String? // mobile | tablet | desktop
+  browser   String?
+  os        String?
+  lang      String?
+  isNew     Boolean  @default(false) // first time this browser was ever seen
+
+  @@index([createdAt])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([country])
+}

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { ChevronDown, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { useCart } from "./CartContext";
 import { setCurrency } from "@/app/actions/prefs";
@@ -53,6 +53,7 @@ type Suggest = { products: { slug: string; name: string; price: string; image: s
 
 export function SearchBox({ className = "", autoFocus = false, onDone }: { className?: string; autoFocus?: boolean; onDone?: () => void }) {
   const router = useRouter();
+  const id = useId(); // the box exists twice on the page (desktop and phone menu), so each needs its own id
   const [q, setQ] = useState("");
   const [s, setS] = useState<Suggest | null>(null);
   const [open, setOpen] = useState(false);
@@ -88,9 +89,9 @@ export function SearchBox({ className = "", autoFocus = false, onDone }: { class
         onSubmit={(e) => { e.preventDefault(); if (q.trim()) go(`/shop?q=${encodeURIComponent(q.trim())}`); }}
         className="flex overflow-hidden rounded-[8px] bg-white"
       >
-        <label htmlFor="site-search" className="sr-only">Search products</label>
+        <label htmlFor={id} className="sr-only">Search products</label>
         <input
-          id="site-search"
+          id={id}
           autoFocus={autoFocus}
           value={q}
           onChange={(e) => setQ(e.target.value)}
