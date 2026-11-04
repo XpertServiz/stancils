@@ -18,7 +18,7 @@ export default async function Reviews({ searchParams }: { searchParams: Promise<
   );
   return (
     <div>
-      <PageHeader title="Reviews" sub="Published reviews show on your homepage — “Feature” puts one first. Reviews with links or spam words wait here for you." />
+      <PageHeader title="Reviews" sub="New reviews from your customers wait in the Pending tab. Press Publish to show one on your homepage; Feature puts it first." />
       <Panel title="Add a review I received" className="mb-5">
         <div id="add" />
         <ActionForm action={addReview}>

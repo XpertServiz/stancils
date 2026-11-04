@@ -61,12 +61,12 @@ export async function submitReview(_: R, fd: FormData): Promise<R> {
   }
   const recent = await db.review.count({ where: { email, createdAt: { gt: new Date(Date.now() - 86400000) } } });
   const flagged = BANNED.test(d.body) || recent >= 3;
+  // DECISION: every customer review waits for the owner's approval (Admin → Reviews) before it is shown
   await db.review.create({
-    data: { name: d.name, email, rating: d.rating, title: d.title, body: d.body, productId: d.productId || null, orderId, verified, status: flagged ? "pending" : "published" },
+    data: { name: d.name, email, rating: d.rating, title: d.title, body: d.body, productId: d.productId || null, orderId, verified, status: "pending" },
   });
-  if (d.productId && !flagged) await refreshRating(d.productId);
-  await db.alert.create({ data: { type: "review", severity: d.rating <= 3 ? "warning" : "info", message: `New ${d.rating}★ review from ${d.name}`, link: "/admin/reviews" } });
-  return { ok: true, msg: flagged ? "Thanks! Your review will appear after a quick check." : "Thanks — your review is live!" };
+  await db.alert.create({ data: { type: "review", severity: d.rating <= 3 ? "warning" : "info", message: `New ${d.rating}★ review from ${d.name} — waiting for your approval${flagged ? " (flagged)" : ""}`, link: "/admin/reviews" } });
+  return { ok: true, msg: "Thank you! Your review has been sent. It will appear on our website once we approve it." };
 }
 
 export async function refreshRating(productId: string) {

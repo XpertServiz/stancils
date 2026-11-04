@@ -11,9 +11,10 @@ import { saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
 
 export default async function LandingProducts() {
   await requireStaff("content.edit");
-  const [seo, home, reviewCount, cols] = await Promise.all([
+  const [seo, home, reviewCount, pendingCount, cols] = await Promise.all([
     getLandingSettings(), getHome(),
     db.review.count({ where: { status: "published" } }),
+    db.review.count({ where: { status: "pending" } }),
     db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], select: { name: true, slug: true } }),
   ]);
   const rows = [...home.rows, { title: "", intro: "", collection: "", banner: "", count: 8 }];
@@ -136,7 +137,8 @@ export default async function LandingProducts() {
         </Panel>
 
         <Panel title="Customer reviews">
-          <p className="text-sm text-ink2">{reviewCount} review{reviewCount === 1 ? " is" : "s are"} showing on your homepage. Featured reviews show first.</p>
+          <p className="text-sm text-ink2">{reviewCount} review{reviewCount === 1 ? " is" : "s are"} showing on your homepage. Customers send reviews with the “Write a review” button, and they appear only after you approve them.</p>
+          {pendingCount > 0 && <p className="mt-2 rounded-lg bg-mustard/20 p-3 text-sm font-semibold">{pendingCount} new {pendingCount === 1 ? "review is" : "reviews are"} waiting for your approval.</p>}
           <div className="mt-3 flex flex-wrap gap-2"><Link href="/admin/reviews" className="btn btn-soft btn-sm">Manage reviews</Link><Link href="/admin/reviews#add" className="btn btn-ghost btn-sm">Add a review I received</Link></div>
         </Panel>
 

@@ -11,6 +11,7 @@ import { getLiveSales } from "@/lib/sales";
 import { ProductGrid } from "./ProductCard";
 import { ReviewCarousel, type ReviewItem } from "./ReviewCarousel";
 import { NewsletterForm } from "./NewsletterForm";
+import { WriteReview } from "./WriteReview";
 
 /** A photo in /public that the owner may not have added yet: show a tidy placeholder instead of a broken image. */
 const exists = (url: string) => {
@@ -192,19 +193,25 @@ export async function HomePage() {
         <section className="mx-auto max-w-[1280px] px-4 py-24 text-center md:px-6"><p className="text-lg text-ink2">Our new designs are on their way. Check back soon.</p></section>
       )}
 
-      {reviews.length > 0 && (
-        <section id="reviews" className={`fade-up ${shown.length % 2 === 0 ? "bg-s1" : ""}`}>
-          <div className="mx-auto max-w-[1280px] px-4 py-12 md:px-6 md:py-16">
-            <SectionTitle>Let customers speak for us</SectionTitle>
-            <p className="-mt-2 mb-8 flex items-center justify-center gap-2 text-sm text-ink2">
-              <span className="flex">{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={17} className={i <= Math.round(agg._avg.rating ?? 0) ? "fill-mustard text-mustard" : "text-line"} />)}</span>
-              <b>{(agg._avg.rating ?? 0).toFixed(1)}</b> from {agg._count} review{agg._count === 1 ? "" : "s"}
-            </p>
-            <ReviewCarousel reviews={reviews} />
-            <p className="mt-6 text-center"><Link href="/reviews/new" className="text-sm font-semibold text-accent underline">Write a review</Link></p>
+      <section id="reviews" className="fade-up bg-s1" aria-labelledby="reviews-h">
+        <div className="mx-auto max-w-[1280px] px-4 py-12 md:px-6 md:py-16">
+          <div className="mb-8 text-center">
+            <h2 id="reviews-h" className="text-[13px] font-bold uppercase tracking-[.2em] text-ink2 md:text-[15px]">Let customers speak for us</h2>
+            {agg._count > 0 && (
+              <p className="mt-3 flex flex-col items-center gap-1 text-sm text-ink2">
+                <span className="flex">{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={20} className={i <= Math.round(agg._avg.rating ?? 0) ? "fill-mustard text-mustard" : "text-line"} />)}</span>
+                <span>from {agg._count} review{agg._count === 1 ? "" : "s"}</span>
+              </p>
+            )}
           </div>
-        </section>
-      )}
+          {reviews.length > 0 ? (
+            <ReviewCarousel reviews={reviews} />
+          ) : (
+            <p className="mx-auto max-w-md text-center text-ink2">No reviews yet — be the first to tell others about your experience.</p>
+          )}
+          <div className="mt-8 text-center"><WriteReview label="Write a review" /></div>
+        </div>
+      </section>
 
       {latestCards.length > 0 && (
         <section className="fade-up">
