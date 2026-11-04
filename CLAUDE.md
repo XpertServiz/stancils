@@ -656,3 +656,17 @@ SENTRY_DSN=
 - Google Business Profile ownership and Place ID; existing reviews and UGC to import.
 - Year-end date; opening fixed-asset list (cutters, computers).
 - Reference zip "The Creative Corner — Stripe Payment Gateway": share it in the repo (or its key files) so its checkout/Stripe flow can be reviewed; it was not accessible from the build environment.
+
+---
+
+## 17. Implementation status & decisions (v1 build)
+
+Built as one Next.js 15 app (store + admin) on Postgres via Prisma. Deviations from the brief, each chosen to keep the ledger correct while shipping everything at once:
+
+- **Business logic in TypeScript services** (`lib/services/*`) inside Prisma transactions instead of Postgres RPCs; journal balance and immutability are still enforced by database triggers (see the init migration).
+- **Auth**: signed-cookie sessions (jose) for staff and customers instead of Supabase Auth; staff permissions per §5.22 in `lib/permissions.ts`.
+- **Content publishing**: edits publish immediately and every change is versioned with one-click rollback (no separate draft/preview state).
+- **3D tiering**: lightweight heuristic (WebGL2 + cores + Save-Data + reduced motion) instead of `detect-gpu`.
+- **Revenue & COGS** are recognised when payment is received; made-to-order/custom costs flow raw materials → WIP (job start) → COGS (job done).
+- **Daily close** runs for the previous business day (nightly cron) so trading on the current day is never locked.
+- **Not yet built** (Phase 4 / needs third-party accounts): AI shop assistant & Owner Copilot, WhatsApp Cloud API messaging (links + bubble only), Instagram/Pinterest sync, live Google reviews, carrier label APIs (tracking numbers are entered manually), AR on mobile, Urdu/RTL.

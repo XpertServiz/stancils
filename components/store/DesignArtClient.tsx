@@ -1,0 +1,10 @@
+"use client";
+import { uniqueSvg } from "@/lib/designs";
+import { themed } from "@/lib/theme-colors";
+
+export function DesignArtClient({ svg, uid, colors, className = "" }: { svg: string | null | undefined; uid: string; colors?: string[]; className?: string }) {
+  if (!svg) return <div className={`art ${className}`} />;
+  const style: Record<string, string> = {};
+  (colors ?? []).forEach((c, i) => (style[`--l${i + 1}`] = themed(c)));
+  return <div className={`art h-full w-full ${className}`} style={style as React.CSSProperties} dangerouslySetInnerHTML={{ __html: uniqueSvg(svg, uid.replace(/[^a-zA-Z0-9]/g, "")) }} />;
+}
