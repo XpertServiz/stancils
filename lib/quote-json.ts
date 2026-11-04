@@ -8,7 +8,7 @@ export function quoteToJson(q: Quote) {
     currency: q.currency.code,
     lines: q.lines.map((l) => ({
       key: l.key, variantId: l.variantId, customDesignId: l.customDesignId, slug: l.slug, name: l.name, variantName: l.variantName,
-      sku: l.sku, kind: l.kind, qty: l.qty, unitPrice: fm(l.unitPrice), total: fm(l.total), available: l.available, error: l.error, svg: l.designSvg ?? null,
+      sku: l.sku, kind: l.kind, qty: l.qty, unitPrice: fm(l.unitPrice), total: fm(l.total), available: l.available, error: l.error, svg: l.designSvg ?? null, image: l.image ?? null,
     })),
     subtotal: fm(q.subtotal),
     subtotalMinor: Number(q.subtotal),

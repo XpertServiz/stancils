@@ -116,11 +116,15 @@ export async function saveAppearance(_: R, fd: FormData): Promise<R> {
   if (!THEMES.some((t) => t.id === preset)) return { ok: false, msg: "Unknown theme." };
   const accent = fd.get("useAccent") === "on" ? String(fd.get("accent") || "") : "";
   if (accent && !hexToTriplet(accent)) return { ok: false, msg: "Main colour must be a hex colour like #2563EB." };
+  const header = fd.get("useHeader") === "on" ? String(fd.get("header") || "") : "";
+  if (header && !hexToTriplet(header)) return { ok: false, msg: "Header colour must be a hex colour like #2A2A2A." };
+  const highlight = fd.get("useHighlight") === "on" ? String(fd.get("highlight") || "") : "";
+  if (highlight && !hexToTriplet(highlight)) return { ok: false, msg: "Highlight colour must be a hex colour like #F2B84B." };
   const displayFont = String(fd.get("displayFont"));
   const bodyFont = String(fd.get("bodyFont"));
   if (!FONTS[displayFont] || !FONTS[bodyFont]) return { ok: false, msg: "Unknown font." };
   const style = String(fd.get("splashStyle") || "cube") as "cube" | "laser" | "layers" | "spray";
-  await setSetting("theme", { preset, accent, displayFont, bodyFont });
+  await setSetting("theme", { preset, accent, header, highlight, displayFont, bodyFont });
   await setSetting("splash", { enabled: fd.get("splash") === "on", style });
   await audit(s.id, "appearance.update", "settings", "theme", undefined, { preset, accent, displayFont, bodyFont, splash: style });
   refresh();

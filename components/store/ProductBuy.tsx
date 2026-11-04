@@ -1,92 +1,88 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Minus, Plus, ShoppingBag, Download, Check, Heart } from "lucide-react";
+import { Check, Download, MessageCircle } from "lucide-react";
 import { useCart } from "./CartContext";
-import { toggleWishlist } from "@/app/actions/store";
 
 export type BuyVariant = {
   id: string; name: string; price: string; compareAt: string | null; isDigital: boolean;
   available: number | null; stockLabel: string; widthMm: number | null; heightMm: number | null; material: string | null;
 };
 
-export function ProductBuy({ productId, variants, units }: { productId: string; variants: BuyVariant[]; units: "cm" | "in" }) {
+export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: string; variants: BuyVariant[]; units: "cm" | "in"; whatsapp: string; sale: boolean }) {
   const physical = variants.filter((v) => !v.isDigital);
   const digital = variants.find((v) => v.isDigital);
   const [vid, setVid] = useState(physical[0]?.id ?? variants[0]?.id);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [saved, setSaved] = useState(false);
   const { add } = useCart();
   const v = useMemo(() => variants.find((x) => x.id === vid)!, [vid, variants]);
-  const dim = (mm: number | null) => (mm ? (units === "in" ? `${(mm / 25.4).toFixed(1)}″` : `${(mm / 10).toFixed(0)} cm`) : "");
+  const dim = (mm: number | null) => (mm ? (units === "in" ? `${(mm / 25.4).toFixed(0)}` : `${(mm / 10).toFixed(0)}`) : "");
+  const label = (x: BuyVariant) => (x.widthMm ? `${dim(x.widthMm)}x${dim(x.heightMm)} ${units === "in" ? "inches" : "cm"} (L×W) — ${x.price}` : `${x.name} — ${x.price}`);
   const out = v && v.available !== null && v.available <= 0;
+  const q = Math.max(1, Math.min(v?.available ?? 999, qty || 1));
 
-  const doAdd = (id = vid, q = qty) => {
-    add({ variantId: id, qty: q });
+  const doAdd = (id = vid, n = q, open = true) => {
+    add({ variantId: id, qty: n });
+    if (!open) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
+  const wa = whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello, I'd like to order: ${name}${v ? ` (${v.name})` : ""}`)}` : "";
 
   return (
     <div className="space-y-5">
-      <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold tabular">{v?.price}</span>
-        {v?.compareAt && <span className="text-lg text-ink3 line-through tabular">{v.compareAt}</span>}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-2xl font-bold tabular text-accent">{v?.price}</span>
+        {v?.compareAt && <span className="text-xl font-semibold text-ink3 line-through tabular">{v.compareAt}</span>}
+        {(v?.compareAt || sale) && <span className="rounded bg-accent px-2 py-1 text-[11px] font-bold uppercase text-onaccent">Sale</span>}
       </div>
+      <p className="text-sm text-ink2"><u>Shipping</u> calculated at checkout.</p>
+
       {physical.length > 0 && (
-        <fieldset>
-          <legend className="label">Size</legend>
-          <div className="grid grid-cols-2 gap-2">
-            {physical.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                onClick={() => setVid(x.id)}
-                aria-pressed={vid === x.id}
-                className={`rounded-xl border p-3 text-left transition-colors ${vid === x.id ? "border-accent bg-accent/10" : "border-line hover:border-ink3"}`}
-              >
-                <span className="block text-sm font-semibold">{x.name}</span>
-                <span className="block text-xs text-ink3">{x.widthMm ? `${dim(x.widthMm)} × ${dim(x.heightMm)}` : x.material ?? ""} · {x.price}</span>
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      )}
-      <p className={`text-sm ${out ? "text-danger" : "text-mint"}`}>{v?.stockLabel}</p>
-      <div className="flex gap-2">
-        <div className="flex items-center rounded-xl border border-line">
-          <button className="p-3" aria-label="Decrease quantity" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus size={16} /></button>
-          <span className="w-10 text-center font-semibold tabular" aria-live="polite">{qty}</span>
-          <button className="p-3" aria-label="Increase quantity" onClick={() => setQty((q) => Math.min(v?.available ?? 999, q + 1))}><Plus size={16} /></button>
+        <div>
+          <label htmlFor="size" className="mb-1.5 block text-sm">Sizes &amp; Prices</label>
+          <select id="size" className="select w-full max-w-sm" value={vid} onChange={(e) => setVid(e.target.value)}>
+            {physical.map((x) => <option key={x.id} value={x.id}>{label(x)}</option>)}
+          </select>
         </div>
-        <button className="btn btn-primary flex-1 !py-3 text-base" disabled={out} onClick={() => doAdd()}>
-          {added ? <><Check size={18} />Added</> : <><ShoppingBag size={18} />{out ? "Out of stock" : "Add to cart"}</>}
+      )}
+      <div>
+        <label htmlFor="qty" className="mb-1.5 block text-sm">Quantity</label>
+        <input id="qty" type="number" min={1} max={v?.available ?? 999} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="input !w-24" />
+      </div>
+      <p className={`text-sm ${out ? "text-danger" : "text-mint"}`}>{v?.stockLabel}</p>
+
+      <div className="space-y-2.5">
+        <button className="h-12 w-full rounded-lg border-2 border-ink text-sm font-bold uppercase tracking-[.15em] transition hover:bg-ink hover:text-bg disabled:opacity-50" disabled={out} onClick={() => doAdd()}>
+          {added ? <span className="inline-flex items-center gap-2"><Check size={16} />Added to cart</span> : out ? "Sold out" : "Add to cart"}
         </button>
         <button
-          className="btn btn-ghost !px-3"
-          aria-label="Save to wishlist"
-          onClick={async () => {
-            const r = await toggleWishlist(productId);
-            if ("needLogin" in r && r.needLogin) window.location.href = "/account/login";
-            else setSaved(Boolean(r.saved));
-          }}
+          className="h-12 w-full rounded-lg bg-mustard text-sm font-bold uppercase tracking-[.15em] text-[#1c1b1a] transition hover:brightness-95 disabled:opacity-50"
+          disabled={out}
+          onClick={() => { doAdd(vid, q, false); window.location.href = "/checkout"; }}
         >
-          <Heart size={18} className={saved ? "fill-accent text-accent" : ""} />
+          Buy it now
         </button>
+        {wa && (
+          <a href={wa} target="_blank" rel="noopener" className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-line text-sm font-semibold text-ink2 transition hover:border-[#25D366] hover:text-[#128c4a]">
+            <MessageCircle size={17} />Order on WhatsApp
+          </a>
+        )}
       </div>
+
       {digital && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line p-3">
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-line p-3">
           <div>
             <p className="flex items-center gap-2 text-sm font-semibold"><Download size={16} className="text-mint" />Also as a digital cut file</p>
-            <p className="text-xs text-ink3">SVG for Cricut, Silhouette & laser · instant download · {digital.price}</p>
+            <p className="text-xs text-ink3">Instant download · {digital.price}</p>
           </div>
           <button className="btn btn-soft btn-sm" onClick={() => doAdd(digital.id, 1)}>Add file</button>
         </div>
       )}
-      {/* sticky mobile add-to-cart */}
+
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-line bg-bg/95 p-3 backdrop-blur lg:hidden">
         <span className="font-bold tabular">{v?.price}</span>
-        <button className="btn btn-primary flex-1" disabled={out} onClick={() => doAdd()}>{out ? "Out of stock" : "Add to cart"}</button>
+        <button className="btn btn-primary flex-1" disabled={out} onClick={() => doAdd()}>{out ? "Sold out" : "Add to cart"}</button>
       </div>
     </div>
   );

@@ -1,13 +1,15 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Lock, Tag } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useCart } from "./CartContext";
 import { useQuote } from "./useQuote";
-import { DesignArtClient } from "./DesignArtClient";
+import { Thumb } from "./Thumb";
 import { checkout, methodsFor } from "@/app/actions/checkout";
 import type { Method } from "@/lib/payments";
 import type { BankAccount } from "@/lib/settings";
 import { BankDetailsCard } from "./BankDetailsCard";
+import { NOTE_KEY } from "./CartPage";
 
 type Props = {
   currency: string;
@@ -19,6 +21,14 @@ type Props = {
   bankInstructions: string;
 };
 
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <section className="space-y-3"><h2 className="text-lg font-bold">{title}</h2>{children}</section>
+);
+const Radio = ({ on, children }: { on: boolean; children: React.ReactNode }) => (
+  <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3.5 ${on ? "border-accent bg-accent/5 ring-1 ring-accent" : "border-line"}`}>{children}</label>
+);
+
+/** A single-column, step-by-step checkout (Contact → Delivery → Shipping → Payment) with the order summary beside it. */
 export function CheckoutForm({ currency, defaultCountry, countries, initialMethods, customer, banks, bankInstructions }: Props) {
   const { lines, clear, ready } = useCart();
   const [country, setCountry] = useState(defaultCountry);
@@ -32,6 +42,7 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
   const [pending, start] = useTransition();
   const idem = useMemo(() => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now() + Math.random())), []);
   const { quote, loading } = useQuote(lines, { country, shippingId, discountCode: code, email: email.includes("@") ? email : null });
+  const [first, ...rest] = (customer?.name ?? "").split(" ");
 
   useEffect(() => {
     methodsFor(country).then((m) => {
@@ -41,17 +52,19 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
   }, [country]);
 
   if (ready && lines.length === 0) {
-    return <div className="card p-10 text-center text-ink2">Your cart is empty. <a href="/shop" className="text-accent underline">Browse stencils</a></div>;
+    return <div className="mx-auto max-w-md px-4 py-20 text-center text-ink2">Your cart is empty. <Link href="/shop" className="font-semibold text-accent underline">Continue shopping</Link></div>;
   }
 
   const submit = (fd: FormData) => {
     setError(null);
+    let note = String(fd.get("notes") || "");
+    try { note = [sessionStorage.getItem(NOTE_KEY), note].filter(Boolean).join(" — "); } catch {}
     start(async () => {
       const r = await checkout({
         idempotencyKey: idem,
         lines,
         email: String(fd.get("email")),
-        name: String(fd.get("name")),
+        name: `${String(fd.get("first") || "").trim()} ${String(fd.get("last") || "").trim()}`.trim(),
         phone: String(fd.get("phone") || "") || undefined,
         line1: String(fd.get("line1")),
         line2: String(fd.get("line2") || "") || undefined,
@@ -62,111 +75,117 @@ export function CheckoutForm({ currency, defaultCountry, countries, initialMetho
         shippingId: quote?.shippingId ?? shippingId,
         discountCode: code,
         paymentMethod: method,
-        notes: String(fd.get("notes") || "") || undefined,
+        notes: note || undefined,
         marketing: fd.get("marketing") === "on",
       });
       if (!r.ok) return setError(r.error);
       clear();
+      try { sessionStorage.removeItem(NOTE_KEY); } catch {}
       window.location.href = r.redirect;
     });
   };
 
   return (
-    <form action={submit} className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
-      <div className="space-y-8">
-        <fieldset className="card space-y-3 p-6">
-          <legend className="px-1 text-lg font-bold">Contact</legend>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label><span className="label">Email</span><input name="email" type="email" required className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
-            <label><span className="label">Phone {method === "cod" && "(required)"}</span><input name="phone" type="tel" className="input" defaultValue={customer?.phone} autoComplete="tel" required={method === "cod"} /></label>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-ink2"><input type="checkbox" name="marketing" /> Email me new designs and offers</label>
-        </fieldset>
+    <form action={submit} className="mx-auto grid max-w-[1100px] lg:grid-cols-[1.15fr_1fr]">
+      <div className="space-y-8 px-4 py-8 md:px-6 lg:py-10 lg:pr-12">
+        <Section title="Contact">
+          <label><span className="sr-only">Email</span><input name="email" type="email" required placeholder="Email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
+          <label className="flex items-center gap-2 text-sm text-ink2"><input type="checkbox" name="marketing" /> Email me with news and offers</label>
+        </Section>
 
-        <fieldset className="card space-y-3 p-6">
-          <legend className="px-1 text-lg font-bold">{quote?.needsShipping === false ? "Billing details" : "Delivery address"}</legend>
-          <label><span className="label">Full name</span><input name="name" required className="input" defaultValue={customer?.name} autoComplete="name" /></label>
-          <label><span className="label">Country</span>
-            <select className="select" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country">
+        <Section title={quote?.needsShipping === false ? "Billing details" : "Delivery"}>
+          <label><span className="sr-only">Country/Region</span>
+            <select className="select" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country" aria-label="Country/Region">
               {countries.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
             </select>
           </label>
-          <label><span className="label">Address</span><input name="line1" required className="input" autoComplete="address-line1" /></label>
-          <input name="line2" className="input" placeholder="Apartment, suite (optional)" autoComplete="address-line2" aria-label="Address line 2" />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label><span className="label">City</span><input name="city" required className="input" autoComplete="address-level2" /></label>
-            <label><span className="label">State / Province</span><input name="state" className="input" autoComplete="address-level1" /></label>
-            <label><span className="label">Postcode</span><input name="postcode" className="input" autoComplete="postal-code" /></label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input name="first" required placeholder="First name" aria-label="First name" className="input" defaultValue={first} autoComplete="given-name" />
+            <input name="last" required placeholder="Last name" aria-label="Last name" className="input" defaultValue={rest.join(" ")} autoComplete="family-name" />
           </div>
-        </fieldset>
+          <input name="line1" required placeholder="Address" aria-label="Address" className="input" autoComplete="address-line1" />
+          <input name="line2" placeholder="Apartment, suite, etc. (optional)" aria-label="Apartment, suite, etc." className="input" autoComplete="address-line2" />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <input name="city" required placeholder="City" aria-label="City" className="input" autoComplete="address-level2" />
+            <input name="state" placeholder="State / Province" aria-label="State or province" className="input" autoComplete="address-level1" />
+            <input name="postcode" placeholder="Postal code" aria-label="Postal code" className="input" autoComplete="postal-code" />
+          </div>
+          <input name="phone" type="tel" placeholder={method === "cod" ? "Phone (required)" : "Phone"} aria-label="Phone" className="input" defaultValue={customer?.phone} autoComplete="tel" required={method === "cod"} />
+        </Section>
 
         {quote?.needsShipping && (
-          <fieldset className="card space-y-2 p-6">
-            <legend className="px-1 text-lg font-bold">Shipping</legend>
-            {quote.shippingOptions.length === 0 && <p className="text-sm text-danger">{quote.errors.join(" ")}</p>}
-            {quote.shippingOptions.map((o) => (
-              <label key={o.id} className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 ${quote.shippingId === o.id ? "border-accent bg-accent/5" : "border-line"}`}>
-                <span className="flex items-center gap-3"><input type="radio" name="ship" checked={quote.shippingId === o.id} onChange={() => setShippingId(o.id)} /><span><span className="block font-semibold">{o.name}</span><span className="text-xs text-ink3">{o.days}</span></span></span>
-                <span className="font-semibold tabular">{o.price}</span>
-              </label>
-            ))}
-          </fieldset>
+          <Section title="Shipping method">
+            {quote.shippingOptions.length === 0 && <p className="rounded-lg border border-line bg-s1 p-3 text-sm text-ink2">{quote.errors.join(" ") || "Enter your address to see shipping options."}</p>}
+            <div className="space-y-2">
+              {quote.shippingOptions.map((o) => (
+                <Radio key={o.id} on={quote.shippingId === o.id}>
+                  <input type="radio" name="ship" checked={quote.shippingId === o.id} onChange={() => setShippingId(o.id)} />
+                  <span className="flex-1"><span className="block font-semibold">{o.name}</span><span className="text-xs text-ink3">{o.days}</span></span>
+                  <span className="font-semibold tabular">{o.price}</span>
+                </Radio>
+              ))}
+            </div>
+          </Section>
         )}
 
-        <fieldset className="card space-y-2 p-6">
-          <legend className="px-1 text-lg font-bold">Payment</legend>
+        <Section title="Payment">
+          <p className="-mt-2 text-sm text-ink3">All transactions are secure and encrypted.</p>
           {methods.length === 0 && <p className="text-sm text-danger">No payment methods are available for {currency}. Try another currency.</p>}
-          {methods.map((m) => (
-            <label key={m.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${method === m.id ? "border-accent bg-accent/5" : "border-line"}`}>
-              <input type="radio" name="method" checked={method === m.id} onChange={() => setMethod(m.id)} />
-              <span><span className="block font-semibold">{m.label}</span><span className="text-xs text-ink3">{m.hint}</span></span>
-            </label>
-          ))}
+          <div className="space-y-2">
+            {methods.map((m) => (
+              <Radio key={m.id} on={method === m.id}>
+                <input type="radio" name="method" checked={method === m.id} onChange={() => setMethod(m.id)} />
+                <span><span className="block font-semibold">{m.label}</span><span className="text-xs text-ink3">{m.hint}</span></span>
+              </Radio>
+            ))}
+          </div>
           {method === "bank" && (
-            <div className="pt-2">
+            <div className="pt-1">
               <BankDetailsCard banks={banks} instructions={bankInstructions} amount={quote?.total} />
               <p className="mt-2 text-xs text-ink3">After you place the order you&apos;ll get your order number to use as the payment reference, and a place to upload your receipt.</p>
             </div>
           )}
-          <label className="block pt-2"><span className="label">Order notes (optional)</span><textarea name="notes" rows={2} className="textarea" /></label>
-        </fieldset>
+          <label className="block pt-1"><span className="sr-only">Order notes</span><textarea name="notes" rows={2} className="textarea" placeholder="Order notes (optional)" /></label>
+        </Section>
+
+        {error && <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">{error}</p>}
+        <div>
+          <button className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-accent text-base font-bold text-onaccent transition hover:brightness-90 disabled:opacity-50" disabled={pending || loading || !quote || !method || (quote?.errors.length ?? 0) > 0}>
+            <Lock size={16} />{pending ? "Placing order…" : method === "bank" || method === "cod" ? "Complete order" : `Pay now · ${quote?.total ?? ""}`}
+          </button>
+          <p className="mt-3 text-center text-xs text-ink3"><Link href="/cart" className="text-accent underline">Return to cart</Link> · Charged in {currency}</p>
+        </div>
       </div>
 
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <div className="card space-y-4 p-6">
-          <h2 className="text-lg font-bold">Order summary</h2>
+      <aside className="border-t border-line bg-s1 px-4 py-8 md:px-6 lg:border-l lg:border-t-0 lg:py-10 lg:pl-10">
+        <div className="space-y-5 lg:sticky lg:top-6">
           {!quote && <div className="skeleton h-40 rounded-xl" />}
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {quote?.lines.map((l) => (
               <li key={l.key} className="flex items-center gap-3">
-                <div className="art-tile relative h-14 w-14 shrink-0 rounded-lg p-1.5 text-accent">
-                  <DesignArtClient svg={l.svg} uid={`co${l.key}`} />
-                  <span className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-ink3 text-[11px] font-bold text-bg">{l.qty}</span>
+                <div className="relative">
+                  <Thumb image={l.image} svg={l.svg} uid={`co${l.key}`} className="h-16 w-16 bg-bg" />
+                  <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-ink3 px-1 text-[11px] font-bold text-bg">{l.qty}</span>
                 </div>
-                <div className="min-w-0 flex-1"><p className="line-clamp-1 text-sm font-semibold">{l.name}</p><p className="line-clamp-1 text-xs text-ink3">{l.variantName}</p>{l.error && <p className="text-xs text-danger">{l.error}</p>}</div>
+                <div className="min-w-0 flex-1"><p className="line-clamp-2 text-sm font-semibold">{l.name}</p><p className="line-clamp-1 text-xs text-ink3">{l.variantName}</p>{l.error && <p className="text-xs text-danger">{l.error}</p>}</div>
                 <span className="text-sm tabular">{l.total}</span>
               </li>
             ))}
           </ul>
           <div className="flex gap-2">
-            <div className="relative flex-1"><Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink3" /><input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} placeholder="Discount code" className="input pl-8 !py-2 text-sm" aria-label="Discount code" /></div>
-            <button type="button" className="btn btn-soft btn-sm" onClick={() => setCode(codeInput || null)}>Apply</button>
+            <input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setCode(codeInput || null); } }} placeholder="Discount code" className="input" aria-label="Discount code" />
+            <button type="button" className="rounded-lg bg-ink/10 px-5 text-sm font-semibold hover:bg-ink/15 disabled:opacity-50" disabled={!codeInput} onClick={() => setCode(codeInput || null)}>Apply</button>
           </div>
           {quote?.discountError && <p className="text-xs text-danger">{quote.discountError}</p>}
           {quote && (
-            <dl className="space-y-1.5 border-t border-line pt-4 text-sm">
+            <dl className="space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-ink2">Subtotal</dt><dd className="tabular">{quote.subtotal}</dd></div>
               {quote.discount && <div className="flex justify-between text-mint"><dt>Discount ({quote.discountLabel})</dt><dd className="tabular">−{quote.discount}</dd></div>}
-              {quote.shippingFee && <div className="flex justify-between"><dt className="text-ink2">Shipping</dt><dd className="tabular">{quote.shippingFee}</dd></div>}
+              <div className="flex justify-between"><dt className="text-ink2">Shipping</dt><dd className="tabular">{quote.shippingFee ?? (quote.needsShipping ? "Enter shipping address" : "—")}</dd></div>
               {quote.tax && <div className="flex justify-between"><dt className="text-ink2">Tax {quote.taxInclusive && "(included)"}</dt><dd className="tabular">{quote.tax}</dd></div>}
-              <div className="flex justify-between border-t border-line pt-3 text-lg font-bold"><dt>Total</dt><dd className="tabular">{quote.total}</dd></div>
+              <div className="flex items-baseline justify-between pt-2 text-lg font-bold"><dt>Total</dt><dd className="tabular"><span className="mr-2 text-xs font-normal text-ink3">{currency}</span>{quote.total}</dd></div>
             </dl>
           )}
-          {error && <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">{error}</p>}
-          <button className="btn btn-primary w-full !py-3.5 text-base" disabled={pending || loading || !quote || !method || (quote?.errors.length ?? 0) > 0}>
-            <Lock size={16} />{pending ? "Placing order…" : method === "bank" || method === "cod" ? `Place order · ${quote?.total ?? ""}` : `Pay ${quote?.total ?? ""}`}
-          </button>
-          <p className="text-center text-xs text-ink3">Charged in {currency}. Your details are encrypted.</p>
         </div>
       </aside>
     </form>

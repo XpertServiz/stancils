@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ShieldCheck, Truck, RotateCcw, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { getActiveCurrency, getCountry, getUnits } from "@/lib/currency";
 import { variantPrice } from "@/lib/services/pricing";
 import { cardInclude, toCard } from "@/lib/catalog";
 import { formatMoney } from "@/lib/money";
+import { getSettings } from "@/lib/settings";
+import { getLiveSales, saleCovers } from "@/lib/sales";
 import { DesignArt } from "@/components/DesignArt";
 import { Markdown } from "@/components/Markdown";
 import { ProductBuy, type BuyVariant } from "@/components/store/ProductBuy";
-import { SurfacePreview } from "@/components/store/SurfacePreview";
+import { ProductGallery } from "@/components/store/ProductGallery";
 import { RepeatCalculator } from "@/components/store/RepeatCalculator";
 import { ProductGrid } from "@/components/store/ProductCard";
 import { ReviewForm } from "@/components/store/ReviewForm";
@@ -23,6 +25,7 @@ const load = (slug: string) =>
     include: {
       variants: { where: { active: true }, include: { prices: true, material: true }, orderBy: { sort: "asc" } },
       collections: { include: { collection: true } },
+      images: { orderBy: { sort: "asc" } },
       reviews: { where: { status: "published" }, orderBy: { createdAt: "desc" }, take: 20 },
     },
   });
@@ -30,11 +33,12 @@ const load = (slug: string) =>
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const p = await load((await params).slug);
   if (!p) return {};
+  const img = p.images[0]?.url;
   return {
     title: p.seoTitle?.replace(/ \| .*$/, "") ?? p.name,
     description: p.seoDesc ?? p.shortDesc ?? undefined,
     alternates: { canonical: `/p/${p.slug}` },
-    openGraph: { title: p.name, description: p.shortDesc ?? undefined, images: [`/og/${p.slug}`] },
+    openGraph: { title: p.name, description: p.shortDesc ?? undefined, images: [img ?? `/og/${p.slug}`] },
     robots: p.status === "ACTIVE" ? undefined : { index: false },
   };
 }
@@ -47,8 +51,10 @@ export default async function ProductPage({ params }: P) {
     if (r) return <meta httpEquiv="refresh" content={`0;url=${r.to}`} />;
     notFound();
   }
-  const [{ cur, base }, units, country] = await Promise.all([getActiveCurrency(), getUnits(), getCountry()]);
+  const [{ cur, base }, units, country, settings, sales] = await Promise.all([getActiveCurrency(), getUnits(), getCountry(), getSettings(), getLiveSales()]);
   const tracked = p.type === "STOCK_PHYSICAL" || p.type === "TOOL";
+  const colNames = p.collections.map((c) => c.collection.name);
+  const onSale = sales.some((s) => saleCovers(s, colNames));
   const variants: BuyVariant[] = p.variants.map((v) => {
     const { price, compareAt } = variantPrice(v, cur, base);
     const available = v.isDigital || !tracked ? null : Math.max(0, v.onHand - v.reserved);
@@ -56,28 +62,28 @@ export default async function ProductPage({ params }: P) {
       id: v.id, name: v.name, isDigital: v.isDigital, widthMm: v.widthMm, heightMm: v.heightMm, material: v.material?.name ?? null,
       price: formatMoney(price, cur.code, cur.exponent), compareAt: compareAt && compareAt > price ? formatMoney(compareAt, cur.code, cur.exponent) : null,
       available,
-      stockLabel: v.isDigital ? "Instant download after payment" : !tracked ? "Made to order · cut and shipped in 2–3 business days" : available === 0 ? "Out of stock" : available! <= 5 ? `Only ${available} left · ships in 24h` : "In stock · ships within 24h",
+      stockLabel: v.isDigital ? "Instant download after payment" : !tracked ? "Made to order · cut and shipped in 2–3 business days" : available === 0 ? "Sold out" : available! <= 5 ? `Only ${available} left · ships in 24h` : "In stock · ships within 24h",
     };
   });
   const zones = await db.shippingZone.findMany({ include: { rates: { where: { active: true }, orderBy: { priceBase: "asc" } } } });
   const zone = zones.find((z) => z.countries.includes(country)) ?? zones.find((z) => z.countries.includes("*"));
   const fastest = zone?.rates.reduce((a, r) => (r.minDays < a.minDays ? r : a), zone.rates[0]);
-  const passport = (p.passport ?? null) as Record<string, string | number | boolean> | null;
   const related = await db.product.findMany({
     where: { status: "ACTIVE", id: { not: p.id }, collections: { some: { collectionId: { in: p.collections.map((c) => c.collectionId) } } } },
     include: cardInclude, orderBy: { salesCount: "desc" }, take: 4,
   });
-  const isWall = p.collections.some((c) => ["wall", "floor-tile"].includes(c.collection.slug)) && p.repeatWmm;
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const isWall = p.collections.some((c) => ["wall", "floor-tile", "wall-and-canvas-stencils"].includes(c.collection.slug)) && p.repeatWmm;
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  const abs = (u: string) => (/^https?:\/\//.test(u) ? u : `${site}${u}`);
   const baseVariant = p.variants.find((v) => !v.isDigital) ?? p.variants[0];
   const ld = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: p.name,
-    description: p.shortDesc,
+    description: p.shortDesc ?? p.description?.slice(0, 300),
     sku: baseVariant?.sku,
-    image: [`${site}/og/${p.slug}`],
-    brand: { "@type": "Brand", name: "Creative Corner" },
+    image: p.images.length ? p.images.map((i) => abs(i.url)) : [`${site}/og/${p.slug}`],
+    brand: { "@type": "Brand", name: settings.business.name },
     ...(p.ratingCount > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: p.ratingAvg.toFixed(1), reviewCount: p.ratingCount } } : {}),
     offers: p.variants.map((v) => ({
       "@type": "Offer",
@@ -86,78 +92,60 @@ export default async function ProductPage({ params }: P) {
       price: (Number(v.basePrice) / 10 ** base.exponent).toFixed(base.exponent),
       availability: v.isDigital || !tracked || v.onHand - v.reserved > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       url: `${site}/p/${p.slug}`,
-      hasMerchantReturnPolicy: { "@type": "MerchantReturnPolicy", returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow", merchantReturnDays: 30 },
     })),
   };
-  const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Shop", item: `${site}/shop` }, ...(p.collections[0] ? [{ "@type": "ListItem", position: 2, name: p.collections[0].collection.name, item: `${site}/c/${p.collections[0].collection.slug}` }] : []), { "@type": "ListItem", position: 3, name: p.name }] };
+  const first = p.collections[0]?.collection;
+  const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: site || "/" }, ...(first ? [{ "@type": "ListItem", position: 2, name: first.name, item: `${site}/c/${first.slug}` }] : []), { "@type": "ListItem", position: first ? 3 : 2, name: p.name }] };
+  const tab = "border-t border-line py-4";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }} />
+    <div className="mx-auto max-w-[1100px] px-4 pb-24 pt-8 md:px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs).replace(/</g, "\\u003c") }} />
       <nav className="mb-5 text-xs text-ink3" aria-label="Breadcrumb">
-        <Link href="/shop" className="hover:text-ink">Shop</Link>
-        {p.collections[0] && <> / <Link href={`/c/${p.collections[0].collection.slug}`} className="hover:text-ink">{p.collections[0].collection.name}</Link></>}
+        <Link href="/" className="hover:text-ink">Home</Link>
+        {first && <> / <Link href={`/c/${first.slug}`} className="hover:text-ink">{first.name}</Link></>}
         {" "}/ <span>{p.name}</span>
       </nav>
-      <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
-        <div className="space-y-4">
-          <div className="art-tile relative aspect-square rounded-[24px] border border-line p-10 text-accent">
-            <DesignArt svg={p.designSvg} colors={p.layerColors} uid={`pd${p.id}`} title={p.name} className="h-full w-full" />
-            {p.foodSafe && <span className="badge badge-mint absolute left-4 top-4">Food-safe</span>}
-          </div>
-          {p.designSvg && <SurfacePreview svg={p.designSvg} layers={p.layers} initialColors={p.layers > 1 ? p.layerColors : ["#2E3140"]} />}
-        </div>
-        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
+        <ProductGallery
+          name={p.name}
+          images={p.images.map((i) => ({ url: i.url, alt: i.alt ?? p.name }))}
+          fallback={p.designSvg ? <DesignArt svg={p.designSvg} colors={p.layerColors} uid={`pd${p.id}`} title={p.name} className="h-full w-full p-10 text-accent" /> : <span className="diag absolute inset-0 grid place-items-center font-semibold text-ink3">Photo coming soon</span>}
+        />
+        <div className="space-y-5">
           <div>
-            <div className="mb-2 flex flex-wrap gap-1.5">{p.collections.slice(0, 3).map((c) => <Link key={c.collectionId} href={`/c/${c.collection.slug}`} className="chip">{c.collection.name}</Link>)}</div>
-            <h1 className="text-3xl font-bold md:text-4xl">{p.name}</h1>
+            <h1 className="text-[26px] font-bold leading-tight md:text-[32px]">{p.name}</h1>
             {p.ratingCount > 0 && <a href="#reviews" className="mt-2 flex items-center gap-1 text-sm text-ink2"><Star size={14} className="fill-mustard text-mustard" />{p.ratingAvg.toFixed(1)} · {p.ratingCount} reviews</a>}
-            {p.shortDesc && <p className="mt-3 text-ink2">{p.shortDesc}</p>}
           </div>
-          <ProductBuy productId={p.id} variants={variants} units={units} />
-          <ul className="grid gap-2 text-sm text-ink2 sm:grid-cols-3">
-            <li className="flex items-center gap-2"><Truck size={16} className="text-mint" />{fastest ? `Delivery to ${country}: ${fastest.minDays}–${fastest.maxDays} days` : "Ships worldwide"}</li>
-            <li className="flex items-center gap-2"><RotateCcw size={16} className="text-mint" />30-day returns on stock items</li>
-            <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-mint" />Remade free if damaged</li>
-          </ul>
-          {passport && (
-            <div className="holo card p-5">
-              <p className="mb-3 font-mono text-xs uppercase tracking-widest text-ink3">Cut-Quality Passport</p>
-              <dl className="grid grid-cols-2 gap-3 font-mono text-sm">
-                <div><dt className="text-[11px] uppercase text-ink3">Material</dt><dd>{String(passport.material)}</dd></div>
-                <div><dt className="text-[11px] uppercase text-ink3">Thickness</dt><dd>{String(passport.thicknessUm)} µm</dd></div>
-                <div><dt className="text-[11px] uppercase text-ink3">Min bridge</dt><dd>{String(passport.minBridgeMm)} mm</dd></div>
-                <div><dt className="text-[11px] uppercase text-ink3">Finest detail</dt><dd>{String(passport.finestDetailMm)} mm</dd></div>
-                <div><dt className="text-[11px] uppercase text-ink3">Reuse</dt><dd>{String(passport.reuse)}</dd></div>
-                <div><dt className="text-[11px] uppercase text-ink3">Food-safe</dt><dd>{passport.foodSafe ? "Yes" : "No"}</dd></div>
-                <div className="col-span-2"><dt className="text-[11px] uppercase text-ink3">Cleaning</dt><dd>{String(passport.cleaning)}</dd></div>
-              </dl>
-            </div>
-          )}
+          <ProductBuy name={p.name} variants={variants} units={units} whatsapp={settings.business.whatsapp} sale={onSale} />
+          <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink2">
+            <span className="text-mint">✓</span>
+            <span>{fastest ? `Delivery to ${country}: ${fastest.minDays}–${fastest.maxDays} days` : "Ships worldwide"}</span>
+          </p>
+          {p.shortDesc && <p className="rounded-lg bg-s1 p-4 text-sm leading-relaxed text-ink2">{p.shortDesc}</p>}
+          <div className="text-sm">
+            <details open className={tab}><summary className="cursor-pointer font-bold">Description</summary><div className="mt-3">{p.description ? <Markdown text={p.description} /> : <p className="text-ink2">Reusable stencil, cut from durable material for crisp, repeatable results.</p>}</div></details>
+            <details className={tab}><summary className="cursor-pointer font-bold">Material &amp; Care</summary><p className="mt-3 text-ink2">Cut from flexible reusable mylar. After use, wipe gently with a damp cloth, dry flat and store without bending. Do not soak or scrub.</p></details>
+            <details className={`${tab} border-b`}><summary className="cursor-pointer font-bold">Shipping &amp; Returns</summary><p className="mt-3 text-ink2">Shipping is calculated at checkout. Unused items can be returned within 30 days. If your stencil arrives damaged, we will replace it free. See <Link href="/legal/shipping" className="text-accent underline">shipping details</Link>.</p></details>
+          </div>
         </div>
       </div>
 
-      <div className="mt-16 grid gap-10 lg:grid-cols-[1.1fr_1fr]">
-        <div>
-          <h2 className="mb-2 text-2xl font-bold">About this stencil</h2>
-          {p.description && <Markdown text={p.description} />}
-        </div>
-        {isWall && <RepeatCalculator repeatWmm={p.repeatWmm!} repeatHmm={p.repeatHmm ?? p.repeatWmm!} units={units} />}
-      </div>
+      {isWall && <div className="mt-12"><RepeatCalculator repeatWmm={p.repeatWmm!} repeatHmm={p.repeatHmm ?? p.repeatWmm!} units={units} /></div>}
 
       <section id="reviews" className="mt-16">
-        <h2 className="mb-6 text-2xl font-bold">Reviews {p.ratingCount > 0 && <span className="text-ink3">({p.ratingCount})</span>}</h2>
+        <h2 className="mb-6 text-2xl font-bold">Customer reviews {p.ratingCount > 0 && <span className="text-ink3">({p.ratingCount})</span>}</h2>
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-4">
             {p.reviews.length === 0 && <p className="text-ink2">No reviews yet — be the first to share your project.</p>}
             {p.reviews.map((r) => (
-              <article key={r.id} className="card p-5">
+              <article key={r.id} className="rounded-[10px] border border-line p-5">
                 <div className="mb-1 flex gap-0.5">{Array.from({ length: 5 }, (_, i) => <Star key={i} size={14} className={i < r.rating ? "fill-mustard text-mustard" : "text-line"} />)}</div>
                 {r.title && <p className="font-semibold">{r.title}</p>}
                 <p className="text-sm text-ink2">{r.body}</p>
-                <p className="mt-2 text-xs text-ink3">{r.name} · {r.createdAt.toLocaleDateString()} {r.verified && <span className="badge badge-mint ml-1">Verified purchase</span>}</p>
-                {r.reply && <p className="mt-3 rounded-lg bg-s2 p-3 text-xs text-ink2"><b>Reply:</b> {r.reply}</p>}
+                <p className="mt-2 text-xs text-ink3">{r.name} · {r.createdAt.toLocaleDateString("en-GB")} {r.verified && <span className="badge badge-mint ml-1">Verified purchase</span>}</p>
+                {r.reply && <p className="mt-3 rounded-lg bg-s1 p-3 text-xs text-ink2"><b>Reply:</b> {r.reply}</p>}
               </article>
             ))}
           </div>
@@ -167,7 +155,7 @@ export default async function ProductPage({ params }: P) {
 
       {related.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-2xl font-bold">You might also like</h2>
+          <h2 className="mb-6 text-center font-display text-[28px] font-bold">You may also like</h2>
           <ProductGrid cards={related.map((r) => toCard(r, cur, base))} />
         </section>
       )}

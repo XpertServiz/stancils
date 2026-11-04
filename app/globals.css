@@ -147,3 +147,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 .band-stone :is(.text-ink2, .text-ink3):not(.card *, .card) { color: rgb(var(--stone-ink) / 0.74); }
 .band-stone .eyebrow:not(.card *) { color: rgb(var(--accent)); filter: brightness(0.82); }
 .band-stone .card { color: rgb(var(--ink)); }
+
+/* Creative Corner storefront: sections fade up once as they enter the screen (only where the browser supports it) */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@supports (animation-timeline: view()) {
+  .fade-up { animation: fadeUp linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+}
+.diag { background-image: repeating-linear-gradient(135deg, rgb(var(--line) / .55) 0 2px, transparent 2px 14px); }

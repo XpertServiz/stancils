@@ -7,7 +7,7 @@ import type { Theme } from "@/lib/themes";
 type Props = {
   themes: Theme[];
   fonts: { name: string; kind: string; weights: string }[];
-  current: { preset: string; accent: string; displayFont: string; bodyFont: string; splash: boolean; splashStyle: string };
+  current: { preset: string; accent: string; header: string; highlight: string; displayFont: string; bodyFont: string; splash: boolean; splashStyle: string };
 };
 
 const SPLASH = [
@@ -37,6 +37,10 @@ export function AppearanceForm({ themes, fonts, current }: Props) {
   const [preset, setPreset] = useState(current.preset);
   const [useAccent, setUseAccent] = useState(Boolean(current.accent));
   const [accent, setAccent] = useState(current.accent || "#2563EB");
+  const [useHeader, setUseHeader] = useState(Boolean(current.header));
+  const [header, setHeader] = useState(current.header || "#2A2A2A");
+  const [useHl, setUseHl] = useState(Boolean(current.highlight));
+  const [hl, setHl] = useState(current.highlight || "#F2B84B");
   const [display, setDisplay] = useState(current.displayFont);
   const [body, setBody] = useState(current.bodyFont);
   const f = (n: string) => fonts.find((x) => x.name === n) ?? fonts[0];
@@ -82,6 +86,27 @@ export function AppearanceForm({ themes, fonts, current }: Props) {
             {["#2563EB", "#0D9488", "#16A34A", "#7C3AED", "#DB2777", "#DC2626", "#CA8A04", "#0F172A"].map((c) => (
               <button type="button" key={c} onClick={() => setAccent(c)} className="h-7 w-7 rounded-full border border-line" style={{ background: c }} aria-label={c} />
             ))}
+          </div>
+        </section>
+
+        <section className="card p-5">
+          <h2 className="mb-1 font-semibold">Header, footer &amp; highlight colours</h2>
+          <p className="mb-3 text-sm text-ink3">The top bar and footer colour, and the colour of the announcement strip, search button and stars. Leave unticked to use the theme&apos;s.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm"><input type="checkbox" name="useHeader" checked={useHeader} onChange={(e) => setUseHeader(e.target.checked)} />My own header / footer colour</label>
+              <div className={`flex items-center gap-3 ${useHeader ? "" : "pointer-events-none opacity-40"}`}>
+                <input type="color" value={header} onChange={(e) => setHeader(e.target.value.toUpperCase())} className="h-11 w-16 cursor-pointer rounded-lg border border-line bg-transparent" aria-label="Header colour" />
+                <input name="header" value={header} onChange={(e) => setHeader(e.target.value)} className="input !w-32 font-mono" aria-label="Header hex colour" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm"><input type="checkbox" name="useHighlight" checked={useHl} onChange={(e) => setUseHl(e.target.checked)} />My own highlight colour</label>
+              <div className={`flex items-center gap-3 ${useHl ? "" : "pointer-events-none opacity-40"}`}>
+                <input type="color" value={hl} onChange={(e) => setHl(e.target.value.toUpperCase())} className="h-11 w-16 cursor-pointer rounded-lg border border-line bg-transparent" aria-label="Highlight colour" />
+                <input name="highlight" value={hl} onChange={(e) => setHl(e.target.value)} className="input !w-32 font-mono" aria-label="Highlight hex colour" />
+              </div>
+            </div>
           </div>
         </section>
 

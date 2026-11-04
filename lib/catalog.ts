@@ -5,6 +5,7 @@ import { variantPrice } from "./services/pricing";
 
 export const cardInclude = {
   variants: { where: { active: true }, include: { prices: true }, orderBy: { sort: "asc" } },
+  images: { orderBy: { sort: "asc" }, take: 2 },
 } satisfies Prisma.ProductInclude;
 
 type CardProduct = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
@@ -15,6 +16,10 @@ export type Card = {
   name: string;
   short: string | null;
   svg: string | null;
+  image: string | null;
+  image2: string | null;
+  off: number;
+  soldOut: boolean;
   colors: string[];
   price: string;
   priceMinor: number;
@@ -46,6 +51,10 @@ export function toCard(p: CardProduct, cur: CurrencyInfo, base: CurrencyInfo): C
     name: p.name,
     short: p.shortDesc,
     svg: p.designSvg,
+    image: p.images[0]?.url ?? null,
+    image2: p.images[1]?.url ?? null,
+    off: best?.compareAt && best.compareAt > best.price ? Math.round((1 - Number(best.price) / Number(best.compareAt)) * 100) : 0,
+    soldOut: stockLabel === "Out of stock",
     colors: p.layerColors,
     price: best ? formatMoney(best.price, cur.code, cur.exponent) : "—",
     priceMinor: best ? Number(best.price) : 0,
@@ -71,6 +80,7 @@ const SYNONYMS: Record<string, string[]> = {
 export type ListFilters = {
   q?: string;
   collection?: string;
+  collections?: string[];
   type?: string;
   foodSafe?: boolean;
   digital?: boolean;
@@ -86,7 +96,8 @@ export type ListFilters = {
 
 export async function listProducts(f: ListFilters, cur: CurrencyInfo, base: CurrencyInfo) {
   const and: Prisma.ProductWhereInput[] = [{ status: "ACTIVE" }];
-  if (f.collection) and.push({ collections: { some: { collection: { slug: f.collection } } } });
+  if (f.collections?.length) and.push({ collections: { some: { collection: { slug: { in: f.collections } } } } });
+  else if (f.collection) and.push({ collections: { some: { collection: { slug: f.collection } } } });
   if (f.type) and.push({ type: f.type as never });
   if (f.foodSafe) and.push({ foodSafe: true });
   if (f.digital) and.push({ variants: { some: { isDigital: true } } });

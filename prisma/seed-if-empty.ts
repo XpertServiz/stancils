@@ -49,7 +49,7 @@ async function main() {
  * "uiRefresh" setting, so the owner's later edits in Admin stick.
  * DECISION: only presentation settings change; products, orders and accounts are never touched.
  */
-const UI_VERSION = "studio-v2";
+const UI_VERSION = "creative-corner-v1";
 async function applyStudioLookOnce(db: PrismaClient) {
   const done = await db.setting.findUnique({ where: { key: "uiRefresh" } });
   if ((done?.value as { version?: string } | null)?.version === UI_VERSION) return;
@@ -58,9 +58,9 @@ async function applyStudioLookOnce(db: PrismaClient) {
     if (Object.keys(cur).length === 0) return; // nothing saved — the new defaults already apply
     await db.setting.update({ where: { key }, data: { value: { ...cur, ...patch } as object } });
   };
-  await merge("theme", { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" });
-  await merge("business", { name: "Stencil & Gift Studio", tagline: "CREATIVE DECOR · GIFTS · APPAREL" });
-  await merge("announcement", { enabled: true, text: "Made to brighten your world — beautifully personal • Shipping across the United States & Canada" });
+  await merge("theme", { preset: "corner", accent: "", header: "", highlight: "", displayFont: "Fraunces", bodyFont: "Inter" });
+  await merge("business", { name: "Creative Corner", tagline: "Reusable Stencils & Art Supplies" });
+  await merge("announcement", { enabled: true, text: "Exclusive Offer: 50% Flat Discount" });
   await merge("splash", { enabled: false });
   await merge("hero", {
     mode: "collage",

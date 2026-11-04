@@ -26,6 +26,7 @@ export type QuotedLine = {
   total: bigint;
   available: number | null;
   designSvg?: string | null;
+  image?: string | null;
   error?: string;
 };
 
@@ -77,7 +78,7 @@ export async function quoteCart(input: {
   const variantIds = input.lines.filter((l) => l.variantId).map((l) => l.variantId!);
   const designIds = input.lines.filter((l) => l.customDesignId).map((l) => l.customDesignId!);
   const [variants, designs] = await Promise.all([
-    db.variant.findMany({ where: { id: { in: variantIds } }, include: { product: true, prices: true } }),
+    db.variant.findMany({ where: { id: { in: variantIds } }, include: { product: { include: { images: { orderBy: { sort: "asc" }, take: 1 } } }, prices: true } }),
     db.customDesign.findMany({ where: { id: { in: designIds } }, include: { material: true } }),
   ]);
 
@@ -97,7 +98,7 @@ export async function quoteCart(input: {
       const line: QuotedLine = {
         key: `v:${v.id}`, variantId: v.id, productId: v.productId, slug: v.product.slug, name: v.product.name,
         variantName: v.name, sku: v.sku, kind, qty, unitPrice: price, total: price * BigInt(qty), available,
-        designSvg: v.product.designSvg,
+        designSvg: v.product.designSvg, image: v.product.images[0]?.url ?? null,
       };
       if (tracks && available !== null && qty > available) line.error = available === 0 ? "Out of stock" : `Only ${available} left`;
       lines.push(line);

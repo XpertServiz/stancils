@@ -1,11 +1,9 @@
 import { db } from "../db";
 import { memo, clearMemo } from "../memo";
-import { getCurrencies, getSettings } from "../settings";
-import { convertMinor, formatMoney, parseMajor } from "../money";
-import { variantPrice } from "../services/pricing";
-import { getLiveSales, landingPercent } from "../sales";
+import { getCurrencies } from "../settings";
+import { parseMajor } from "../money";
+import { slugify as collectionSlug } from "../storefront";
 import { DEFAULT_LANDING_PRODUCTS, DEPARTMENTS, SUBCATEGORIES } from "./defaults";
-import { buildHome, type CardProduct, type ReviewCard } from "./template";
 
 /**
  * Products shown on the homepage. Managed in Admin → Website → Homepage products.
@@ -15,7 +13,8 @@ import { buildHome, type CardProduct, type ReviewCard } from "./template";
 export type LandingProduct = {
   id: number;
   name: string;
-  cat: (typeof DEPARTMENTS)[number];
+  /** the name of the collection the product is in */
+  cat: string;
   subcat: string;
   price: number;
   icon: string;
@@ -54,10 +53,8 @@ export function cleanProduct(input: Record<string, unknown>, id: number): Landin
     if (required && !v) throw new Error(`${k} is required.`);
     return v;
   };
-  const cat = String(input.cat) as LandingProduct["cat"];
-  if (!DEPARTMENTS.includes(cat)) throw new Error("Choose a category.");
+  const cat = text("cat", 80, true);
   const subcat = text("subcat", 80);
-  if (subcat && !SUBCATEGORIES[cat].includes(subcat)) throw new Error("Choose a subcategory from the list.");
   const price = Number(input.price || 0);
   if (!Number.isFinite(price) || price < 0 || price > 1_000_000) throw new Error("Price must be 0 or more (0 = “Get a quote”).");
   const bg = String(input.bg || "#f3e5ee").trim();
@@ -90,7 +87,7 @@ export function splitCategory(value: string): { cat: string; subcat: string } {
 }
 
 /** Match free text (CSV cell, dropdown label) to a department + subcategory, case-insensitively. */
-export function matchCategory(raw: string): { cat: LandingProduct["cat"]; subcat: string } | null {
+export function matchCategory(raw: string): { cat: string; subcat: string } | null {
   const t = raw.trim().toLowerCase();
   if (!t) return null;
   for (const d of DEPARTMENTS) {
@@ -113,8 +110,8 @@ async function uniqueSlug(name: string) {
 }
 
 async function ensureCollection(name: string) {
-  const slug = slugify(name);
-  return (await db.collection.findUnique({ where: { slug } })) ?? db.collection.create({ data: { slug, name, type: "SURFACE" } });
+  const slug = collectionSlug(name);
+  return (await db.collection.findUnique({ where: { slug } })) ?? db.collection.create({ data: { slug, name, type: "STYLE" } });
 }
 
 /**
@@ -199,69 +196,4 @@ export function cleanLandingSettings(input: Record<string, unknown>, prev: Landi
   const heroImage = input.heroImage === undefined ? prev.heroImage : String(input.heroImage).trim();
   if (heroImage && !/^(https:\/\/|\/)[^"'\s<>()]+$/.test(heroImage)) throw new Error("Photo must be an https:// or /uploads/ link.");
   return { heroImage, headline: t("headline", 60) || LANDING_DEFAULTS.headline, sub: t("sub", 90) || LANDING_DEFAULTS.sub, seoTitle: t("seoTitle", 70) || LANDING_DEFAULTS.seoTitle, seoDesc: t("seoDesc", 170) || LANDING_DEFAULTS.seoDesc, keywords: t("keywords", 300) || LANDING_DEFAULTS.keywords };
-}
-
-// ───────────────────────── render ─────────────────────────
-
-const abs = (site: string, u: string) => (/^https?:\/\//.test(u) ? u : `${site}${u.startsWith("/") ? "" : "/"}${u}`);
-
-/** The homepage HTML: server-rendered products and reviews, SEO tags and structured data included. */
-export async function renderLandingPage() {
-  const { getActiveCurrency } = await import("../currency"); // server-only (reads cookies); loaded lazily so the pure helpers stay testable
-  const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-  const [products, page, settings, { cur, base, enabled }, sales, reviewRows, agg] = await Promise.all([
-    getLandingProducts(),
-    getLandingSettings(),
-    getSettings(),
-    getActiveCurrency(),
-    getLiveSales(),
-    db.review.findMany({ where: { status: "published" }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }], take: 9, include: { product: { select: { name: true } } } }).catch(() => []),
-    db.review.aggregate({ where: { status: "published" }, _avg: { rating: true }, _count: true }).catch(() => ({ _avg: { rating: null }, _count: 0 })),
-  ]);
-
-  const ids = products.map((p) => p.variantId).filter((x): x is string => !!x);
-  const variants = ids.length ? await db.variant.findMany({ where: { id: { in: ids }, active: true, product: { status: "ACTIVE" } }, include: { prices: true, product: { select: { slug: true } } } }) : [];
-  const byId = new Map(variants.map((v) => [v.id, v]));
-
-  const cards: CardProduct[] = products.map((p) => {
-    const v = p.variantId ? byId.get(p.variantId) : undefined;
-    const minor = v ? variantPrice(v, cur, base).price : p.price > 0 ? convertMinor(parseMajor(p.price.toFixed(base.exponent), base.exponent), base, cur, "price") : 0n;
-    const pct = minor > 0n ? landingPercent(sales, p) : 0;
-    const sale = pct ? (minor * BigInt(Math.round((100 - pct) * 100))) / 10000n : minor;
-    return {
-      id: p.id, name: p.name, cat: p.cat, subcat: p.subcat, icon: p.icon, bg: p.bg, tag: p.tag, image: p.image, slug: v?.product.slug,
-      variantId: v?.id, minor: Number(sale), fullMinor: Number(minor), pct,
-      text: minor > 0n ? formatMoney(sale, cur.code, cur.exponent) : "", fullText: pct ? formatMoney(minor, cur.code, cur.exponent) : "",
-    };
-  });
-
-  const reviews: ReviewCard[] = reviewRows.map((r) => ({ name: r.name, rating: r.rating, title: r.title ?? "", body: r.body, verified: r.verified, product: r.product?.name ?? "" }));
-  const bestSale = sales.reduce<{ name: string; percent: number } | null>((b, s) => (!b || s.percent > b.percent ? { name: s.name, percent: s.percent } : b), null);
-
-  const b = settings.business;
-  const socials = [b.instagram, b.pinterest, b.facebook, b.youtube].filter((u) => /^https?:\/\//.test(u));
-  const image = abs(site, page.heroImage || "/hero/studio-collage.webp");
-  const title = `${page.seoTitle} | ${b.name}`;
-  const buyable = cards.filter((c) => c.variantId && c.minor > 0 && c.slug).slice(0, 24);
-  const jsonLd = [
-    { "@context": "https://schema.org", "@type": "Organization", name: b.name, url: site, logo: `${site}/icon.svg`, ...(socials.length ? { sameAs: socials } : {}) },
-    { "@context": "https://schema.org", "@type": "WebSite", name: b.name, url: site, potentialAction: { "@type": "SearchAction", target: `${site}/shop?q={search_term_string}`, "query-input": "required name=search_term_string" } },
-    {
-      "@context": "https://schema.org", "@type": "ItemList", name: `${b.name} — featured products`,
-      itemListElement: buyable.map((c, i) => ({
-        "@type": "ListItem", position: i + 1,
-        item: {
-          "@type": "Product", name: c.name, url: `${site}/p/${c.slug}`, ...(c.image ? { image: abs(site, c.image) } : {}), category: c.subcat || c.cat,
-          offers: { "@type": "Offer", url: `${site}/p/${c.slug}`, priceCurrency: cur.code, price: (c.minor / 10 ** cur.exponent).toFixed(cur.exponent), availability: "https://schema.org/InStock" },
-        },
-      })),
-    },
-  ];
-
-  return buildHome({
-    site, brand: b.name, tagline: b.tagline, page, title, image, cards, reviews,
-    rating: { avg: agg._avg.rating ?? 0, count: agg._count },
-    sale: bestSale, cur: { code: cur.code, exponent: cur.exponent }, currencies: enabled.map((c) => c.code), jsonLd,
-    whatsapp: b.whatsapp.replace(/\D/g, ""),
-  });
 }

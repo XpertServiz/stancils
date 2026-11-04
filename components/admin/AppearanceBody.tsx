@@ -8,7 +8,7 @@ export async function AppearanceBody() {
     <AppearanceForm
       themes={THEMES}
       fonts={Object.entries(FONTS).map(([name, f]) => ({ name, ...f }))}
-      current={{ preset: themeById(s.theme.preset).id, accent: s.theme.accent, displayFont: s.theme.displayFont, bodyFont: s.theme.bodyFont, splash: s.splash.enabled, splashStyle: s.splash.style ?? "cube" }}
+      current={{ preset: themeById(s.theme.preset).id, accent: s.theme.accent, header: s.theme.header ?? "", highlight: s.theme.highlight ?? "", displayFont: s.theme.displayFont, bodyFont: s.theme.bodyFont, splash: s.splash.enabled, splashStyle: s.splash.style ?? "cube" }}
     />
   );
 }

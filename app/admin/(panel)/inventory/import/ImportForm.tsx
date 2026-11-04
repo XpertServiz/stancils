@@ -1,17 +1,15 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { importCatalog, type ImportState } from "@/app/admin/actions/inventory";
 
 export function ImportForm() {
   const [state, action, pending] = useActionState(importCatalog, null as ImportState);
-  const [home, setHome] = useState(true);
   const r = state?.report;
   return (
     <div className="space-y-3">
       <form action={action} className="space-y-3">
         <input type="hidden" name="commit" value="0" />
         <input type="file" name="file" accept=".csv,text/csv" required className="text-sm" />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={home} onChange={(e) => setHome(e.target.checked)} />Also show these products on my homepage</label>
         <button className="btn btn-soft" disabled={pending}>{pending ? "Checking…" : "Step 2 · Check my file"}</button>
       </form>
       {state && <p className={`text-sm ${state.ok ? "text-mint" : "text-danger"}`}>{state.msg}</p>}
@@ -25,7 +23,6 @@ export function ImportForm() {
       {state?.csv && state.ok && !r?.batchId && (
         <form action={action}>
           <input type="hidden" name="commit" value="1" />
-          <input type="hidden" name="home" value={home ? "1" : "0"} />
           <input type="hidden" name="csv" value={state.csv} />
           <input type="hidden" name="filename" value={state.filename} />
           <button className="btn btn-primary" disabled={pending}>{pending ? "Adding…" : "Step 3 · Add these products"}</button>

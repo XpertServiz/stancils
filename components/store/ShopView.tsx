@@ -2,7 +2,9 @@ import Link from "next/link";
 import { listProducts, type ListFilters } from "@/lib/catalog";
 import { getActiveCurrency } from "@/lib/currency";
 import { db } from "@/lib/db";
+import { getMenu, slugsFor } from "@/lib/storefront";
 import { ProductGrid } from "./ProductCard";
+import { SortSelect } from "./SortSelect";
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -12,12 +14,7 @@ export function parseFilters(sp: SP, collection?: string): ListFilters {
   return {
     q: one(sp.q)?.slice(0, 80),
     collection: collection ?? one(sp.c),
-    type: one(sp.type),
-    foodSafe: one(sp.food) === "1",
-    digital: one(sp.digital) === "1",
     inStock: one(sp.stock) === "1",
-    layers: n("layers"),
-    material: one(sp.mat),
     min: n("min"),
     max: n("max"),
     sort: one(sp.sort),
@@ -25,13 +22,16 @@ export function parseFilters(sp: SP, collection?: string): ListFilters {
   };
 }
 
+const SORTS: [string, string][] = [["", "Featured"], ["rating", "Best selling"], ["price_asc", "Price, low to high"], ["price_desc", "Price, high to low"], ["new", "Date, new to old"]];
+
 export async function ShopView({ sp, collection, basePath }: { sp: SP; collection?: string; basePath: string }) {
   const f = parseFilters(sp, collection);
+  const menu = await getMenu();
+  if (f.collection) f.collections = slugsFor(f.collection, menu);
   const { cur, base } = await getActiveCurrency();
-  const [{ cards, total, page, perPage }, surfaces, styles] = await Promise.all([
+  const [{ cards, total, page, perPage }, collections] = await Promise.all([
     listProducts(f, cur, base),
-    db.collection.findMany({ where: { type: "SURFACE" }, orderBy: { sort: "asc" } }),
-    db.collection.findMany({ where: { type: { in: ["STYLE", "OCCASION"] } }, orderBy: [{ type: "asc" }, { sort: "asc" }] }),
+    db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], take: 40, select: { slug: true, name: true } }),
   ]);
   const pages = Math.ceil(total / perPage);
   const qs = (patch: Record<string, string | undefined>) => {
@@ -41,78 +41,44 @@ export async function ShopView({ sp, collection, basePath }: { sp: SP; collectio
     const s = p.toString();
     return s ? `${basePath}?${s}` : basePath;
   };
-  const toggle = (k: string) => (one(sp[k]) === "1" ? undefined : "1");
-  const active = (k: string, v = "1") => one(sp[k]) === v;
+  const stockOn = one(sp.stock) === "1";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[230px_1fr]">
       <aside className="space-y-6 text-sm" aria-label="Filters">
-        <form action={basePath} className="space-y-2">
-          <label className="label" htmlFor="q">Search</label>
-          <input id="q" name="q" defaultValue={f.q} className="input" placeholder="mandala, latte, A–Z…" />
-        </form>
-        <div>
-          <p className="label">Surface</p>
-          <div className="flex flex-wrap gap-1.5 lg:flex-col lg:items-start">
-            {surfaces.map((s) => (
-              <Link key={s.id} href={`/c/${s.slug}`} className={`chip ${collection === s.slug ? "!border-accent text-accent" : ""}`}>{s.name}</Link>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="label">Options</p>
-          <div className="flex flex-col gap-1.5">
-            {[["food", "Food-safe"], ["digital", "Digital file available"], ["stock", "In stock / made to order"]].map(([k, l]) => (
-              <Link key={k} href={qs({ [k]: toggle(k), page: undefined })} className="flex items-center gap-2">
-                <span className={`grid h-4 w-4 place-items-center rounded border ${active(k) ? "border-accent bg-accent text-onaccent" : "border-line"}`}>{active(k) ? "✓" : ""}</span>{l}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="label">Layers</p>
-          <div className="flex gap-1.5">
-            {[["", "Any"], ["1", "Single"], ["2", "Multi"]].map(([v, l]) => (
-              <Link key={l} href={qs({ layers: v || undefined, page: undefined })} className={`chip ${(one(sp.layers) ?? "") === v ? "!border-accent text-accent" : ""}`}>{l}</Link>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="label">Material</p>
-          <div className="flex flex-wrap gap-1.5">
-            {[["", "Any"], ["MYLAR", "Mylar"], ["PET", "Food PET"], ["STEEL", "Steel"]].map(([v, l]) => (
-              <Link key={l} href={qs({ mat: v || undefined, page: undefined })} className={`chip ${(one(sp.mat) ?? "") === v ? "!border-accent text-accent" : ""}`}>{l}</Link>
-            ))}
-          </div>
-        </div>
+        <details className="group lg:open:block" open>
+          <summary className="mb-2 flex cursor-pointer list-none items-center justify-between font-bold uppercase tracking-wider lg:pointer-events-none">Availability</summary>
+          <Link href={qs({ stock: stockOn ? undefined : "1", page: undefined })} className="flex items-center gap-2">
+            <span className={`grid h-4 w-4 place-items-center rounded border text-[11px] ${stockOn ? "border-accent bg-accent text-onaccent" : "border-line"}`}>{stockOn ? "✓" : ""}</span>In stock / made to order
+          </Link>
+        </details>
         <form action={basePath} className="space-y-2">
           {Object.entries(sp).filter(([k]) => !["min", "max", "page"].includes(k)).map(([k, v]) => <input key={k} type="hidden" name={k} value={one(v)} />)}
-          <p className="label">Price ({cur.code})</p>
+          <p className="font-bold uppercase tracking-wider">Price ({cur.code})</p>
           <div className="flex items-center gap-2">
-            <input name="min" type="number" min={0} defaultValue={f.min} placeholder="Min" className="input !py-1.5" aria-label="Minimum price" />
+            <input name="min" type="number" min={0} defaultValue={f.min} placeholder="From" className="input !py-1.5" aria-label="Minimum price" />
             <span>–</span>
-            <input name="max" type="number" min={0} defaultValue={f.max} placeholder="Max" className="input !py-1.5" aria-label="Maximum price" />
+            <input name="max" type="number" min={0} defaultValue={f.max} placeholder="To" className="input !py-1.5" aria-label="Maximum price" />
           </div>
           <button className="btn btn-soft btn-sm w-full">Apply</button>
         </form>
         <div>
-          <p className="label">Style & occasion</p>
-          <div className="flex flex-wrap gap-1.5">
-            {styles.map((s) => <Link key={s.id} href={`/c/${s.slug}`} className={`chip ${collection === s.slug ? "!border-accent text-accent" : ""}`}>{s.name}</Link>)}
-          </div>
+          <p className="mb-2 font-bold uppercase tracking-wider">Collections</p>
+          <ul className="space-y-1.5">
+            <li><Link href="/shop" className={!collection ? "font-bold text-accent" : "hover:text-accent"}>All stencils</Link></li>
+            {collections.map((c) => <li key={c.slug}><Link href={`/c/${c.slug}`} className={collection === c.slug ? "font-bold text-accent" : "hover:text-accent"}>{c.name}</Link></li>)}
+          </ul>
         </div>
       </aside>
 
       <div>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-ink3">{total} {total === 1 ? "design" : "designs"}{f.q ? ` for “${f.q}”` : ""}</p>
-          <div className="flex flex-wrap gap-1.5 text-xs">
-            {[["", "Popular"], ["new", "Newest"], ["price_asc", "Price ↑"], ["price_desc", "Price ↓"], ["rating", "Top rated"]].map(([v, l]) => (
-              <Link key={l} href={qs({ sort: v || undefined, page: undefined })} className={`chip ${(one(sp.sort) ?? "") === v ? "!border-accent text-accent" : ""}`}>{l}</Link>
-            ))}
-          </div>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <label className="flex items-center gap-3"><span className="text-xs font-bold uppercase tracking-wider text-ink3">Sort by</span>
+            <SortSelect value={one(sp.sort) ?? ""} options={SORTS} hrefs={Object.fromEntries(SORTS.map(([v]) => [v, qs({ sort: v || undefined, page: undefined })]))} />
+          </label>
+          <p className="text-ink3">{total} product{total === 1 ? "" : "s"}{f.q ? ` for “${f.q}”` : ""}</p>
         </div>
-        <ProductGrid cards={cards} />
+        <ProductGrid cards={cards} cols={3} />
         {pages > 1 && (
           <nav className="mt-10 flex flex-wrap justify-center gap-1.5" aria-label="Pagination">
             {Array.from({ length: pages }, (_, i) => i + 1).filter((p) => p === 1 || p === pages || Math.abs(p - page) <= 2).map((p, i, arr) => (

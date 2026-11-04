@@ -1,21 +1,16 @@
 import type { LandingProduct } from "@/lib/landing";
-import { DEPARTMENTS, SUBCATEGORIES } from "@/lib/landing/defaults";
 import { Field } from "@/components/admin/ui";
 
 /** The whole “add a product” form: name, category, price, photo. */
-export function ProductFields({ p, base }: { p?: LandingProduct; base: string }) {
-  const current = p ? (p.subcat ? `${p.cat}|${p.subcat}` : p.cat) : "Stencils";
+export function ProductFields({ p, base, collections }: { p?: LandingProduct; base: string; collections: string[] }) {
+  const current = p?.cat ?? collections[0] ?? "Stencils";
+  const list = collections.includes(current) ? collections : [current, ...collections];
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <Field label="1. Product name"><input name="name" required maxLength={120} defaultValue={p?.name} placeholder="e.g. Rose Wall Stencil" className="input" /></Field>
       <Field label="2. Category">
         <select name="category" defaultValue={current} className="select">
-          {DEPARTMENTS.map((d) => (
-            <optgroup key={d} label={d}>
-              <option value={d}>{d} — general</option>
-              {SUBCATEGORIES[d].map((c) => <option key={c} value={`${d}|${c}`}>{c}</option>)}
-            </optgroup>
-          ))}
+          {list.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </Field>
       <Field label={`3. Price (${base})`} hint="Leave 0 if you will quote each customer."><input name="price" type="number" inputMode="decimal" min={0} step="0.01" defaultValue={p?.price ?? ""} placeholder="0" className="input" /></Field>

@@ -1,16 +1,42 @@
 import { describe, expect, it } from "vitest";
 import { cleanLandingSettings, cleanProduct, LANDING_DEFAULTS, matchCategory, splitCategory } from "../lib/landing";
 import { DEFAULT_LANDING_PRODUCTS, SUBCATEGORIES } from "../lib/landing/defaults";
-import { buildHome, type HomeData } from "../lib/landing/template";
+import { cleanHome, DEFAULT_MENU_TEXT, HOME_DEFAULTS, parseHours, parseMenu, slugify, slugsFor } from "../lib/storefront";
 import { cleanSale, isLive, landingPercent, saleDiscount } from "../lib/sales";
 import { parseCsv } from "../lib/services/importer";
 
-const base: HomeData = {
-  site: "https://example.com", brand: "Studio", tagline: "Stencils", page: LANDING_DEFAULTS, title: "T | Studio", image: "https://example.com/x.jpg",
-  cards: [{ id: 1, name: "Rose <b>Stencil</b>", cat: "Stencils", subcat: "Floral & Botanical", icon: "❀", bg: "#fff", tag: "New", slug: "rose", variantId: "v1", minor: 1000, fullMinor: 1200, pct: 10, text: "$10.00", fullText: "$12.00" }],
-  reviews: [{ name: "Ann", rating: 5, title: "Great", body: "Loved it </script>", verified: true, product: "" }],
-  rating: { avg: 5, count: 1 }, sale: { name: "Eid Sale", percent: 10 }, cur: { code: "USD", exponent: 2 }, currencies: ["USD", "PKR"], jsonLd: [{ "@type": "Organization", name: "x</script>" }], whatsapp: "",
-};
+describe("storefront menu and homepage", () => {
+  const menu = parseMenu(DEFAULT_MENU_TEXT);
+  it("builds the dropdown menu from indented text", () => {
+    expect(menu.map((m) => m.label)).toEqual(["All Collections", "All Stencils", "Calligraphy Stencils", "Wall & Canvas Stencils", "Carpet Design Stencils", "Art & Craft Stencils", "Acrylic Wall Decoration", "Art Supplies"]);
+    const cal = menu.find((m) => m.label === "Calligraphy Stencils")!;
+    expect(cal.children).toHaveLength(9);
+    expect(cal.href).toBe("/c/all-calligraphy-stencils");
+    expect(menu[0].href).toBe("/collections");
+    expect(menu.find((m) => m.label === "Carpet Design Stencils")!.href).toBe("/c/carpet-design-stencils");
+  });
+  it("slugifies names the same way everywhere", () => {
+    expect(slugify("Wall & Canvas Stencils")).toBe("wall-and-canvas-stencils");
+    expect(slugify("4 Qul")).toBe("4-qul");
+  });
+  it("a parent collection also lists its sub-collections", () => {
+    const s = slugsFor("all-calligraphy-stencils", menu);
+    expect(s).toContain("tasbih");
+    expect(s).toContain("ayat-ul-kursi");
+    expect(slugsFor("tasbih", menu)).toEqual(["tasbih"]);
+  });
+  it("validates homepage settings", () => {
+    expect(cleanHome({ headline: "Hi" }, HOME_DEFAULTS).headline).toBe("Hi");
+    expect(() => cleanHome({ heroImage: "javascript:alert(1)" }, HOME_DEFAULTS)).toThrow();
+    expect(() => cleanHome({ cta: { label: "x", href: "javascript:x" } }, HOME_DEFAULTS)).toThrow();
+    expect(cleanHome({ headline: "<b>Hi</b>" }, HOME_DEFAULTS).headline).toBe("bHi/b");
+    const rows = cleanHome({ rows: [{ title: "A", intro: "", collection: "Wall & Canvas", banner: "", count: 99 }, { title: "", intro: "", collection: "x", banner: "", count: 8 }] }, HOME_DEFAULTS).rows;
+    expect(rows).toEqual([{ title: "A", intro: "", collection: "wall-and-canvas", banner: "", count: 12 }]);
+  });
+  it("reads opening hours", () => {
+    expect(parseHours("Mon | 10am – 9pm\nSun").at(-1)).toEqual({ day: "Sun", time: "Closed" });
+  });
+});
 
 describe("landing products", () => {
   it("defaults are the starter products, each in a known subcategory", () => {
@@ -27,7 +53,6 @@ describe("landing products", () => {
     expect(() => cleanProduct({ ...b, name: "a ${alert(1)}" }, 1)).toThrow();
     expect(() => cleanProduct({ ...b, name: "ok", bg: "red;background:url(x)" }, 1)).toThrow();
     expect(() => cleanProduct({ ...b, name: "ok", image: "javascript:alert(1)" }, 1)).toThrow();
-    expect(() => cleanProduct({ ...b, name: "ok", subcat: "Floral & Botanical" }, 1)).toThrow();
   });
   it("splits the one-dropdown category and matches spreadsheet text", () => {
     expect(splitCategory("Stencils|Floral & Botanical")).toEqual({ cat: "Stencils", subcat: "Floral & Botanical" });
@@ -40,33 +65,6 @@ describe("landing products", () => {
     expect(cleanLandingSettings({ headline: "Hi" }, LANDING_DEFAULTS).headline).toBe("Hi");
     expect(() => cleanLandingSettings({ headline: "<script>" }, LANDING_DEFAULTS)).toThrow();
     expect(() => cleanLandingSettings({ heroImage: "javascript:x" }, LANDING_DEFAULTS)).toThrow();
-  });
-});
-
-describe("homepage HTML", () => {
-  const html = buildHome(base);
-  it("has the SEO essentials", () => {
-    expect(html).toContain('<link rel="canonical" href="https://example.com/">');
-    expect(html).toContain('name="description"');
-    expect(html).toContain('name="keywords"');
-    expect(html).toContain('property="og:image"');
-    expect(html).toContain("application/ld+json");
-    expect(html.match(/<h1[ >]/g)).toHaveLength(1);
-  });
-  it("renders products and reviews in the HTML, escaped, with a crawlable product link", () => {
-    expect(html).toContain('href="/p/rose"');
-    expect(html).not.toContain("<b>Stencil</b>");
-    expect(html).toContain("Rose &lt;b&gt;Stencil&lt;/b&gt;");
-    expect(html).toContain("Verified buyer");
-  });
-  it("cannot be broken out of a script element", () => {
-    expect(html.match(/<script/g)!.length).toBe(html.match(/<\/script>/g)!.length);
-    expect(html).not.toContain("x</script>");
-    expect(html).not.toContain("Loved it </script>");
-  });
-  it("checks out through the real cart", () => {
-    expect(html).toContain("cc_cart_v1");
-    expect(html).toContain('href="/checkout"');
   });
 });
 

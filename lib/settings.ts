@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS = {
     facebook: "",
     youtube: "",
   },
-  theme: { preset: "studio", accent: "", displayFont: "Georgia", bodyFont: "Inter" },
+  theme: { preset: "corner", accent: "", header: "", highlight: "", displayFont: "Fraunces", bodyFont: "Inter" },
   hero: {
     mode: "collage", // collage | 3d | video | image
     eyebrow: "Your ideas, our creative touch",

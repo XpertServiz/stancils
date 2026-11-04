@@ -29,7 +29,7 @@ export const THEMES: Theme[] = [
   { id: "blush", name: "Blush Rose", note: "Elegant rose on soft pink", mode: "light", vars: light({ bg: "250 240 242", s1: "253 247 248", s2: "255 255 255", band: "60 28 40", bandInk: "253 242 246", line: "236 210 218", ink: "48 20 32", ink2: "92 56 70", ink3: "124 90 104", accent: "190 24 93", accent2: "15 118 110", accent3: "161 98 7" }) },
 ];
 
-export const DEFAULT_THEME = "studio";
+export const DEFAULT_THEME = "corner";
 
 /** Most popular Google Fonts worldwide, with the weights each one actually ships (Google rejects missing weights). */
 export const FONTS: Record<string, { weights: string; kind: "sans" | "serif" | "display" | "system" }> = {
@@ -78,7 +78,7 @@ export const DEFAULT_FONT = "Poppins";
 export const themeById = (id?: string) => THEMES.find((t) => t.id === id) ?? THEMES.find((t) => t.id === DEFAULT_THEME)!;
 
 /** The visitor light/dark toggle switches to this companion theme. */
-export const companionOf = (t: Theme) => (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" || t.id === "studio" ? "plum" : "dusk");
+export const companionOf = (t: Theme) => t.id === "corner" || t.id.endsWith("-shop") ? t.id : (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" || t.id === "studio" ? "plum" : "dusk");
 
 export function hexToTriplet(hex: string): string | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -99,10 +99,14 @@ function block(sel: string, v: Vars, mode: "dark" | "light") {
 }
 
 /** CSS for every theme, plus the owner's custom main colour and fonts. */
-export function themeCss(opts: { accent?: string; displayFont?: string; bodyFont?: string }) {
+export function themeCss(opts: { accent?: string; header?: string; highlight?: string; displayFont?: string; bodyFont?: string }) {
   const css = THEMES.map((t) => block(`[data-theme="${t.id}"]`, t.vars, t.mode));
   const acc = opts.accent ? hexToTriplet(opts.accent) : null;
   if (acc) css.push(`[data-theme]{--accent:${acc};--on-accent:${onColor(acc)}}`);
+  const hdr = opts.header ? hexToTriplet(opts.header) : null;
+  if (hdr) css.push(`[data-theme]{--band-stone:${hdr};--stone-ink:${onColor(hdr) === "255 255 255" ? "255 255 255" : "20 22 28"}}`);
+  const hl = opts.highlight ? hexToTriplet(opts.highlight) : null;
+  if (hl) css.push(`[data-theme]{--accent-3:${hl}}`);
   const stack = (f?: string) => {
     const name = f && FONTS[f] ? f : DEFAULT_FONT;
     return `"${name}",${FONTS[name].kind === "sans" ? "system-ui,sans-serif" : "Georgia,'Times New Roman',serif"}`;

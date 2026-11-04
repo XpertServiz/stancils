@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getCurrencies } from "@/lib/settings";
+import { db } from "@/lib/db";
 import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { Submit } from "@/components/admin/Submit";
@@ -11,14 +12,14 @@ import { saveLandingProduct } from "@/app/admin/actions/landing";
 export default async function NewProduct({ searchParams }: { searchParams: Promise<{ advanced?: string }> }) {
   await requireStaff("inventory.edit");
   const advanced = (await searchParams).advanced === "1";
-  const { base } = await getCurrencies();
+  const [{ base }, cols] = await Promise.all([getCurrencies(), db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], select: { name: true } })]);
   if (!advanced) {
     return (
       <div className="max-w-xl">
-        <PageHeader title="Add a product" sub="Four boxes and you’re done. It appears on your homepage and customers can buy it right away." />
+        <PageHeader title="Add a product" sub="Four boxes and you’re done. It shows in the shop under its category and customers can buy it right away." />
         <Panel>
           <ActionForm action={saveLandingProduct}>
-            <ProductFields base={base.code} />
+            <ProductFields base={base.code} collections={cols.map((c) => c.name)} />
             <input type="hidden" name="position" value="top" />
             <button className="btn btn-primary">Add product</button>
           </ActionForm>
