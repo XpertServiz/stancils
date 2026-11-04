@@ -9,7 +9,8 @@ import { clearMemo, memo } from "./memo";
 
 export type MenuItem = { label: string; href: string; children: { label: string; href: string }[] };
 export type HomeRow = { title: string; intro: string; collection: string; banner: string; count: number };
-export type Chip = { label: string; href: string };
+/** A picture tile in “Our Collections”. `baked` = the name is already written on the picture, so we do not print it again. */
+export type Chip = { label: string; href: string; image?: string; baked?: boolean };
 export type StoreHome = {
   eyebrow: string;
   headline: string;
@@ -140,12 +141,12 @@ export const HOME_DEFAULTS: StoreHome = {
   heroImage: "/images/hero-banner.jpg",
   heroLayout: "banner",
   chips: [
-    { label: "All Calligraphy Stencils", href: "/c/all-calligraphy-stencils" },
-    { label: "Mandala Stencils", href: "/c/mandala-designs" },
-    { label: "Floral & Motif Designs", href: "/c/floral-and-motif-designs" },
-    { label: "Fabric Stencils", href: "/c/fabric-stencils" },
-    { label: "Furniture Stencils", href: "/c/furniture-stencils" },
-    { label: "Calligraphy Brushes", href: "/c/art-supplies" },
+    { label: "All Calligraphy Stencils", href: "/c/all-calligraphy-stencils", image: "/images/collections/all-calligraphy-stencils.jpg" },
+    { label: "Mandala Stencils", href: "/c/mandala-designs", image: "/images/collections/mandala-stencils.jpg", baked: true },
+    { label: "Floral & Motif Designs", href: "/c/floral-and-motif-designs", image: "/images/collections/floral-motif-designs.jpg", baked: true },
+    { label: "Fabric Stencils", href: "/c/fabric-stencils", image: "/images/collections/fabric-stencils.jpg" },
+    { label: "Furniture Stencils", href: "/c/furniture-stencils", image: "/images/collections/furniture-stencils.jpg", baked: true },
+    { label: "Calligraphy Brushes", href: "/c/art-supplies", image: "/images/collections/calligraphy-brushes.jpg", baked: true },
   ],
   rows: [
     { title: "Persian Carpet Stencils", intro: "Elegant designs inspired by traditional rugs, ideal for canvas, walls and furniture.", collection: "carpet-design-stencils", banner: "", count: 8 },
@@ -181,7 +182,10 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     banner: cleanUrl(r.banner),
     count: Math.max(2, Math.min(12, Math.round(Number(r.count)) || 8)),
   })).filter((r) => r.title && r.collection);
-  const chips = (input.chips ?? prev.chips).map((c) => ({ label: cleanText(c.label, 40), href: cleanLink(c.href, "/shop") })).filter((c) => c.label).slice(0, 12);
+  const chips = (input.chips ?? prev.chips)
+    .map((c) => ({ label: cleanText(c.label, 40), href: cleanLink(c.href, "/shop"), image: cleanUrl(c.image), baked: Boolean(c.baked) && Boolean(c.image) }))
+    .filter((c) => c.label)
+    .slice(0, 12);
   return {
     eyebrow: cleanText(input.eyebrow ?? prev.eyebrow, 40),
     headline: cleanText(input.headline ?? prev.headline, 80) || HOME_DEFAULTS.headline,

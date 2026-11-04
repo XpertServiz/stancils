@@ -102,7 +102,19 @@ export async function saveHomeRows(_: R, fd: FormData): Promise<R> {
         count: Number(fd.get(`count_${i}`) || 8),
       });
     }
-    const chips = String(fd.get("chips") ?? "").split(/\r?\n/).map((l) => l.split("|").map((x) => x.trim())).filter((p) => p[0]).map(([label, href]) => ({ label, href: href || "/shop" }));
+    const chips: { label: string; href: string; image: string; baked: boolean }[] = [];
+    for (let i = 0; fd.has(`tile_label_${i}`); i++) {
+      if (fd.get(`tile_remove_${i}`) === "on") continue;
+      const label = String(fd.get(`tile_label_${i}`) ?? "").trim();
+      if (!label) continue;
+      const up = await photo(fd.get(`tile_img_${i}`));
+      chips.push({
+        label,
+        href: String(fd.get(`tile_href_${i}`) ?? "").trim() || "/shop",
+        image: up ?? String(fd.get(`tile_keep_${i}`) ?? ""),
+        baked: up ? fd.get(`tile_baked_${i}`) === "on" : fd.get(`tile_baked_${i}`) === "on",
+      });
+    }
     const next = cleanHome(
       { rows, chips, latestTitle: String(fd.get("latestTitle") ?? ""), hours: String(fd.get("hours") ?? ""), mapQuery: String(fd.get("mapQuery") ?? ""), newsletterTitle: String(fd.get("newsletterTitle") ?? "") },
       prev,

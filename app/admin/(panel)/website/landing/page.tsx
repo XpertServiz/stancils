@@ -89,8 +89,34 @@ export default async function LandingProducts() {
                 </fieldset>
               ))}
             </div>
+            <div className="space-y-3">
+              <p className="text-sm font-semibold">“Our Collections” pictures</p>
+              <p className="text-sm text-ink2">Each picture opens its collection when a customer clicks it. Use the empty box at the bottom to add another.</p>
+              {[...home.chips, { label: "", href: "", image: "", baked: false }].map((c, i) => (
+                <fieldset key={i} className="rounded-xl border border-line p-4">
+                  <legend className="px-1 text-xs font-bold uppercase tracking-wider text-ink3">{c.label ? `Picture ${i + 1}` : "Add a new picture"}</legend>
+                  <div className="grid gap-3 sm:grid-cols-[96px_1fr_1fr]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {c.image ? <img src={c.image} alt="" className="h-24 w-24 rounded-lg object-cover" /> : <span className="grid h-24 w-24 place-items-center rounded-lg bg-s1 text-xs text-ink3">No picture</span>}
+                    <Field label="Name"><input name={`tile_label_${i}`} defaultValue={c.label} maxLength={40} className="input" placeholder="e.g. Mandala Stencils" /></Field>
+                    <Field label="Opens collection">
+                      <select name={`tile_href_${i}`} defaultValue={c.href} className="select">
+                        {c.href && !cols.some((k) => `/c/${k.slug}` === c.href) && <option value={c.href}>{c.href}</option>}
+                        <option value="">Choose…</option>
+                        {cols.map((k) => <option key={k.slug} value={`/c/${k.slug}`}>{k.name}</option>)}
+                      </select>
+                    </Field>
+                    <div className="sm:col-span-3 grid gap-2">
+                      <Field label={c.image ? "Replace the picture" : "Picture"} hint="Square or 4:3 works best (JPG or PNG)."><input name={`tile_img_${i}`} type="file" accept="image/*" className="input" /></Field>
+                      <input type="hidden" name={`tile_keep_${i}`} value={c.image ?? ""} />
+                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name={`tile_baked_${i}`} defaultChecked={c.baked} />The name is already written on the picture (do not add it again)</label>
+                      {c.label && <label className="flex items-center gap-2 text-sm text-danger"><input type="checkbox" name={`tile_remove_${i}`} />Delete this picture</label>}
+                    </div>
+                  </div>
+                </fieldset>
+              ))}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="“Our Collections” buttons" hint="One per line: name | link. Example: Mandala Stencils | /c/mandala-designs" className="sm:col-span-2"><textarea name="chips" rows={6} defaultValue={home.chips.map((c) => `${c.label} | ${c.href}`).join("\n")} className="textarea font-mono text-sm" /></Field>
               <Field label="Heading for the newest products"><input name="latestTitle" maxLength={60} defaultValue={home.latestTitle} className="input" /></Field>
               <Field label="Heading above the email box"><input name="newsletterTitle" maxLength={80} defaultValue={home.newsletterTitle} className="input" /></Field>
               <Field label="Store opening hours" hint="One per line: Day | hours. Shown on the homepage and footer."><textarea name="hours" rows={7} defaultValue={home.hours} className="textarea font-mono text-sm" /></Field>

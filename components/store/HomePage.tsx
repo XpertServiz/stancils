@@ -91,20 +91,33 @@ function Hero({ h, off }: { h: StoreHome; off: string }) {
   );
 }
 
+/** “Our Collections”: picture tiles. Clicking one opens that collection's products. */
 function Chips({ chips }: { chips: StoreHome["chips"] }) {
   if (!chips.length) return null;
   return (
-    <section className="fade-up">
-      <div className="mx-auto max-w-[1280px] px-4 pt-12 md:px-6">
-        <SectionTitle>Our Collections</SectionTitle>
-        <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:flex-wrap md:justify-center md:overflow-visible md:px-0">
-          {chips.map((c, i) => (
-            <Link key={c.label} href={c.href} className="flex shrink-0 snap-start items-center gap-2.5 rounded-full border border-line bg-bg py-2 pl-2 pr-5 text-sm font-semibold shadow-[0_1px_2px_rgba(0,0,0,.06)] transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent/10 hover:text-accent">
-              <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-accent/15 text-sm font-bold text-accent">{c.label.slice(0, 1)}</span>
-              {c.label}
-            </Link>
-          ))}
-        </div>
+    <section className="fade-up" aria-labelledby="collections-h">
+      <div className="mx-auto max-w-[1100px] px-4 pb-4 pt-12 md:px-6 md:pt-16">
+        <h2 id="collections-h" className="mb-8 text-center text-[13px] font-bold uppercase tracking-[.2em] text-ink2">Our Collections</h2>
+        <ul className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
+          {chips.map((c, i) => {
+            const img = exists(c.image ?? "") ? c.image : "";
+            return (
+              <li key={c.label + i}>
+                <Link href={c.href} className="group relative block aspect-square overflow-hidden bg-s1" aria-label={`${c.label} — view the collection`}>
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt={c.label} loading={i < 3 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
+                  ) : (
+                    <span className="absolute inset-0 bg-gradient-to-br from-accent to-[rgb(var(--band-stone))]" />
+                  )}
+                  {(!c.baked || !img) && (
+                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center text-[clamp(14px,2.1vw,22px)] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

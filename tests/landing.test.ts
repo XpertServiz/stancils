@@ -44,6 +44,13 @@ describe("storefront menu and homepage", () => {
     expect(cleanHome({ heroLayout: "split" }, HOME_DEFAULTS).heroLayout).toBe("split");
     expect(cleanHome({ heroLayout: "x" as never }, HOME_DEFAULTS).heroLayout).toBe("banner");
   });
+  it("collection picture tiles keep their picture and reject bad links", () => {
+    const c = cleanHome({}, HOME_DEFAULTS).chips;
+    expect(c).toHaveLength(6);
+    expect(c.every((x) => x.href.startsWith("/c/") && x.image?.startsWith("/images/collections/"))).toBe(true);
+    expect(() => cleanHome({ chips: [{ label: "x", href: "javascript:x" }] }, HOME_DEFAULTS)).toThrow();
+    expect(() => cleanHome({ chips: [{ label: "x", href: "/shop", image: "javascript:x" }] }, HOME_DEFAULTS)).toThrow();
+  });
   it("reads opening hours", () => {
     expect(parseHours("Mon | 10am – 9pm\nSun").at(-1)).toEqual({ day: "Sun", time: "Closed" });
   });
