@@ -60,7 +60,7 @@ export async function ShopView({ sp, collection, basePath }: { sp: SP; collectio
             <span>–</span>
             <input name="max" type="number" min={0} defaultValue={f.max} placeholder="To" className="input !py-1.5" aria-label="Maximum price" />
           </div>
-          <button className="btn btn-soft btn-sm w-full">Apply</button>
+          <button className="btn btn-sm w-full border border-line hover:border-accent hover:text-accent">Apply</button>
         </form>
         <div>
           <p className="mb-2 font-bold uppercase tracking-wider">Collections</p>

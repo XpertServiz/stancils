@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { getMenu, slugify } from "@/lib/storefront";
 import { ShopView } from "@/components/store/ShopView";
 
 type P = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -15,7 +16,13 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 export default async function CollectionPage({ params, searchParams }: P) {
   const { slug } = await params;
   const sp = await searchParams;
-  const c = await db.collection.findUnique({ where: { slug } });
+  let c: { id?: string; slug: string; name: string; description: string | null } | null = await db.collection.findUnique({ where: { slug } });
+  if (!c) {
+    // a menu link whose collection has no products yet: show an empty collection page instead of an error
+    const menu = await getMenu();
+    const hit = menu.flatMap((m) => [m, ...m.children]).find((m) => slugify(m.label) === slug || m.href === `/c/${slug}`);
+    if (hit) c = { slug, name: hit.label, description: null };
+  }
   if (!c) {
     const r = await db.redirect.findUnique({ where: { from: `/c/${slug}` } });
     if (r) return <meta httpEquiv="refresh" content={`0;url=${r.to}`} />;

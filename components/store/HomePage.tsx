@@ -135,7 +135,16 @@ export async function HomePage() {
   const today = new Date().toLocaleDateString("en-US", { weekday: "short", timeZone: s.business.timezone });
   const mapQ = encodeURIComponent(h.mapQuery || s.business.address);
 
-  const shown = h.rows.map((r, i) => ({ r, cards: rowCards[i] })).filter((x) => x.cards.length > 0);
+  let shown = h.rows.map((r, i) => ({ r, cards: rowCards[i] })).filter((x) => x.cards.length > 0);
+  if (shown.length === 0) {
+    // none of the configured rows has products yet (new store, or collections not filled): show the busiest collections instead
+    const busy = await db.collection.findMany({
+      where: { products: { some: { product: { status: "ACTIVE" } } } },
+      orderBy: { products: { _count: "desc" } }, take: 4, select: { slug: true, name: true },
+    });
+    const fb = await Promise.all(busy.map((c) => listProducts({ collection: c.slug, perPage: 6 }, cur, base).then((x) => ({ r: { title: c.name, intro: "", collection: c.slug, banner: "", count: 6 }, cards: x.cards }))));
+    shown = fb.filter((x) => x.cards.length > 0);
+  }
   let n = 0;
   return (
     <>

@@ -5,8 +5,8 @@ import type { CurrencyInfo } from "./money";
 
 export const DEFAULT_SETTINGS = {
   business: {
-    name: "Stencil & Gift Studio",
-    tagline: "CREATIVE DECOR · GIFTS · APPAREL",
+    name: "Creative Corner",
+    tagline: "Reusable Stencils & Art Supplies",
     email: "hello@creativecorner.shop",
     phone: "+92 300 0000000",
     whatsapp: "923000000000",
@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS = {
     trust: ["Made to order", "USA & Canada"],
   },
   splash: { enabled: false, style: "cube" as "cube" | "laser" | "layers" | "spray" },
-  announcement: { enabled: true, text: "Made to brighten your world — beautifully personal • Shipping across the United States & Canada" },
+  announcement: { enabled: true, text: "Exclusive Offer: 50% Flat Discount" },
   tax: { ratePct: 0, inclusive: true, label: "Tax" },
   payments: {
     demoCard: true,
