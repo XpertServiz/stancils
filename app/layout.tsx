@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getSettings } from "@/lib/settings";
 import { companionOf, googleFontsHref, themeById, themeCss } from "@/lib/themes";
+import { Splash } from "@/components/store/Splash";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -34,12 +35,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href={googleFontsHref(s.theme.displayFont, s.theme.bodyFont)} />
         <style dangerouslySetInnerHTML={{ __html: themeCss(s.theme) }} />
+        {s.splash.enabled && (
+          <script
+            // repeat visit, reduced motion or a crawler: hide the splash before the first paint (shop and admin are counted separately)
+            dangerouslySetInnerHTML={{ __html: `try{var k=location.pathname.indexOf('/admin')===0?'cc_splash_a':'cc_splash_s';if(sessionStorage.getItem(k)||matchMedia('(prefers-reduced-motion: reduce)').matches||/bot|crawl|spider|lighthouse|slurp/i.test(navigator.userAgent))document.documentElement.dataset.splash='skip'}catch(e){document.documentElement.dataset.splash='skip'}` }}
+          />
+        )}
         <script
           // visitor light/dark override, applied before paint to avoid a flash
           dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('cc_alt')==='1'){var d=document.documentElement;d.dataset.theme=d.dataset.alt}}catch(e){}` }}
         />
       </head>
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        {s.splash.enabled && <Splash name={s.business.name} style={s.splash.style} />}
+        {children}
+      </body>
     </html>
   );
 }

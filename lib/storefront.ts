@@ -11,7 +11,10 @@ export type MenuItem = { label: string; href: string; children: { label: string;
 export type HomeRow = { title: string; intro: string; collection: string; banner: string; count: number };
 /** A picture tile in “Our Collections”. `baked` = the name is already written on the picture, so we do not print it again. */
 export type Chip = { label: string; href: string; image?: string; baked?: boolean };
+/** A feature banner between the top banner and “Our Collections” (the Kiswa banner). `baked` = the picture already has an OPEN button drawn on it, so we put a real clickable button over it. */
+export type Feature = { enabled: boolean; image: string; href: string; title: string; text: string; bullets: string[]; baked: boolean };
 export type StoreHome = {
+  feature: Feature;
   eyebrow: string;
   headline: string;
   sub: string;
@@ -132,6 +135,15 @@ export async function ensureMenuCollections(menu: MenuItem[]) {
 // ───────────────────────────── homepage ─────────────────────────────
 
 export const HOME_DEFAULTS: StoreHome = {
+  feature: {
+    enabled: true,
+    image: "/images/kiswa-banner.jpg",
+    href: "/p/kaaba-kiswa-inspired-pattern-stencil",
+    title: "Hand-Paint the Kaaba Door with Kiswa Stencil",
+    text: "Create your own Ghilaf-e-Kaaba masterpiece. No calligraphy skills required — just devotion and creativity.",
+    bullets: ["100% Accurate Calligraphy", "All sizes Available", "Exclusive Design", "50% Discount"],
+    baked: true,
+  },
   eyebrow: "New • Limited offer",
   headline: "Paint Beautiful Walls — No Skills Required",
   sub: "Reusable stencils for walls, canvas, furniture and fabric.",
@@ -186,7 +198,18 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     .map((c) => ({ label: cleanText(c.label, 40), href: cleanLink(c.href, "/shop"), image: cleanUrl(c.image), baked: Boolean(c.baked) && Boolean(c.image) }))
     .filter((c) => c.label)
     .slice(0, 12);
+  const f = { ...prev.feature, ...(input.feature ?? {}) };
+  const feature: Feature = {
+    enabled: Boolean(f.enabled),
+    image: cleanUrl(f.image),
+    href: cleanLink(f.href, "/shop"),
+    title: cleanText(f.title, 90),
+    text: cleanText(f.text, 300),
+    bullets: (f.bullets ?? []).map((x) => cleanText(x, 60)).filter(Boolean).slice(0, 6),
+    baked: Boolean(f.baked) && Boolean(f.image),
+  };
   return {
+    feature,
     eyebrow: cleanText(input.eyebrow ?? prev.eyebrow, 40),
     headline: cleanText(input.headline ?? prev.headline, 80) || HOME_DEFAULTS.headline,
     sub: cleanText(input.sub ?? prev.sub, 140),

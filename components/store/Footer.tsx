@@ -58,6 +58,10 @@ export async function Footer() {
           </div>
         </div>
       </div>
+      <div className="border-t border-white/10 py-3 text-center text-[11px]">
+        {/* a normal <a>, not <Link>: it loads the admin panel fresh, with its own splash screen */}
+        <a href="/admin/login" className="opacity-70 hover:text-mustard hover:opacity-100">Admin login</a>
+      </div>
     </footer>
   );
 }

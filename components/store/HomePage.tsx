@@ -40,7 +40,7 @@ function Hero({ h, off }: { h: StoreHome; off: string }) {
         <Link href={h.cta.href} className="relative block bg-s1" aria-label={`${h.cta.label}: ${h.headline}`}>
           {img ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={img} alt={`${h.headline}. ${h.sub}`} fetchPriority="high" className="aspect-[4/3] w-full object-cover object-center sm:aspect-[2000/1116]" />
+            <img src={img} srcSet={img === "/images/hero-banner.jpg" ? "/images/hero-banner-900.jpg 900w, /images/hero-banner.jpg 2000w" : undefined} sizes="100vw" alt={`${h.headline}. ${h.sub}`} fetchPriority="high" decoding="async" className="aspect-[4/3] w-full object-cover object-center sm:aspect-[2000/1116]" />
           ) : (
             <div className="diag grid aspect-[4/3] w-full place-items-center text-sm font-semibold text-ink3 sm:aspect-[2000/1116]">Hero image coming soon</div>
           )}
@@ -93,6 +93,46 @@ function Hero({ h, off }: { h: StoreHome; off: string }) {
 }
 
 /** “Our Collections”: picture tiles. Clicking one opens that collection's products. */
+/** The Kiswa feature banner. The picture has the writing and an OPEN button drawn on it; we lay a real, clickable button over it. */
+const BAKED_BUTTON = { left: "5.4%", top: "64.2%", width: "10%", height: "7.4%" }; // where OPEN sits on the original banner picture
+function FeatureBanner({ f }: { f: StoreHome["feature"] }) {
+  if (!f.enabled) return null;
+  const img = exists(f.image) ? f.image : "";
+  const label = `Open — ${f.title}`;
+  const textBlock = (
+    <div className="mx-auto max-w-xl px-4 py-10 text-center sm:text-left md:px-6">
+      <h2 className="font-display text-[26px] font-bold leading-tight text-[#14224a] md:text-[32px]">{f.title}</h2>
+      {f.text && <p className="mt-3 text-ink2">{f.text}</p>}
+      {f.bullets.length > 0 && <ul className="mt-4 space-y-1 text-sm font-medium">{f.bullets.map((b) => <li key={b}>- {b}</li>)}</ul>}
+      <Link href={f.href} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#14224a] px-9 text-sm font-bold uppercase tracking-wider text-white transition hover:-translate-y-px hover:brightness-125">Open</Link>
+    </div>
+  );
+  if (!img) return <section className="bg-[#f2f2f2]">{textBlock}</section>;
+  return (
+    <section className="bg-[#f2f2f2]" aria-label={f.title}>
+      {/* big screens: the whole picture, with a real button over the OPEN drawn on it */}
+      <div className="relative mx-auto hidden max-w-[2000px] sm:block">
+        <h2 className="sr-only">{f.title}</h2>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img} alt={`${f.title}. ${f.text}`} loading="lazy" decoding="async" className="block h-auto w-full" />
+        {f.baked ? (
+          <Link href={f.href} aria-label={label} style={BAKED_BUTTON} className="absolute rounded-[10px] outline-offset-2 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" />
+        ) : (
+          <Link href={f.href} className="absolute bottom-[12%] left-[5.5%] inline-flex h-11 items-center rounded-xl bg-[#14224a] px-9 text-sm font-bold uppercase tracking-wider text-white transition hover:brightness-125">Open</Link>
+        )}
+      </div>
+      {/* phones: the picture is cropped to the girl and the door, and the words are real text */}
+      <div className="sm:hidden">
+        <Link href={f.href} aria-label={label} className="block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img} alt="" loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover object-[78%_50%]" />
+        </Link>
+        {textBlock}
+      </div>
+    </section>
+  );
+}
+
 function Chips({ chips }: { chips: StoreHome["chips"] }) {
   if (!chips.length) return null;
   return (
@@ -187,6 +227,7 @@ export async function HomePage() {
   return (
     <>
       <Hero h={h} off={best ? `${Math.round(best)}% OFF` : ""} />
+      <FeatureBanner f={h.feature} />
       <Chips chips={h.chips} />
             {shown.map(({ r, cards }) => <Row key={r.title} row={r} cards={cards} />)}
       {shown.length === 0 && latestCards.length === 0 && (

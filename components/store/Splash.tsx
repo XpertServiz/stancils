@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export type SplashStyle = "cube" | "laser" | "layers" | "spray";
 
@@ -7,25 +8,30 @@ const MARK = "M32 10a22 22 0 1 0 0 44 22 22 0 0 0 0-44Zm0 9a13 13 0 0 1 11.3 6.6
 const DURATION = 1300;
 
 /**
- * 3D intro shown once per browser session (≤1.8s, skippable with any tap or key).
+ * 3D intro shown on arrival — once per browser session for the shop and once for the admin panel (≤1.5s, skippable with any tap or key).
+ * It is part of the server-rendered page, so it covers the screen before anything else paints (the head script in app/layout.tsx
+ * hides it at once for repeat visits, reduced motion and crawlers; a CSS fail-safe removes it after 7s even if scripts never run).
  * Pure CSS 3D + a tiny canvas for particles — no three.js, so it never delays the page.
  * Skipped for reduced motion, bots/crawlers and repeat visits in the same session.
  */
 export function Splash({ name, style = "cube" }: { name: string; style?: SplashStyle }) {
-  const [show, setShow] = useState(false);
+  const admin = usePathname().startsWith("/admin");
+  const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem("cc_splash")) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      if (/bot|crawl|spider|lighthouse|slurp/i.test(navigator.userAgent)) return;
-      sessionStorage.setItem("cc_splash", "1");
+      const key = admin ? "cc_splash_a" : "cc_splash_s";
+      if (sessionStorage.getItem(key) || window.matchMedia("(prefers-reduced-motion: reduce)").matches || /bot|crawl|spider|lighthouse|slurp/i.test(navigator.userAgent)) {
+        setShow(false);
+        return;
+      }
+      sessionStorage.setItem(key, "1");
     } catch {
+      setShow(false);
       return;
     }
-    setShow(true);
     const t1 = setTimeout(() => setLeaving(true), DURATION - 350);
     const t2 = setTimeout(() => setShow(false), DURATION);
     const skip = () => { setLeaving(true); setTimeout(() => setShow(false), 250); };
@@ -92,7 +98,7 @@ export function Splash({ name, style = "cube" }: { name: string; style?: SplashS
   return (
     <div
       aria-hidden
-      className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-bg"
+      className="cc-splash fixed inset-0 z-[1000] grid place-items-center overflow-hidden bg-bg"
       style={{ transition: "opacity .35s ease, transform .35s ease", opacity: leaving ? 0 : 1, transform: leaving ? "scale(1.04)" : "none" }}
     >
       <style>{CSS}</style>

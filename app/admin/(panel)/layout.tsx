@@ -4,6 +4,7 @@ import { Bell, ExternalLink } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { memo } from "@/lib/memo";
 import { ROLES } from "@/lib/permissions";
 import { Sidebar, type NavItem } from "@/components/admin/Sidebar";
 import { staffLogout } from "../actions/auth";
@@ -14,13 +15,14 @@ export const dynamic = "force-dynamic";
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
   const s = await getSettings();
-  const [alerts, pendingOrders, queued, inbox, pendingReviews] = await Promise.all([
+  // the little numbers in the menu: read once and reused for 15 seconds, so moving around the panel stays quick
+  const [alerts, pendingOrders, queued, inbox, pendingReviews] = await memo("admin:badges", () => Promise.all([
     db.alert.count({ where: { read: false } }),
     db.order.count({ where: { status: { in: ["PAID", "CONFIRMED", "QUALITY_CHECK", "PACKED"] } } }),
     db.productionJob.count({ where: { completedAt: null } }),
     db.inquiry.count({ where: { status: "open" } }),
     db.review.count({ where: { status: "pending" } }),
-  ]);
+  ]), 15_000);
   const has = (p: string) => staff.perms.has(p);
   const items: (NavItem & { perm?: string })[] = [
     { href: "/admin", label: "Cockpit", icon: "LayoutDashboard", perm: "dashboard.view" },

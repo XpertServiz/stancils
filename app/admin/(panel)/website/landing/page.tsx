@@ -7,7 +7,7 @@ import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { WebsiteTabs } from "@/components/admin/WebsiteTabs";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { saveLandingPage } from "@/app/admin/actions/landing";
-import { saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
+import { saveFeature, saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
 
 export default async function LandingProducts() {
   await requireStaff("content.edit");
@@ -58,6 +58,25 @@ export default async function LandingProducts() {
               )}
             </div>
             <button className="btn btn-primary">Save top of page</button>
+          </ActionForm>
+        </Panel>
+
+        <Panel title="Kiswa banner (above “Our Collections”)">
+          <ActionForm action={saveFeature}>
+            <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="f_enabled" defaultChecked={home.feature.enabled} />Show this banner</label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Heading"><input name="f_title" maxLength={90} defaultValue={home.feature.title} className="input" /></Field>
+              <Field label="The OPEN button goes to" hint="Paste a page link, e.g. /p/your-kiswa-product or /c/kaaba-inspired-calligraphy"><input name="f_href" defaultValue={home.feature.href} className="input" /></Field>
+              <Field label="A few words" className="sm:col-span-2"><textarea name="f_text" rows={2} maxLength={300} defaultValue={home.feature.text} className="textarea" /></Field>
+              <Field label="Tick points (one per line)"><textarea name="f_bullets" rows={4} defaultValue={home.feature.bullets.join("\n")} className="textarea" /></Field>
+              <div className="space-y-2">
+                <Field label={home.feature.image ? "Replace the banner picture" : "Banner picture"} hint="A wide picture, about 2000 × 1100."><input name="featureImage" type="file" accept="image/*" className="input" /></Field>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="f_baked" defaultChecked={home.feature.baked} />The picture already has an OPEN button drawn on it</label>
+                {home.feature.image && <label className="flex items-center gap-2 text-sm text-danger"><input type="checkbox" name="f_remove" />Remove the picture</label>}
+              </div>
+            </div>
+            <p className="text-xs text-ink3">On phones the words are shown as normal text under the picture, so they stay easy to read.</p>
+            <button className="btn btn-primary">Save banner</button>
           </ActionForm>
         </Panel>
 

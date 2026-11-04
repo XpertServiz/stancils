@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS = {
     imageUrl: "/hero/studio-collage.webp",
     trust: ["Made to order", "USA & Canada"],
   },
-  splash: { enabled: false, style: "cube" as "cube" | "laser" | "layers" | "spray" },
+  splash: { enabled: true, style: "cube" as "cube" | "laser" | "layers" | "spray" },
   announcement: { enabled: true, text: "Exclusive Offer: 50% Flat Discount" },
   tax: { ratePct: 0, inclusive: true, label: "Tax" },
   payments: {

@@ -83,6 +83,36 @@ export async function saveHomeTop(_: R, fd: FormData): Promise<R> {
   }
 }
 
+/** The feature banner above “Our Collections” (the Kiswa banner). */
+export async function saveFeature(_: R, fd: FormData): Promise<R> {
+  try {
+    const s = await requirePermission("content.publish");
+    const prev = await getHome();
+    const up = await photo(fd.get("featureImage"));
+    const next = cleanHome(
+      {
+        feature: {
+          enabled: fd.get("f_enabled") === "on",
+          image: up ?? (fd.get("f_remove") === "on" ? "" : prev.feature.image),
+          href: String(fd.get("f_href") ?? ""),
+          title: String(fd.get("f_title") ?? ""),
+          text: String(fd.get("f_text") ?? ""),
+          bullets: String(fd.get("f_bullets") ?? "").split(/\r?\n/),
+          // a picture you upload yourself gets a normal button under it; the original banner has its OPEN button drawn on it
+          baked: up ? fd.get("f_baked") === "on" : fd.get("f_baked") === "on",
+        },
+      },
+      prev,
+    );
+    await saveHome(next);
+    await audit(s.id, "storefront.home.feature", "settings", "storeHome");
+    refreshAll();
+    return { ok: true, msg: "Saved. The banner is updated." };
+  } catch (e) {
+    return { ok: false, msg: (e as Error).message };
+  }
+}
+
 /** The product rows ("Persian Carpet Stencils", …). The last, empty row in the form adds a new one. */
 export async function saveHomeRows(_: R, fd: FormData): Promise<R> {
   try {

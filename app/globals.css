@@ -148,6 +148,11 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 .band-stone .eyebrow:not(.card *) { color: rgb(var(--accent)); filter: brightness(0.82); }
 .band-stone .card { color: rgb(var(--ink)); }
 
+/* Splash screen: hidden at once on repeat visits, and removed after 7s even if scripts never run */
+html[data-splash="skip"] .cc-splash { display: none !important; }
+@keyframes cc-splash-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.cc-splash { animation: cc-splash-failsafe 0.01s 7s forwards; }
+
 /* Creative Corner storefront: sections fade up once as they enter the screen (only where the browser supports it) */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @supports (animation-timeline: view()) {

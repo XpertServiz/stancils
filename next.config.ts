@@ -9,7 +9,11 @@ const nextConfig: NextConfig = {
     return key ? [{ source: `/${key}.txt`, destination: "/api/indexnow-key" }] : [];
   },
   async headers() {
+    const pictures = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }];
     return [
+      { source: "/catalog/:path*", headers: pictures },
+      { source: "/images/:path*", headers: pictures },
+      { source: "/uploads/:path*", headers: pictures },
       {
         source: "/:path*",
         headers: [

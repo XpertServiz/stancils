@@ -74,7 +74,7 @@ export const FONTS: Record<string, { weights: string; kind: "sans" | "serif" | "
   Lora: { weights: "400;500;600;700", kind: "serif" },
   "Libre Baskerville": { weights: "400;700", kind: "serif" },
   "DM Serif Display": { weights: "400", kind: "serif" },
-  Fraunces: { weights: "400;500;600;700", kind: "serif" },
+  Fraunces: { weights: "600;700", kind: "serif" },
 };
 export const FONT_NAMES = Object.keys(FONTS);
 export const DEFAULT_FONT = "Poppins";
@@ -124,11 +124,9 @@ export function googleFontsHref(displayFont: string, bodyFont: string) {
     const name = FONTS[f] ? f : DEFAULT_FONT;
     if (FONTS[name].kind === "system") return null;
     const w = FONTS[name].weights;
-    // serif headings use an italic accent word, so load the italic cut too
-    if (FONTS[name].kind === "serif") return `family=${name.replace(/ /g, "+")}:ital,wght@${w.split(";").map((x) => `0,${x}`).join(";")};${w.split(";").map((x) => `1,${x}`).join(";")}`;
     return `family=${name.replace(/ /g, "+")}:wght@${w}`;
   };
-  const fonts = new Set([fam(displayFont), fam(bodyFont), "family=IBM+Plex+Mono:wght@400;500"].filter((x): x is string => Boolean(x)));
+  const fonts = new Set([fam(displayFont), fam(bodyFont)].filter((x): x is string => Boolean(x)));
   return `https://fonts.googleapis.com/css2?${[...fonts].join("&")}&display=swap`;
 }
 
