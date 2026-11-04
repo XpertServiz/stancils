@@ -103,7 +103,7 @@ function Chips({ chips }: { chips: StoreHome["chips"] }) {
             const img = exists(c.image ?? "") ? c.image : "";
             return (
               <li key={c.label + i}>
-                <Link href={c.href} className="group relative block aspect-square overflow-hidden bg-s1" aria-label={`${c.label} — view the collection`}>
+                <Link href={c.href} className="group relative block aspect-square overflow-hidden bg-s1 [container-type:inline-size]" aria-label={`${c.label} — view the collection`}>
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt={c.label} loading={i < 3 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
@@ -111,7 +111,7 @@ function Chips({ chips }: { chips: StoreHome["chips"] }) {
                     <span className="absolute inset-0 bg-gradient-to-br from-accent to-[rgb(var(--band-stone))]" />
                   )}
                   {(!c.baked || !img) && (
-                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center text-[clamp(14px,2.1vw,22px)] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
+                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center [font-size:4.6cqw] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
                   )}
                 </Link>
               </li>
