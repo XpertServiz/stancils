@@ -10,6 +10,9 @@ export const TEMPLATE_HEADERS = [
   "sku", "variant_name", "width_mm", "height_mm", "material_code", "price", "compare_at", "unit_cost", "opening_stock", "reorder_level", "digital", "image_url",
 ] as const;
 
+/** The beginner template: only what a shop owner actually knows. SKU, slug and the rest are filled in automatically. */
+export const SIMPLE_HEADERS = ["name", "category", "price", "stock", "photo_link", "description"] as const;
+
 type Row = Record<(typeof TEMPLATE_HEADERS)[number], string>;
 export type ImportReport = { products: number; variants: number; created: number; updated: number; errors: { row: number; msg: string }[]; warnings: string[] };
 
@@ -17,9 +20,28 @@ const truthy = (v?: string) => /^(1|y|yes|true)$/i.test((v ?? "").trim());
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80);
 
 /** Accepts our template or a Shopify product export and returns normalised rows. */
-export function parseCsv(text: string): { rows: Row[]; format: "template" | "shopify" } {
+export function parseCsv(text: string): { rows: Row[]; format: "simple" | "template" | "shopify" } {
   const parsed = Papa.parse<Record<string, string>>(text.replace(/^﻿/, ""), { header: true, skipEmptyLines: true });
   const headers = parsed.meta.fields ?? [];
+  const lower = headers.map((h) => h.trim().toLowerCase());
+  if (lower.includes("name") && lower.includes("price") && !lower.includes("sku") && !headers.includes("Handle")) {
+    // beginner template — a blank stock cell means “made to order”, a number means “I keep this many ready”
+    const rows = parsed.data
+      .map((raw) => {
+        const r = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k.trim().toLowerCase(), String(v ?? "").trim()]));
+        const name = r.name ?? "";
+        const slug = slugify(name);
+        const stock = r.stock ?? "";
+        return {
+          name, slug, type: stock === "" ? "MADE_TO_ORDER" : "STOCK_PHYSICAL", status: "ACTIVE", collections: r.category || r.collection || "", tags: "", short_desc: "",
+          description: r.description ?? "", food_safe: "", layers: "1", sku: ("P-" + slug).toUpperCase().slice(0, 30), variant_name: "Standard", width_mm: "", height_mm: "",
+          material_code: "", price: (r.price ?? "").replace(/[^0-9.]/g, ""), compare_at: "", unit_cost: "", opening_stock: stock, reorder_level: "", digital: "",
+          image_url: r.photo_link || r.photo || r.image_url || r.image || "",
+        } as Row;
+      })
+      .filter((r) => r.name);
+    return { rows, format: "simple" };
+  }
   if (headers.includes("Handle") && headers.includes("Variant SKU")) {
     let last: Record<string, string> = {};
     const rows = parsed.data.map((r) => {
@@ -46,17 +68,32 @@ export async function runImport(text: string, opts: { commit: boolean; filename?
     db.collection.findMany(),
     db.variant.findMany({ where: { sku: { in: rows.map((r) => r.sku.toUpperCase()).filter(Boolean) } }, select: { sku: true, productId: true } }),
   ]);
+  if (format === "simple") {
+    // match each row's category to a collection by name or slug; create the missing ones when the import is confirmed
+    for (const r of rows) {
+      const raw = r.collections;
+      if (!raw) continue;
+      let c = collections.find((x) => x.slug === slugify(raw) || x.name.toLowerCase() === raw.toLowerCase());
+      if (!c && opts.commit) {
+        c = await db.collection.create({ data: { slug: slugify(raw), name: raw.slice(0, 60), type: "SURFACE" } });
+        collections.push(c);
+      }
+      r.collections = c?.slug ?? slugify(raw);
+    }
+  }
   const seenSku = new Set<string>();
   rows.forEach((r, i) => {
     const n = i + 2;
     if (!r.name && !r.slug) report.errors.push({ row: n, msg: "name or slug is required" });
     if (!r.sku) report.errors.push({ row: n, msg: "sku is required" });
+    if (format === "simple" && r.opening_stock && !/^\d+$/.test(r.opening_stock)) report.errors.push({ row: n, msg: `stock "${r.opening_stock}" must be a whole number (or leave it empty)` });
+    if (format === "simple" && !r.price) report.warnings.push(`Row ${n}: ${r.name} has no price — it will show “Get a quote”`);
     if (r.sku && seenSku.has(r.sku.toUpperCase())) report.errors.push({ row: n, msg: `duplicate sku ${r.sku}` });
     seenSku.add(r.sku.toUpperCase());
     if (r.price && isNaN(Number(r.price))) report.errors.push({ row: n, msg: `price "${r.price}" is not a number` });
     if (r.material_code && !materials.some((m) => m.code === r.material_code)) report.warnings.push(`Row ${n}: unknown material_code ${r.material_code} (ignored)`);
     if (r.type && !["STOCK_PHYSICAL", "MADE_TO_ORDER", "DIGITAL", "TOOL", "BUNDLE"].includes(r.type)) report.errors.push({ row: n, msg: `type must be STOCK_PHYSICAL, MADE_TO_ORDER, DIGITAL, TOOL or BUNDLE` });
-    r.collections.split(";").filter(Boolean).forEach((c) => { if (!collections.some((x) => x.slug === c.trim())) report.warnings.push(`Row ${n}: unknown collection "${c}" (ignored)`); });
+    if (format !== "simple") r.collections.split(";").filter(Boolean).forEach((c) => { if (!collections.some((x) => x.slug === c.trim())) report.warnings.push(`Row ${n}: unknown collection "${c}" (ignored)`); });
   });
   const groups = new Map<string, Row[]>();
   for (const r of rows) {

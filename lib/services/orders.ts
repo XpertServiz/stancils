@@ -7,6 +7,7 @@ import { getCurrencies, getSettings, toInfo } from "../settings";
 import { variantPrice } from "./pricing";
 import { moveVariant, moveMaterial } from "./inventory";
 import { sendOrderEmail } from "../email";
+import { getLiveSales, saleDiscount } from "../sales";
 
 export type CartLineInput = { variantId?: string; customDesignId?: string; qty: number };
 
@@ -35,6 +36,8 @@ export type Quote = {
   subtotal: bigint;
   discount: bigint;
   discountLabel?: string;
+  /** the discount code that was actually accepted (its usage is counted when the order is placed) */
+  codeApplied?: string;
   discountError?: string;
   shippingOptions: { id: string; name: string; price: bigint; days: string }[];
   shippingId?: string;
@@ -115,11 +118,24 @@ export async function quoteCart(input: {
   const subtotalBase = toBaseMinor(subtotal, cur.exponent, cur.rate, base.exponent);
   const needsShipping = lines.some((l) => l.kind !== "digital");
 
-  // discounts
+  // discounts — first any automatic website sale, then the customer's code on what is left
   let discount = 0n;
   let discountLabel: string | undefined;
+  let codeApplied: string | undefined;
   let discountError: string | undefined;
   let freeShip = false;
+  const liveSales = await getLiveSales();
+  if (liveSales.length) {
+    const pids = [...new Set(lines.filter((l) => l.productId && !l.error).map((l) => l.productId!))];
+    const pcs = pids.length ? await db.productCollection.findMany({ where: { productId: { in: pids } }, include: { collection: { select: { name: true } } } }) : [];
+    const names = new Map<string, string[]>();
+    for (const pc of pcs) names.set(pc.productId, [...(names.get(pc.productId) ?? []), pc.collection.name]);
+    const r = saleDiscount(lines.filter((l) => !l.error).map((l) => ({ total: l.total, collections: names.get(l.productId ?? "") ?? [] })), liveSales);
+    if (r.discount > 0n) {
+      discount = r.discount;
+      discountLabel = r.applied.map((s) => s.name).join(" + ");
+    }
+  }
   if (input.discountCode) {
     const code = await db.discountCode.findUnique({ where: { code: input.discountCode.trim().toUpperCase() } });
     const now = new Date();
@@ -131,10 +147,11 @@ export async function quoteCart(input: {
     else if (code.firstOrderOnly && input.email && (await db.order.count({ where: { email: input.email.toLowerCase(), paymentStatus: "paid" } })) > 0)
       discountError = "This code is for first orders only.";
     else {
-      if (code.kind === "PERCENT") discount = (subtotal * BigInt(Math.round(code.value * 100))) / 10000n;
-      if (code.kind === "FIXED") discount = convertMinor(BigInt(Math.round(code.value * 10 ** base.exponent)), base, cur);
+      if (code.kind === "PERCENT") discount += ((subtotal - discount) * BigInt(Math.round(code.value * 100))) / 10000n;
+      if (code.kind === "FIXED") discount += convertMinor(BigInt(Math.round(code.value * 10 ** base.exponent)), base, cur);
       if (code.kind === "FREESHIP") freeShip = true;
-      discountLabel = code.code;
+      codeApplied = code.code;
+      discountLabel = discountLabel ? `${code.code} + ${discountLabel}` : code.code;
     }
   }
   if (input.businessDiscountPct && input.businessDiscountPct > 0) {
@@ -168,7 +185,7 @@ export async function quoteCart(input: {
   const total = taxable + shippingFee + (settings.tax.inclusive ? 0n : tax);
 
   return {
-    currency: cur, base, lines, subtotal, discount, discountLabel, discountError, shippingOptions, shippingId: selected?.id,
+    currency: cur, base, lines, subtotal, discount, discountLabel, codeApplied, discountError, shippingOptions, shippingId: selected?.id,
     shippingFee, tax, taxInclusive: settings.tax.inclusive, total, needsShipping, freeShippingThreshold, errors,
   };
 }
@@ -257,7 +274,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       },
       include: { items: true },
     });
-    if (q.discountLabel && input.discountCode) {
+    if (q.codeApplied && input.discountCode) {
       await tx.discountCode.updateMany({ where: { code: input.discountCode.trim().toUpperCase() }, data: { used: { increment: 1 } } });
     }
     for (const l of q.lines) if (l.customDesignId) await tx.customDesign.update({ where: { id: l.customDesignId }, data: { status: "locked" } });

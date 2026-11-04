@@ -3,9 +3,19 @@ import { getActiveCurrency } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { convertMinor, formatMoney } from "@/lib/money";
 import { getCountry } from "@/lib/currency";
+import { getLiveSales } from "@/lib/sales";
 
 export async function Announcement() {
   const s = await getSettings();
+  const sales = await getLiveSales();
+  const best = sales.reduce<(typeof sales)[number] | null>((b, x) => (!b || x.percent > b.percent ? x : b), null);
+  if (best) {
+    return (
+      <div className="px-[18px] py-3 text-center text-[12px] font-semibold tracking-[.03em] text-white" style={{ background: "linear-gradient(100deg,#d63a74,#ee6a73 50%,#6a63d9)" }}>
+        🔥 {best.name} — {Math.round(best.percent)}% off{best.scope === "all" ? " everything" : ` ${best.collection}`}, applied automatically at checkout
+      </div>
+    );
+  }
   if (!s.announcement.enabled || !s.announcement.text) return null;
   const { cur, base } = await getActiveCurrency();
   const country = await getCountry();

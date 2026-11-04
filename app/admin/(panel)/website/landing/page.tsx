@@ -1,59 +1,46 @@
+import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { getLandingProducts, type LandingProduct } from "@/lib/landing";
-import { DEFAULT_LANDING_PRODUCTS, DEPARTMENTS, SUBCATEGORIES } from "@/lib/landing/defaults";
+import { db } from "@/lib/db";
+import { getCurrencies } from "@/lib/settings";
+import { getLandingProducts, getLandingSettings } from "@/lib/landing";
+import { DEFAULT_LANDING_PRODUCTS } from "@/lib/landing/defaults";
+import { ProductFields } from "@/components/admin/SimpleProductFields";
 import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { WebsiteTabs } from "@/components/admin/WebsiteTabs";
 import { ActionForm } from "@/components/admin/ActionForm";
-import { landingProductOp, resetLanding, saveLandingProduct } from "@/app/admin/actions/landing";
-
-function ProductFields({ p }: { p?: LandingProduct }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Field label="Product name" className="sm:col-span-2"><input name="name" required maxLength={120} defaultValue={p?.name} className="input" /></Field>
-      <Field label="Main collection">
-        <select name="cat" defaultValue={p?.cat ?? "Stencils"} className="select">{DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}</select>
-      </Field>
-      <Field label="Subcategory" hint="Must belong to the main collection.">
-        <select name="subcat" defaultValue={p?.subcat ?? ""} className="select">
-          <option value="">— none —</option>
-          {DEPARTMENTS.map((d) => (
-            <optgroup key={d} label={d}>{SUBCATEGORIES[d].map((c) => <option key={c} value={c}>{c}</option>)}</optgroup>
-          ))}
-        </select>
-      </Field>
-      <Field label="Price (USD)" hint="0 shows “Price to be added”."><input name="price" type="number" min={0} step="0.01" defaultValue={p?.price ?? 0} className="input" /></Field>
-      <Field label="Badge"><input name="tag" maxLength={30} defaultValue={p?.tag ?? "New"} className="input" /></Field>
-      <Field label="Icon (emoji or symbol)"><input name="icon" maxLength={8} defaultValue={p?.icon ?? "✦"} className="input" /></Field>
-      <Field label="Card background"><input name="bg" type="color" defaultValue={p?.bg && p.bg.length === 7 ? p.bg : "#f3e5ee"} className="input h-10 p-1" /></Field>
-      <Field label="Photo (optional — replaces the icon)" className="sm:col-span-2"><input name="photo" type="file" accept="image/*" className="input" /></Field>
-      {p?.image && (
-        <label className="flex items-center gap-2 text-sm sm:col-span-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={p.image} alt="" className="h-10 w-10 rounded object-cover" />
-          <input type="checkbox" name="remove_photo" /> Remove photo
-        </label>
-      )}
-    </div>
-  );
-}
+import { landingProductOp, resetLanding, saveLandingPage, saveLandingProduct, syncLanding } from "@/app/admin/actions/landing";
 
 export default async function LandingProducts() {
   await requireStaff("content.edit");
-  const list = await getLandingProducts();
+  const [list, page, { base }, reviewCount] = await Promise.all([getLandingProducts(), getLandingSettings(), getCurrencies(), db.review.count({ where: { status: "published" } })]);
+  const notReady = list.filter((p) => p.price > 0 && !p.variantId).length;
+  const noPrice = list.filter((p) => p.price <= 0).length;
   return (
     <div>
-      <PageHeader title="Landing products" sub="The products in “Shop the studio” on the homepage. Changes appear on the site within about 30 seconds." />
+      <PageHeader title="Homepage" sub="Everything on your homepage in one place. Changes go live within about 30 seconds." />
       <WebsiteTabs active="landing" />
       <div className="space-y-6">
         <Panel title="Add a product">
           <ActionForm action={saveLandingProduct}>
-            <ProductFields />
+            <ProductFields base={base.code} />
             <div className="flex flex-wrap items-center gap-3">
-              <select name="position" className="select !w-auto"><option value="end">Add at the end</option><option value="top">Add at the top</option></select>
-              <button className="btn btn-primary">Add product</button>
+              <button className="btn btn-primary">Add to homepage</button>
+              <span className="text-xs text-ink3">Adding many? <Link href="/admin/inventory/import" className="text-accent underline">Use the spreadsheet</Link>.</span>
             </div>
           </ActionForm>
         </Panel>
+
+        {(notReady > 0 || noPrice > 0) && (
+          <Panel title="Make products ready to sell">
+            <ActionForm action={syncLanding}>
+              <p className="text-sm text-ink2">
+                {notReady > 0 && <>{notReady} product{notReady === 1 ? " has" : "s have"} a price but customers can’t buy {notReady === 1 ? "it" : "them"} yet. </>}
+                {noPrice > 0 && <>{noPrice} {noPrice === 1 ? "has" : "have"} no price, so {noPrice === 1 ? "it shows" : "they show"} “Get a quote”. Open a product below and type a price to sell it. </>}
+              </p>
+              {notReady > 0 && <button className="btn btn-primary">Make all {notReady} ready to sell</button>}
+            </ActionForm>
+          </Panel>
+        )}
 
         <Panel title={`Products on the homepage (${list.length})`}>
           <ul className="divide-y divide-line/60">
@@ -67,15 +54,16 @@ export default async function LandingProducts() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{p.name}</span>
-                      <span className="block truncate text-xs text-ink3">{p.cat}{p.subcat ? ` · ${p.subcat}` : ""} · {p.tag || "no badge"}</span>
+                      <span className="block truncate text-xs text-ink3">{p.cat}{p.subcat ? ` · ${p.subcat}` : ""}</span>
                     </span>
-                    <span className="tabular text-sm">{p.price ? `$${p.price.toFixed(2)}` : "Price to be added"}</span>
+                    <span className="tabular text-sm">{p.price ? `${base.code} ${p.price.toFixed(2)}` : "Get a quote"}</span>
+                    {p.variantId ? <span className="badge badge-mint">For sale</span> : <span className="badge badge-muted">Not for sale</span>}
                     <span className="btn btn-soft btn-sm">Edit</span>
                   </summary>
                   <div className="mt-4 rounded-xl border border-line/60 p-4">
                     <ActionForm action={saveLandingProduct}>
                       <input type="hidden" name="id" value={p.id} />
-                      <ProductFields p={p} />
+                      <ProductFields p={p} base={base.code} />
                       <button className="btn btn-primary btn-sm">Save changes</button>
                     </ActionForm>
                   </div>
@@ -100,10 +88,43 @@ export default async function LandingProducts() {
           </ul>
         </Panel>
 
+        <Panel title="Top of the page">
+          <ActionForm action={saveLandingPage}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Big headline" hint="Keep it short."><input name="headline" maxLength={60} defaultValue={page.headline} className="input" /></Field>
+              <Field label="One line under it"><input name="sub" maxLength={90} defaultValue={page.sub} className="input" /></Field>
+              <Field label="Photo of your model holding a stencil" hint="Replaces the drawing. A tall photo works best (JPG or PNG)." className="sm:col-span-2">
+                <input name="heroPhoto" type="file" accept="image/*" className="input" />
+              </Field>
+              {page.heroImage && (
+                <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={page.heroImage} alt="" className="h-12 w-12 rounded object-cover" />
+                  <input type="checkbox" name="remove_hero" /> Go back to the drawing
+                </label>
+              )}
+            </div>
+            <details className="rounded-xl border border-line p-3" open>
+              <summary className="cursor-pointer text-sm font-semibold">Google search (helps people find you)</summary>
+              <div className="mt-3 space-y-3">
+                <Field label="Page title" hint={`${page.seoTitle.length}/60 — the blue link people see on Google.`}><input name="seoTitle" maxLength={70} defaultValue={page.seoTitle} className="input" /></Field>
+                <Field label="Short description" hint={`${page.seoDesc.length}/160 — the grey text under the link.`}><textarea name="seoDesc" maxLength={170} rows={2} defaultValue={page.seoDesc} className="textarea" /></Field>
+                <Field label="Keywords" hint="What would a customer type into Google? Separate with commas."><textarea name="keywords" maxLength={300} rows={2} defaultValue={page.keywords} className="textarea" /></Field>
+              </div>
+            </details>
+            <button className="btn btn-primary">Save</button>
+          </ActionForm>
+        </Panel>
+
+        <Panel title="Customer reviews">
+          <p className="text-sm text-ink2">{reviewCount} review{reviewCount === 1 ? " is" : "s are"} showing on your homepage. Featured reviews show first.</p>
+          <div className="mt-3 flex flex-wrap gap-2"><Link href="/admin/reviews" className="btn btn-soft btn-sm">Manage reviews</Link><Link href="/admin/reviews#add" className="btn btn-ghost btn-sm">Add a review I received</Link></div>
+        </Panel>
+
         <Panel title="Start over">
-          <ActionForm action={resetLanding} confirm="Replace the homepage products with the original list from the approved design?">
-            <p className="text-sm text-ink2">Restores the {DEFAULT_LANDING_PRODUCTS.length} products exactly as in the approved design file. Your added products and edits are removed.</p>
-            <button className="btn btn-ghost btn-sm">Restore original products</button>
+          <ActionForm action={resetLanding} confirm="Replace the homepage products with the starter list? Your own products will be hidden from the shop.">
+            <p className="text-sm text-ink2">Brings back the {DEFAULT_LANDING_PRODUCTS.length} starter products. Your own homepage products are removed.</p>
+            <button className="btn btn-ghost btn-sm">Restore starter products</button>
           </ActionForm>
         </Panel>
       </div>

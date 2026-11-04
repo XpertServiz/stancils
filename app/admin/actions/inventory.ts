@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { parseMajor } from "@/lib/money";
 import { adjustMaterial, adjustVariant } from "@/lib/services/inventory";
-import { rollbackImport, runImport } from "@/lib/services/importer";
+import { parseCsv, rollbackImport, runImport } from "@/lib/services/importer";
+import { cleanProduct, getLandingProducts, matchCategory, saveLandingProducts, type LandingProduct } from "@/lib/landing";
+import { getCurrencies } from "@/lib/settings";
 import { saveUpload } from "@/lib/storage";
 
 type R = { ok: boolean; msg: string } | null;
@@ -74,15 +76,59 @@ export async function importCatalog(_: ImportState, fd: FormData): Promise<Impor
     if (commit && report.batchId) {
       await audit(s.id, "catalog.import", "import_batch", report.batchId, undefined, { rows: report.variants });
       revalidatePath("/admin/products");
-      return { ok: true, msg: `Imported ${report.variants} rows (${report.created} new, ${report.updated} updated).`, report };
+      let onHome = 0;
+      if (fd.get("home") === "1" && report.format === "simple") onHome = await showOnHomepage(csv, s.id);
+      return { ok: true, msg: `Imported ${report.variants} products (${report.created} new, ${report.updated} updated).${onHome ? ` ${onHome} now show on your homepage.` : ""}`, report };
     }
     return { ok: report.errors.length === 0, msg: report.errors.length ? `${report.errors.length} errors — fix them and try again.` : `Dry run OK (${report.format}). Review and confirm.`, report, csv, filename };
   } catch (e) { return { ok: false, msg: (e as Error).message }; }
 }
 
+/** Put the products of a simple-template import on the homepage (matched by name; photo, price and category follow the file). */
+async function showOnHomepage(csv: string, byId: string) {
+  const { rows } = parseCsv(csv);
+  const { base } = await getCurrencies();
+  const list = await getLandingProducts();
+  const LOOK: Record<string, { icon: string; bg: string }> = { Stencils: { icon: "❀", bg: "#f3e5ee" }, Gifts: { icon: "🎁", bg: "#fde9dc" }, "T-Shirts": { icon: "👕", bg: "#dfe9f1" }, Cybersigilism: { icon: "✣", bg: "#e2dfea" } };
+  let n = 0;
+  for (const r of rows) {
+    const v = await db.variant.findUnique({ where: { sku: r.sku.toUpperCase() }, include: { product: true } });
+    if (!v) continue;
+    const raw = (await db.collection.findUnique({ where: { slug: r.collections } }))?.name ?? r.collections;
+    const cat = matchCategory(raw) ?? { cat: "Stencils" as const, subcat: "" };
+    const i = list.findIndex((p) => p.variantId === v.id);
+    const old = i >= 0 ? list[i] : undefined;
+    const image = /^https:\/\//.test(r.image_url) ? r.image_url : old?.image ?? "";
+    try {
+      const next: LandingProduct = cleanProduct(
+        { name: v.product.name, ...cat, price: Number(v.basePrice) / 10 ** base.exponent, image, variantId: v.id, slug: v.product.slug, icon: old?.icon ?? LOOK[cat.cat].icon, bg: old?.bg ?? LOOK[cat.cat].bg, tag: old?.tag ?? "New" },
+        old?.id ?? Math.max(0, ...list.map((p) => p.id)) + 1,
+      );
+      if (i >= 0) list[i] = next;
+      else list.push(next);
+      n++;
+    } catch { /* a row the homepage can't show (odd characters) stays in the catalogue only */ }
+  }
+  if (n) {
+    await saveLandingProducts(list);
+    await audit(byId, "landing.products.import", "landing_product", "all", undefined, { count: n });
+    revalidatePath("/");
+    revalidatePath("/admin/website/landing");
+  }
+  return n;
+}
+
 export async function rollback(fd: FormData) {
   const s = await requirePermission("inventory.import");
   await rollbackImport(String(fd.get("id")), s.id);
+  // drop homepage cards whose catalogue product the rollback just deleted
+  const list = await getLandingProducts();
+  const alive = new Set((await db.variant.findMany({ where: { id: { in: list.map((p) => p.variantId).filter((x): x is string => !!x) } }, select: { id: true } })).map((v) => v.id));
+  const kept = list.filter((p) => !p.variantId || alive.has(p.variantId));
+  if (kept.length !== list.length) {
+    await saveLandingProducts(kept);
+    revalidatePath("/");
+  }
   await audit(s.id, "catalog.import.rollback", "import_batch", String(fd.get("id")));
   revalidatePath("/admin/inventory/import");
 }

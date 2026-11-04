@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { PageHeader, StatusBadge, Tabs, Empty } from "@/components/admin/ui";
+import { PageHeader, StatusBadge, Tabs, Empty, Panel, Field } from "@/components/admin/ui";
+import { ActionForm } from "@/components/admin/ActionForm";
 import { Submit } from "@/components/admin/Submit";
-import { moderateReview } from "@/app/admin/actions/crm";
+import { addReview, moderateReview } from "@/app/admin/actions/crm";
 
 export default async function Reviews({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   await requireStaff("reviews.moderate");
@@ -17,7 +18,19 @@ export default async function Reviews({ searchParams }: { searchParams: Promise<
   );
   return (
     <div>
-      <PageHeader title="Reviews" sub="Reviews with links, spam words or from very frequent posters wait here. Verified badges come from matching a paid order." />
+      <PageHeader title="Reviews" sub="Published reviews show on your homepage — “Feature” puts one first. Reviews with links or spam words wait here for you." />
+      <Panel title="Add a review I received" className="mb-5">
+        <div id="add" />
+        <ActionForm action={addReview}>
+          <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+            <Field label="Customer name"><input name="name" required maxLength={60} className="input" placeholder="e.g. Sarah M." /></Field>
+            <Field label="Stars"><select name="rating" defaultValue="5" className="select">{[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{"★".repeat(n)}</option>)}</select></Field>
+          </div>
+          <Field label="What they said"><textarea name="body" required maxLength={1000} rows={2} className="textarea" placeholder="Paste or type the review" /></Field>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="featured" />Show first on the homepage</label>
+          <button className="btn btn-primary btn-sm">Add review</button>
+        </ActionForm>
+      </Panel>
       <Tabs active={status} tabs={["pending", "published", "hidden", "rejected", "all"].map((s) => ({ key: s, label: `${s} ${s !== "all" ? `(${n(s)})` : ""}`, href: `/admin/reviews?status=${s}` }))} />
       {reviews.length === 0 ? <Empty>Nothing here.</Empty> : (
         <div className="space-y-3">

@@ -15,10 +15,17 @@ export default async function ImportPage() {
       <PageHeader title="Import, export & bulk media" />
       <Tabs tabs={tabs} active="import" />
       <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Import catalogue (CSV)">
-          <p className="mb-3 text-sm text-ink2">Use our template or a <b>Shopify product export</b>. Rows are grouped into products by slug; variants are matched by SKU (existing SKUs are updated). Opening stock on new SKUs is posted to the ledger. Every import is a batch you can roll back.</p>
-          <p className="mb-4 text-sm"><a href="/admin/export/products?template=1" className="text-accent underline">Download template</a> · <a href="/admin/export/products" className="text-accent underline">Export full catalogue</a></p>
+        <Panel title="Add many products from a spreadsheet">
+          <ol className="mb-4 list-decimal space-y-1 pl-5 text-sm text-ink2">
+            <li><a href="/admin/export/products?template=1" className="font-semibold text-accent underline">Download the template</a> and open it in Excel or Google Sheets.</li>
+            <li>Fill one row per product. Only 6 columns: <b>name, category, price, stock, photo_link, description</b>. Leave <b>stock</b> empty if you make it when someone orders.</li>
+            <li>Save as CSV, choose it below, check it, then add.</li>
+          </ol>
           <ImportForm />
+          <p className="mt-4 border-t border-line/60 pt-3 text-xs text-ink3">
+            Already have products? <a href="/admin/export/products" className="text-accent underline">Download them in this same simple format</a>, change what you want, and upload again — matching names are updated, not duplicated.
+            <br />Advanced (sizes, SKUs, materials, Shopify files): <a href="/admin/export/products?format=full&template=1" className="text-accent underline">advanced template</a> · <a href="/admin/export/products?format=full" className="text-accent underline">advanced export</a>. The same upload box accepts them.
+          </p>
         </Panel>
         <Panel title="Bulk images & artwork">
           <p className="mb-3 text-sm text-ink2">Drop many files at once. Each file is matched by name to a <b>SKU</b> (e.g. <code>CC-1042.jpg</code>) or a <b>product slug</b> (e.g. <code>lotus-mandala-stencil-2.png</code>). <code>.svg</code> files replace the stencil artwork; photos are added to the gallery.</p>
