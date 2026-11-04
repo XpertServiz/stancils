@@ -32,6 +32,32 @@ function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: stri
 
 function Hero({ h, off }: { h: StoreHome; off: string }) {
   const img = exists(h.heroImage) ? h.heroImage : "";
+  if (h.heroLayout === "banner") {
+    return (
+      <section>
+        <h1 className="sr-only">{h.headline}{h.sub ? ` — ${h.sub}` : ""}</h1>
+        <Link href={h.cta.href} className="relative block bg-s1" aria-label={`${h.cta.label}: ${h.headline}`}>
+          {img ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={img} alt={`${h.headline}. ${h.sub}`} fetchPriority="high" className="aspect-[4/3] w-full object-cover object-center sm:aspect-[2000/1116]" />
+          ) : (
+            <div className="diag grid aspect-[4/3] w-full place-items-center text-sm font-semibold text-ink3 sm:aspect-[2000/1116]">Hero image coming soon</div>
+          )}
+          {off && <span className="absolute left-3 top-3 -rotate-6 rounded-lg bg-mustard px-3 py-1.5 text-sm font-extrabold text-[#1c1b1a] shadow-lg sm:left-6 sm:top-6 sm:px-4 sm:py-2 sm:text-lg">{off}</span>}
+        </Link>
+        <div className="border-b border-line bg-s1">
+          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5 md:px-6">
+            {h.checklist.length > 0 && (
+              <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium">
+                {h.checklist.map((c) => <li key={c} className="flex items-center gap-2"><span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-onaccent"><Check size={12} strokeWidth={3} /></span>{c}</li>)}
+              </ul>
+            )}
+            <Link href={h.cta.href} className="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-7 font-semibold text-onaccent transition hover:-translate-y-px hover:brightness-90">{h.cta.label}<ArrowRight size={17} /></Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="overflow-hidden bg-s1">
       <div className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-8 px-4 py-10 md:px-6 lg:grid-cols-2 lg:gap-12 lg:py-16 [&>*]:min-w-0">

@@ -18,6 +18,8 @@ export type StoreHome = {
   cta: { label: string; href: string };
   badge: string;
   heroImage: string;
+  /** banner = one wide picture across the page; split = headline on the left, tall photo on the right */
+  heroLayout: "banner" | "split";
   chips: Chip[];
   rows: HomeRow[];
   latestTitle: string;
@@ -135,7 +137,8 @@ export const HOME_DEFAULTS: StoreHome = {
   checklist: ["100% accurate calligraphy", "All sizes available", "Exclusive designs", "50% discount"],
   cta: { label: "Shop now", href: "/shop" },
   badge: "50% OFF",
-  heroImage: "/images/hero-girl.jpg",
+  heroImage: "/images/hero-banner.jpg",
+  heroLayout: "banner",
   chips: [
     { label: "All Calligraphy Stencils", href: "/c/all-calligraphy-stencils" },
     { label: "Mandala Stencils", href: "/c/mandala-designs" },
@@ -187,6 +190,7 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     cta: { label: cleanText(input.cta?.label ?? prev.cta.label, 24) || "Shop now", href: cleanLink(input.cta?.href ?? prev.cta.href, "/shop") },
     badge: cleanText(input.badge ?? prev.badge, 16),
     heroImage: input.heroImage === undefined ? prev.heroImage : cleanUrl(input.heroImage),
+    heroLayout: (input.heroLayout ?? prev.heroLayout) === "split" ? "split" : "banner",
     chips,
     rows,
     latestTitle: cleanText(input.latestTitle ?? prev.latestTitle, 60) || "Latest Designs",

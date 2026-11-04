@@ -69,7 +69,8 @@ export async function saveHomeTop(_: R, fd: FormData): Promise<R> {
         checklist: String(fd.get("checklist") ?? "").split(/\r?\n/),
         cta: { label: String(fd.get("cta_label") ?? ""), href: String(fd.get("cta_href") ?? "") },
         badge: String(fd.get("badge") ?? ""),
-        heroImage: up ?? (fd.get("remove_hero") === "on" ? "/images/hero-girl.jpg" : prev.heroImage),
+        heroImage: up ?? (fd.get("remove_hero") === "on" ? "/images/hero-banner.jpg" : prev.heroImage),
+        heroLayout: fd.get("heroLayout") === "split" ? "split" : "banner",
       },
       prev,
     );

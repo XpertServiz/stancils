@@ -41,12 +41,18 @@ export default async function LandingProducts() {
               <Field label="Tick list" hint="One short line per tick (up to 6)." className="sm:col-span-2"><textarea name="checklist" rows={4} maxLength={400} defaultValue={home.checklist.join("\n")} className="textarea" /></Field>
               <Field label="Button text"><input name="cta_label" maxLength={24} defaultValue={home.cta.label} className="input" /></Field>
               <Field label="Button goes to" hint="e.g. /shop or /c/mandala-designs"><input name="cta_href" defaultValue={home.cta.href} className="input" /></Field>
-              <Field label="Photo on the right" hint="Tall photo works best (JPG or PNG)." className="sm:col-span-2"><input name="heroPhoto" type="file" accept="image/*" className="input" /></Field>
+              <Field label="How should the top look?" className="sm:col-span-2">
+                <select name="heroLayout" defaultValue={home.heroLayout} className="select">
+                  <option value="banner">One wide banner picture (like a poster)</option>
+                  <option value="split">Words on the left, tall photo on the right</option>
+                </select>
+              </Field>
+              <Field label="Top picture" hint="Banner: a wide picture, about 2000 × 1100. Split: a tall photo. JPG or PNG." className="sm:col-span-2"><input name="heroPhoto" type="file" accept="image/*" className="input" /></Field>
               {home.heroImage && (
                 <label className="flex items-center gap-2 text-sm sm:col-span-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={home.heroImage} alt="" className="h-14 w-12 rounded object-cover" />
-                  <input type="checkbox" name="remove_hero" /> Go back to the original photo
+                  <input type="checkbox" name="remove_hero" /> Go back to the original banner
                 </label>
               )}
             </div>

@@ -39,6 +39,11 @@ describe("storefront menu and homepage", () => {
     const rows = cleanHome({ rows: [{ title: "A", intro: "", collection: "Wall & Canvas", banner: "", count: 99 }, { title: "", intro: "", collection: "x", banner: "", count: 8 }] }, HOME_DEFAULTS).rows;
     expect(rows).toEqual([{ title: "A", intro: "", collection: "wall-and-canvas", banner: "", count: 12 }]);
   });
+  it("the hero is a banner by default and can be switched", () => {
+    expect(HOME_DEFAULTS.heroLayout).toBe("banner");
+    expect(cleanHome({ heroLayout: "split" }, HOME_DEFAULTS).heroLayout).toBe("split");
+    expect(cleanHome({ heroLayout: "x" as never }, HOME_DEFAULTS).heroLayout).toBe("banner");
+  });
   it("reads opening hours", () => {
     expect(parseHours("Mon | 10am – 9pm\nSun").at(-1)).toEqual({ day: "Sun", time: "Closed" });
   });
