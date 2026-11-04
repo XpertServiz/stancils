@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { compressImage } from "./compress";
+import { thumb } from "@/lib/img";
 import { addPhoto } from "@/app/admin/actions/quick";
 import { makeCover } from "@/app/admin/actions/quick";
 import { deleteImage } from "@/app/admin/actions/products";
@@ -36,7 +37,7 @@ export function ProductPhotos({ productId, images }: { productId: string; images
         {images.map((im, i) => (
           <div key={im.id} className="group relative aspect-square overflow-hidden rounded-lg border border-line bg-s1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={im.url} alt="" className="h-full w-full object-cover" />
+            <img src={thumb(im.url)!} alt="" className="h-full w-full object-cover" />
             {i === 0 && <span className="absolute left-1 top-1 rounded bg-accent px-1.5 py-0.5 text-[10px] font-bold text-onaccent">Main</span>}
             <div className="absolute inset-x-0 bottom-0 flex gap-1 bg-black/55 p-1 opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
               {i > 0 && <form action={makeCover} className="flex-1"><input type="hidden" name="id" value={im.id} /><button className="w-full rounded bg-white/90 px-1 py-1 text-[11px] font-semibold text-black">Make main</button></form>}

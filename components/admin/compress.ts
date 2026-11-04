@@ -1,5 +1,5 @@
 /** Shrinks a phone photo in the browser (max 1600px, JPEG) so uploads are fast and stay under the host's size limit. */
-export async function compressImage(file: File, max = 1600, quality = 0.82): Promise<File> {
+export async function compressImage(file: File, max = 1400, quality = 0.8): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml" || file.type === "image/gif") return file;
   try {
     const bmp = await createImageBitmap(file);

@@ -6,6 +6,7 @@ import { majorString } from "@/lib/money";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { renameProducts } from "@/app/admin/actions/quick";
+import { thumb } from "@/lib/img";
 
 export default async function FixNames({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
   await requireStaff("inventory.edit");
@@ -24,7 +25,7 @@ export default async function FixNames({ searchParams }: { searchParams: Promise
               <div key={p.id} className="flex flex-wrap items-center gap-3 py-3">
                 <input type="hidden" name="id" value={p.id} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {p.images[0] ? <img src={p.images[0].url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <span className="h-14 w-14 rounded-lg bg-s1" />}
+                {p.images[0] ? <img src={thumb(p.images[0].url)!} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <span className="h-14 w-14 rounded-lg bg-s1" />}
                 <input name={`name_${p.id}`} defaultValue={p.name} aria-label="Product name" className="input min-w-[200px] flex-1" />
                 <label className="flex items-center gap-1.5 text-sm text-ink3">{base.code}<input name={`price_${p.id}`} defaultValue={p.variants[0] ? majorString(p.variants[0].basePrice) : ""} inputMode="decimal" aria-label="Price" className="input !w-28" /></label>
               </div>

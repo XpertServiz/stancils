@@ -13,7 +13,7 @@ import { DesignArt } from "@/components/DesignArt";
 import { ProductPhotos } from "@/components/admin/ProductPhotos";
 import { CategoryPicker } from "@/components/admin/AddProductForm";
 import { quickSaveProduct } from "@/app/admin/actions/quick";
-import { deleteImage, deleteProduct, deleteVariant, saveBom, saveProduct, saveVariants, uploadImages } from "@/app/admin/actions/products";
+import { deleteProduct, deleteVariant, saveBom, saveProduct, saveVariants } from "@/app/admin/actions/products";
 
 export default async function EditProduct({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ archived?: string }> }) {
   const staff = await requireStaff("inventory.view");
@@ -137,22 +137,6 @@ export default async function EditProduct({ params, searchParams }: { params: Pr
         <div className="space-y-6">
           <Panel title="Preview">
             <div className="art-tile aspect-square rounded-2xl p-8 text-accent"><DesignArt svg={p.designSvg} colors={p.layerColors} uid={`ap${p.id}`} /></div>
-          </Panel>
-          <Panel title="Photos">
-            <div className="mb-3 grid grid-cols-3 gap-2">
-              {p.images.map((img) => (
-                <div key={img.id} className="group relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt={img.alt ?? ""} className="aspect-square w-full rounded-lg object-cover" />
-                  <form action={deleteImage} className="absolute right-1 top-1 opacity-0 group-hover:opacity-100"><input type="hidden" name="id" value={img.id} /><button className="rounded bg-black/70 p-1 text-white" aria-label="Delete image"><Trash2 size={14} /></button></form>
-                </div>
-              ))}
-            </div>
-            <ActionForm action={uploadImages}>
-              <input type="hidden" name="productId" value={p.id} />
-              <input type="file" name="images" multiple accept="image/*" className="text-sm" />
-              <button className="btn btn-soft btn-sm">Upload</button>
-            </ActionForm>
           </Panel>
         </div>
       </div>

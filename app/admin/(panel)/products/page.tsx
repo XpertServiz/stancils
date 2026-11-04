@@ -9,6 +9,7 @@ import { DesignArt } from "@/components/DesignArt";
 import { Submit } from "@/components/admin/Submit";
 import { bulkProducts } from "@/app/admin/actions/products";
 import { SelectAll } from "@/components/admin/SelectAll";
+import { thumb } from "@/lib/img";
 
 export default async function Products({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const staff = await requireStaff("inventory.view");
@@ -83,7 +84,7 @@ export default async function Products({ searchParams }: { searchParams: Promise
                       <td><input type="checkbox" name="ids" value={p.id} aria-label={`Select ${p.name}`} /></td>
                       <td className="w-12">{p.images[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.images[0].url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                        <img src={thumb(p.images[0].url)!} alt="" className="h-10 w-10 rounded-lg object-cover" />
                       ) : (
                         <div className="art-tile h-10 w-10 rounded-lg p-1 text-accent" title="No photo — hidden from the website"><DesignArt svg={p.designSvg} colors={p.layerColors} uid={`al${p.id}`} /></div>
                       )}</td>

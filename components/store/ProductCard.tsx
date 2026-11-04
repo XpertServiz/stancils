@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import type { Card } from "@/lib/catalog";
 import { DesignArt } from "../DesignArt";
+import { thumb } from "@/lib/img";
 import { QuickAdd } from "./QuickAdd";
 
 export function CardImage({ p, priority }: { p: Card; priority?: boolean }) {
@@ -9,10 +10,10 @@ export function CardImage({ p, priority }: { p: Card; priority?: boolean }) {
     return (
       <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.image} alt={p.name} loading={priority ? "eager" : "lazy"} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition duration-[400ms] ${p.image2 ? "group-hover:opacity-0" : "group-hover:scale-[1.04]"}`} />
+        <img src={thumb(p.image)!} alt={p.name} loading={priority ? "eager" : "lazy"} decoding="async" className={`absolute inset-0 h-full w-full object-cover transition duration-[400ms] ${p.image2 ? "group-hover:opacity-0" : "group-hover:scale-[1.04]"}`} />
         {p.image2 && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.image2} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-[400ms] group-hover:opacity-100" />
+          <img src={thumb(p.image2)!} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-[400ms] group-hover:opacity-100" />
         )}
       </>
     );
