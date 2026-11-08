@@ -13,7 +13,12 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const org = {
     "@context": "https://schema.org",
     "@type": "OnlineStore",
+    "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/#organization`,
     name: s.business.name,
+    description: s.seo.description,
+    logo: `${process.env.NEXT_PUBLIC_SITE_URL}/icon.svg`,
+    image: `${process.env.NEXT_PUBLIC_SITE_URL}/naqsh/stencils.jpg`,
+    knowsAbout: ["stencils", "gift baskets", "custom t-shirts", "cybersigilism art"],
     url: process.env.NEXT_PUBLIC_SITE_URL,
     email: s.business.email,
     telephone: s.business.phone,

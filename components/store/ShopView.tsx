@@ -79,6 +79,9 @@ export async function ShopView({ sp, collection, basePath }: { sp: SP; collectio
           <p className="text-ink3">{total} product{total === 1 ? "" : "s"}{f.q ? ` for “${f.q}”` : ""}</p>
         </div>
         <ProductGrid cards={cards} cols={3} />
+        {cards.length > 0 && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", itemListElement: cards.map((c, i) => ({ "@type": "ListItem", position: i + 1, url: `${(process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "")}/p/${c.slug}`, name: c.name })) }).replace(/</g, "\\u003c") }} />
+        )}
         {pages > 1 && (
           <nav className="mt-10 flex flex-wrap justify-center gap-1.5" aria-label="Pagination">
             {Array.from({ length: pages }, (_, i) => i + 1).filter((p) => p === 1 || p === pages || Math.abs(p - page) <= 2).map((p, i, arr) => (

@@ -10,6 +10,7 @@ import { ReviewCarousel, type ReviewItem } from "./ReviewCarousel";
 import { NewsletterForm } from "./NewsletterForm";
 import { WriteReview } from "./WriteReview";
 import { Tilt3D } from "./Tilt3D";
+import { HOME_FAQ } from "@/lib/seo-copy";
 
 const eyebrow = "text-sm uppercase tracking-[.14em] text-goldink";
 const h2 = "font-display text-[38px] font-semibold leading-none sm:text-[52px]";
@@ -156,6 +157,19 @@ export async function HomePage() {
           <div className={`${arch} aspect-[3/4] max-w-[380px] flex-[1_1_320px] border-2 border-accent`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={h.story.image} alt="Detailed black ink alternative art sketch" loading="lazy" className="block h-full w-full object-cover" />
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ (also sent to Google as FAQPage data) */}
+      <section id="faq" className="py-[72px]" aria-labelledby="faq-h">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: HOME_FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }).replace(/</g, "\\u003c") }} />
+        <div className={`${wrap} max-w-[860px]`}>
+          <div className="mb-8 flex flex-col items-center gap-2 text-center"><span className={eyebrow}>Good to know</span><h2 id="faq-h" className={h2}>Questions, answered</h2></div>
+          <div className="divide-y divide-line border-y border-line">
+            {HOME_FAQ.map((f) => (
+              <details key={f.q} className="group py-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-xl font-semibold">{f.q}<span className="text-goldink transition group-open:rotate-45">+</span></summary><p className="mt-2 leading-relaxed text-ink2">{f.a}</p></details>
+            ))}
           </div>
         </div>
       </section>

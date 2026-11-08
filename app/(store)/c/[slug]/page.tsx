@@ -4,13 +4,20 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getMenu, slugify } from "@/lib/storefront";
 import { ShopView } from "@/components/store/ShopView";
+import { COLLECTION_SEO } from "@/lib/seo-copy";
+
+/** Owner-written text wins; otherwise our keyword copy; otherwise the plain name. */
+const own = (v: string | null | undefined, name: string) => (v && v.trim() && v.trim() !== name ? v : null);
 
 type P = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const c = await db.collection.findUnique({ where: { slug: (await params).slug } });
   if (!c) return {};
-  return { title: c.seoTitle ?? c.name, description: c.seoDesc ?? c.description ?? `Shop ${c.name} — reusable stencils and decor.`, alternates: { canonical: `/c/${c.slug}` } };
+  const k = COLLECTION_SEO[c.slug];
+  const title = own(c.seoTitle, c.name) ?? k?.title ?? c.name;
+  const description = own(c.seoDesc, c.name) ?? c.description ?? k?.desc ?? `Shop ${c.name} — stencils, gifts, custom T-shirts and art.`;
+  return { title, description, alternates: { canonical: `/c/${c.slug}` }, openGraph: { title, description, type: "website" } };
 }
 
 export default async function CollectionPage({ params, searchParams }: P) {
@@ -37,8 +44,7 @@ export default async function CollectionPage({ params, searchParams }: P) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }} />
       <nav className="mb-3 text-xs text-ink3" aria-label="Breadcrumb"><Link href="/" className="hover:text-ink">Home</Link> / <Link href="/collections" className="hover:text-ink">Collections</Link> / <span>{c.name}</span></nav>
       <h1 className="text-center font-display text-[32px] font-bold md:text-[40px]">{c.name}</h1>
-      {c.description && <p className="mx-auto mb-8 mt-3 max-w-3xl text-center text-ink2">{c.description}</p>}
-      {!c.description && <div className="mb-8" />}
+      {(c.description || COLLECTION_SEO[c.slug]) ? <p className="mx-auto mb-8 mt-3 max-w-3xl text-center text-ink2">{c.description || COLLECTION_SEO[c.slug].intro}</p> : <div className="mb-8" />}
       <ShopView sp={sp} collection={c.slug} basePath={`/c/${c.slug}`} />
     </div>
   );

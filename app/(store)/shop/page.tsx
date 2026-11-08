@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ShopView } from "@/components/store/ShopView";
 
 export const metadata: Metadata = {
-  title: "Shop All",
+  title: "Shop Stencils, Gift Baskets, Custom T-Shirts & Art",
   description: "Browse stencils, gift baskets, custom T-shirts and cybersigilism art.",
   alternates: { canonical: "/shop" },
 };

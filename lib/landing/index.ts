@@ -167,9 +167,9 @@ export const LANDING_DEFAULTS: LandingSettings = {
   heroImage: "",
   headline: "Stencils & gifts, made yours.",
   sub: "Pick it. Add it. Check out in a minute.",
-  seoTitle: "Reusable Stencils, Gift Baskets & Custom T-Shirts",
+  seoTitle: "Stencils, Gift Baskets & Custom T-Shirts | Stencil & Gift Studio",
   seoDesc: "Shop reusable wall & craft stencils, gift baskets, custom T-shirt printing and cybersigilism art. Fast shipping across the USA & Canada. Custom orders welcome.",
-  keywords: "wall stencils, reusable stencils, custom stencils, craft stencils, gift baskets, custom t-shirt printing, cybersigilism art, stencils USA, stencils Canada",
+  keywords: "reusable stencils, wall stencils, mandala stencils, floral stencils, custom stencils, custom logo stencil, birthday gift baskets, corporate gift baskets, custom t-shirts, personalized t-shirts, cybersigilism art, stencils USA",
 };
 
 const SKEY = "landingPage";

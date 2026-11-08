@@ -13,8 +13,11 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: s.seo.title, template: `%s | ${s.business.name}` },
     description: s.seo.description,
     applicationName: s.business.name,
-    openGraph: { type: "website", siteName: s.business.name, title: s.seo.title, description: s.seo.description },
-    twitter: { card: "summary_large_image", title: s.seo.title, description: s.seo.description },
+    keywords: ["stencils", "reusable stencils", "wall stencils", "mandala stencils", "floral stencils", "custom stencils", "gift baskets", "birthday gift baskets", "custom t-shirts", "personalized t-shirts", "cybersigilism art"],
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+    verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
+    openGraph: { type: "website", siteName: s.business.name, title: s.seo.title, description: s.seo.description, locale: "en_US", images: [{ url: "/naqsh/stencils.jpg", width: 880, height: 1080, alt: s.business.name }] },
+    twitter: { card: "summary_large_image", title: s.seo.title, description: s.seo.description, images: ["/naqsh/stencils.jpg"] },
     alternates: { canonical: "/" },
     icons: { icon: "/icon.svg" },
   };

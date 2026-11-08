@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }),
   ]);
   const now = new Date();
-  const statics = ["", "/shop", "/custom-stencils", "/business", "/tutorials", "/faq", "/contact", "/about", "/track", "/legal/privacy", "/legal/terms", "/legal/shipping", "/legal/returns"];
+  const statics = ["", "/shop", "/collections", "/custom-stencils", "/business", "/tutorials", "/faq", "/contact", "/about", "/track", "/legal/privacy", "/legal/terms", "/legal/shipping", "/legal/returns"];
   return [
     ...statics.map((p) => ({ url: `${site}${p}`, lastModified: now, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.7 })),
     ...Object.keys(STUDIO_USES).map((u) => ({ url: `${site}/custom-stencils/${u}`, lastModified: now, priority: 0.8 })),

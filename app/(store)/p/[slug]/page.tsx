@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   const img = p.images[0]?.url;
   return {
     title: p.seoTitle?.replace(/ \| .*$/, "") ?? p.name,
-    description: p.seoDesc ?? p.shortDesc ?? undefined,
+    description: p.seoDesc ?? `${p.name}${p.collections[0] ? ` — ${p.collections[0].collection.name}` : ""}. ${p.shortDesc ? `${p.shortDesc.replace(/\s+/g, " ").slice(0, 90)}. ` : ""}Choose your size. Made to order, shipped from Stencil and Gift Studio.`.slice(0, 160),
     alternates: { canonical: `/p/${p.slug}` },
     openGraph: { title: p.name, description: p.shortDesc ?? undefined, images: [img ?? `/og/${p.slug}`] },
     robots: p.status === "ACTIVE" ? undefined : { index: false },
@@ -92,6 +92,9 @@ export default async function ProductPage({ params }: P) {
       price: (Number(v.basePrice) / 10 ** base.exponent).toFixed(base.exponent),
       availability: v.isDigital || !tracked || v.onHand - v.reserved > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       url: `${site}/p/${p.slug}`,
+      itemCondition: "https://schema.org/NewCondition",
+      priceValidUntil: new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10),
+      seller: { "@type": "Organization", name: settings.business.name },
     })),
   };
   const first = p.collections[0]?.collection;

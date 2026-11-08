@@ -3,8 +3,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "All Collections",
-  description: "Every stencil collection in one place — calligraphy, mandala, floral, carpet, furniture, fabric and art supplies.",
+  title: "All Collections — Stencils, Gifts, T-Shirts & Art",
+  description: "Browse every collection: reusable stencils, gift baskets, custom T-shirts and cybersigilism art. Choose your size or order a custom piece.",
   alternates: { canonical: "/collections" },
 };
 export const dynamic = "force-dynamic";
