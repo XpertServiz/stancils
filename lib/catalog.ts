@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { formatMoney, toBaseMinor, type CurrencyInfo } from "./money";
 import { variantPrice } from "./services/pricing";
+import { sizeFieldLabel } from "./sizes";
 
 /** The storefront only shows products that have a real photo (like a photo catalogue). Products without one stay in the admin, hidden. */
 export const SHOWN = { status: "ACTIVE", images: { some: {} } } satisfies Prisma.ProductWhereInput;
@@ -9,6 +10,7 @@ export const SHOWN = { status: "ACTIVE", images: { some: {} } } satisfies Prisma
 export const cardInclude = {
   variants: { where: { active: true }, include: { prices: true }, orderBy: { sort: "asc" } },
   images: { orderBy: { sort: "asc" }, take: 2 },
+  collections: { include: { collection: { select: { name: true } } }, take: 1 },
 } satisfies Prisma.ProductInclude;
 
 type CardProduct = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
@@ -33,6 +35,13 @@ export type Card = {
   ratingCount: number;
   defaultVariantId: string | null;
   stockLabel: string;
+  /** first category name, shown above the title */
+  sub: string;
+  /** small label on the picture: BESTSELLER, NEW … */
+  tag: string;
+  /** the size dropdown on the card (only when there is more than one size) */
+  sizes: { id: string; name: string; price: string }[];
+  sizeLabel: string;
 };
 
 export function toCard(p: CardProduct, cur: CurrencyInfo, base: CurrencyInfo): Card {
@@ -68,6 +77,10 @@ export function toCard(p: CardProduct, cur: CurrencyInfo, base: CurrencyInfo): C
     ratingCount: p.ratingCount,
     defaultVariantId: best?.v.id ?? null,
     stockLabel,
+    sub: p.collections[0]?.collection.name ?? "",
+    tag: p.featured ? "BESTSELLER" : Date.now() - p.createdAt.getTime() < 21 * 864e5 ? "NEW" : "",
+    sizes: physical.length > 1 ? physical.map((v) => ({ id: v.id, name: v.name, price: formatMoney(variantPrice(v, cur, base).price, cur.code, cur.exponent) })) : [],
+    sizeLabel: sizeFieldLabel(physical.map((v) => v.name)),
   };
 }
 

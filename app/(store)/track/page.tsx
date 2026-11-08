@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { OrderView, orderInclude } from "@/components/store/OrderView";
 import { orderToken } from "@/lib/tokens";
 
-export const metadata: Metadata = { title: "Track your order", description: "Track your Creative Corner order — production, shipping and delivery.", alternates: { canonical: "/track" } };
+export const metadata: Metadata = { title: "Track your order", description: "Track your Stencil and Gift Studio order — production, shipping and delivery.", alternates: { canonical: "/track" } };
 
 export default async function Track({ searchParams }: { searchParams: Promise<{ order?: string; email?: string }> }) {
   const sp = await searchParams;

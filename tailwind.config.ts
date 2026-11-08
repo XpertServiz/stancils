@@ -21,6 +21,7 @@ export default {
         mustard: v("accent-3"),
         danger: v("danger"),
         onaccent: v("on-accent"),
+        goldink: "rgb(var(--gold-ink) / <alpha-value>)",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

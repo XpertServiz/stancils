@@ -7,7 +7,7 @@ const SITE = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 /** Resend when RESEND_API_KEY is set; otherwise logs (mock provider for local dev). */
 export async function sendEmail(to: string, subject: string, html: string) {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "Creative Corner <orders@creativecorner.shop>";
+  const from = process.env.EMAIL_FROM || "Stencil and Gift Studio <orders@stencilandgiftstudio.com>";
   if (!key) {
     console.log(`[email:mock] to=${to} subject=${subject}`);
     return { mocked: true };

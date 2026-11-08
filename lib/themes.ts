@@ -12,6 +12,7 @@ const dark = (v: Omit<Vars, "danger" | "onAccent"> & Partial<Pick<Vars, "danger"
 const light = (v: Omit<Vars, "danger" | "onAccent"> & Partial<Pick<Vars, "danger" | "onAccent">>): Vars => ({ danger: "196 48 48", onAccent: "255 255 255", ...v });
 
 export const THEMES: Theme[] = [
+  { id: "naqsh", name: "Stencil & Gift Studio", note: "Deep green and gold on soft mist — the Naqsh design", mode: "light", vars: light({ bg: "243 245 241", s1: "227 234 229", s2: "255 255 255", band: "14 47 40", bandInk: "232 239 234", line: "197 210 203", ink: "17 32 28", ink2: "75 91 85", ink3: "94 110 104", accent: "14 47 40", accent2: "27 90 75", accent3: "212 175 90", danger: "122 31 43", onAccent: "212 175 90" }) },
   { id: "corner", name: "Creative Corner", note: "Charcoal header, warm cream bands, orange buttons", mode: "light", vars: light({ bg: "255 255 255", s1: "250 247 242", s2: "255 255 255", band: "42 42 42", bandInk: "255 255 255", line: "232 226 217", ink: "28 27 26", ink2: "75 70 64", ink3: "107 102 95", accent: "228 87 46", accent2: "13 128 118", accent3: "242 184 75" }) },
   { id: "emerald-shop", name: "Emerald Shop", note: "Deep green header, gold highlights", mode: "light", vars: light({ bg: "255 255 255", s1: "245 249 246", s2: "255 255 255", band: "20 66 52", bandInk: "255 255 255", line: "220 232 225", ink: "22 32 28", ink2: "64 82 74", ink3: "100 118 110", accent: "15 118 90", accent2: "180 120 0", accent3: "245 190 60" }) },
   { id: "royal-shop", name: "Royal Blue Shop", note: "Navy header, bright blue buttons", mode: "light", vars: light({ bg: "255 255 255", s1: "244 247 252", s2: "255 255 255", band: "23 37 84", bandInk: "255 255 255", line: "219 226 240", ink: "17 24 39", ink2: "55 65 81", ink3: "98 108 126", accent: "37 99 235", accent2: "13 148 136", accent3: "250 204 21" }) },
@@ -33,11 +34,13 @@ export const THEMES: Theme[] = [
   { id: "blush", name: "Blush Rose", note: "Elegant rose on soft pink", mode: "light", vars: light({ bg: "250 240 242", s1: "253 247 248", s2: "255 255 255", band: "60 28 40", bandInk: "253 242 246", line: "236 210 218", ink: "48 20 32", ink2: "92 56 70", ink3: "124 90 104", accent: "190 24 93", accent2: "15 118 110", accent3: "161 98 7" }) },
 ];
 
-export const DEFAULT_THEME = "corner";
+export const DEFAULT_THEME = "naqsh";
 
 /** Most popular Google Fonts worldwide, with the weights each one actually ships (Google rejects missing weights). */
 export const FONTS: Record<string, { weights: string; kind: "sans" | "serif" | "display" | "system" }> = {
   Georgia: { weights: "", kind: "system" }, // built into every device — no download
+  "Cormorant Garamond": { weights: "500;600;700", kind: "serif" },
+  Jost: { weights: "400;500;600", kind: "sans" },
   Poppins: { weights: "400;500;600;700", kind: "sans" },
   Roboto: { weights: "400;500;700", kind: "sans" },
   "Open Sans": { weights: "400;500;600;700", kind: "sans" },
@@ -82,7 +85,7 @@ export const DEFAULT_FONT = "Poppins";
 export const themeById = (id?: string) => THEMES.find((t) => t.id === id) ?? THEMES.find((t) => t.id === DEFAULT_THEME)!;
 
 /** The visitor light/dark toggle switches to this companion theme. */
-export const companionOf = (t: Theme) => t.id === "corner" || t.id.endsWith("-shop") ? t.id : (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" || t.id === "studio" ? "plum" : "dusk");
+export const companionOf = (t: Theme) => t.id === "corner" || t.id === "naqsh" || t.id.endsWith("-shop") ? t.id : (t.mode === "dark" ? (t.id === "ocean" || t.id === "midnight" ? "sky" : t.id === "emerald" || t.id === "forest" || t.id === "sage" ? "mint" : t.id === "plum" ? "blush" : "stone") : t.id === "sky" ? "midnight" : t.id === "mint" ? "emerald" : t.id === "blush" || t.id === "studio" ? "plum" : "dusk");
 
 export function hexToTriplet(hex: string): string | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());

@@ -21,7 +21,7 @@ export async function createPayPalOrder(order: Order, exponent: number, viewToke
       intent: "CAPTURE",
       purchase_units: [{ reference_id: order.id, custom_id: order.id, description: `Order ${order.number}`, amount: { currency_code: order.currency, value: (Number(order.total) / 10 ** exponent).toFixed(exponent) } }],
       application_context: {
-        brand_name: "Creative Corner",
+        brand_name: "Stencil and Gift Studio",
         user_action: "PAY_NOW",
         return_url: `${SITE()}/api/payments/paypal/capture?order=${order.number}&t=${viewToken}`,
         cancel_url: `${SITE()}/checkout?cancelled=${order.number}`,

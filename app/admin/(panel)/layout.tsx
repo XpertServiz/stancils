@@ -8,6 +8,7 @@ import { memo } from "@/lib/memo";
 import { ROLES } from "@/lib/permissions";
 import { Sidebar, type NavItem } from "@/components/admin/Sidebar";
 import { staffLogout } from "../actions/auth";
+import { AdminFrame } from "@/components/admin/AdminFrame";
 
 export const metadata: Metadata = { title: { default: "Admin", template: "%s · Admin" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     { href: "/admin/settings", label: "Settings", icon: "Settings", perm: "settings.manage" },
   ];
   return (
+    <AdminFrame>
     <div className="flex min-h-screen">
       <Sidebar items={items.filter((i) => !i.perm || has(i.perm)).map(({ perm: _p, ...i }) => i)} brand={s.business.name} />
       <div className="min-w-0 flex-1">
@@ -60,5 +62,6 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         <main className="mx-auto max-w-[1400px] p-4 sm:p-6">{children}</main>
       </div>
     </div>
+    </AdminFrame>
   );
 }

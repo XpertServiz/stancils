@@ -10,10 +10,21 @@ import { clearMemo, memo } from "./memo";
 export type MenuItem = { label: string; href: string; children: { label: string; href: string }[] };
 export type HomeRow = { title: string; intro: string; collection: string; banner: string; count: number };
 /** A picture tile in “Our Collections”. `baked` = the name is already written on the picture, so we do not print it again. */
-export type Chip = { label: string; href: string; image?: string; baked?: boolean };
+export type Chip = { label: string; href: string; image?: string; baked?: boolean; eyebrow?: string; desc?: string; cta?: string };
 /** A feature banner between the top banner and “Our Collections” (the Kiswa banner). `baked` = the picture already has an OPEN button drawn on it, so we put a real clickable button over it. */
 export type Feature = { enabled: boolean; image: string; href: string; title: string; text: string; bullets: string[]; baked: boolean };
+export type Benefit = { t: string; d: string };
 export type StoreHome = {
+  heroButton2: string;
+  circle1: string;
+  circle2: string;
+  deptEyebrow: string;
+  deptTitle: string;
+  shop: { eyebrow: string; title: string; intro: string };
+  custom: { eyebrow: string; title: string; text: string; button: string };
+  benefits: Benefit[];
+  story: { eyebrow: string; title: string; text: string; link: string; image: string };
+  newsletterSub: string;
   feature: Feature;
   eyebrow: string;
   headline: string;
@@ -37,33 +48,24 @@ export const slugify = (s: string) =>
 
 // ───────────────────────────── menu ─────────────────────────────
 
-export const DEFAULT_MENU_TEXT = `All Collections | /collections
-All Stencils | /shop
-Calligraphy Stencils
-  All Calligraphy Stencils
-  Entire Surah
-  Tasbih
-  Quran Verses
-  Sacred Names
-  Ayat ul Kursi
-  4 Qul
-  Quranic Panels
-  Kaaba-Inspired Calligraphy
-Wall & Canvas Stencils
-  Mandala Designs
-  Floral & Motif Designs
-  Animals & Birds
-  Pattern & Texture
-  Borders & Corners
-  Stencil Packs
-  Tribal & Ancient Art
-Carpet Design Stencils
-Art & Craft Stencils
-  All Art & Craft Stencils
-  Furniture Stencils
-  Fabric Stencils
-Acrylic Wall Decoration
-Art Supplies`;
+export const DEFAULT_MENU_TEXT = `Stencils
+  Floral Stencils
+  Mandala Stencils
+  Calligraphy Stencils
+  Geometric Stencils
+  Wall & Decor Stencils
+  Custom Stencils
+Gifts
+  Birthday Gift Baskets
+  Corporate Gift Baskets
+  Custom Gift Baskets
+  Wedding & Celebration
+  Holiday Gifts
+Custom T-Shirts
+Cybersigilism Art
+  Cybersigilism Apparel
+  Cybersigilism Prints
+  Custom Cybersigilism`;
 
 /** "Label" or "Label | /link". Lines indented under another line become its dropdown. */
 export function parseMenu(text: string): MenuItem[] {
@@ -135,32 +137,45 @@ export async function ensureMenuCollections(menu: MenuItem[]) {
 // ───────────────────────────── homepage ─────────────────────────────
 
 export const HOME_DEFAULTS: StoreHome = {
+  heroButton2: "Make it yours",
+  circle1: "/naqsh/gifts.jpg",
+  circle2: "/naqsh/tees.jpg",
+  deptEyebrow: "Your next obsession starts here",
+  deptTitle: "Four ways to create joy",
+  shop: { eyebrow: "The good stuff", title: "Find your new favorite", intro: "Browse the full collection." },
+  custom: { eyebrow: "Made for your one-of-a-kind ideas", title: "Have an idea? Let's make it real.", text: "Personalized tees, custom stencils, thoughtful gift baskets, or art that nobody else has. Tell us what you are imagining.", button: "Start a custom request ↗" },
+  benefits: [
+    { t: "Made just for you", d: "Every stencil, gift and tee is prepared to order." },
+    { t: "Reusable & durable", d: "Stencils cut from tough material, ready for project after project." },
+    { t: "Sizes for everyone", d: "Stencil sizes, T-shirt sizes from XS to 5XL, and gift sizes from Small to Deluxe." },
+    { t: "Real people, real help", d: "Questions about a custom order? Message us any time." },
+  ],
+  story: { eyebrow: "Hi, we're Stencil and Gift Studio", title: "More than a store. A little imagination station.", text: "We believe everyday things can be meaningful, expressive and unexpected. From intricate stencil patterns to gifts that feel personal, from one-of-a-kind tees to bold alternative art, this is where those ideas meet.", link: "Discover our collections ↗", image: "/naqsh/cyber.jpg" },
+  newsletterSub: "Product launches and seasonal ideas, sent when they are ready.",
   feature: {
-    enabled: true,
-    image: "/images/kiswa-banner.jpg",
+    enabled: false,
+    image: "",
     href: "/p/kaaba-kiswa-inspired-pattern-stencil",
     title: "Hand-Paint the Kaaba Door with Kiswa Stencil",
     text: "Create your own Ghilaf-e-Kaaba masterpiece. No calligraphy skills required — just devotion and creativity.",
     bullets: ["100% Accurate Calligraphy", "All sizes Available", "Exclusive Design", "50% Discount"],
     baked: true,
   },
-  eyebrow: "New • Limited offer",
-  headline: "Paint Beautiful Walls — No Skills Required",
-  sub: "Reusable stencils for walls, canvas, furniture and fabric.",
-  checklist: ["100% accurate calligraphy", "All sizes available", "Exclusive designs", "50% discount"],
-  cta: { label: "Shop now", href: "/shop" },
-  badge: "50% OFF",
-  heroImage: "/images/hero-banner.jpg",
+  eyebrow: "Stencils · Gifts · Custom tees · Cybersigilism art",
+  headline: "Little things. Big imagination.",
+  sub: "Reusable stencils, thoughtful gift baskets, wearable art and bold alternative prints. Your favorite ideas, made into real things.",
+  checklist: ["Stencils", "Gift baskets", "Custom T-shirts", "Cybersigilism art"],
+  cta: { label: "Explore collections", href: "/#collections" },
+  badge: "",
+  heroImage: "/naqsh/stencils.jpg",
   heroLayout: "banner",
   chips: [
-    { label: "All Calligraphy Stencils", href: "/c/all-calligraphy-stencils", image: "/images/collections/all-calligraphy-stencils.jpg" },
-    { label: "Mandala Stencils", href: "/c/mandala-designs", image: "/images/collections/mandala-stencils.jpg", baked: true },
-    { label: "Floral & Motif Designs", href: "/c/floral-and-motif-designs", image: "/images/collections/floral-motif-designs.jpg", baked: true },
-    { label: "Fabric Stencils", href: "/c/fabric-stencils", image: "/images/collections/fabric-stencils.jpg" },
-    { label: "Furniture Stencils", href: "/c/furniture-stencils", image: "/images/collections/furniture-stencils.jpg", baked: true },
-    { label: "Calligraphy Brushes", href: "/c/art-supplies", image: "/images/collections/calligraphy-brushes.jpg", baked: true },
+    { eyebrow: "01 / Get creative", label: "Stencils", desc: "Patterns that bring your world to life.", cta: "Explore stencils", href: "/c/stencils", image: "/naqsh/stencils.jpg" },
+    { eyebrow: "02 / Give thoughtfully", label: "Gifts", desc: "For every person and every occasion.", cta: "Find a gift", href: "/c/gifts", image: "/naqsh/gifts.jpg" },
+    { eyebrow: "03 / Wear it proud", label: "Custom Tees", desc: "Wear your story. Your design, your rules.", cta: "Design a tee", href: "/c/custom-t-shirts", image: "/naqsh/tees.jpg" },
+    { eyebrow: "04 / Break the ordinary", label: "Cybersigilism", desc: "Edgy, expressive, and all your own.", cta: "Discover the art", href: "/c/cybersigilism-art", image: "/naqsh/cyber.jpg" },
   ],
-  rows: [
+ rows: [
     { title: "Persian Carpet Stencils", intro: "Elegant designs inspired by traditional rugs, ideal for canvas, walls and furniture.", collection: "carpet-design-stencils", banner: "/images/rows/persian-carpet.jpg", count: 8 },
     { title: "Islamic / Arabic Calligraphy Stencils", intro: "Apply graceful calligraphic art to canvas, walls, glass and ceramic.", collection: "all-calligraphy-stencils", banner: "/images/rows/islamic-calligraphy.jpg", count: 8 },
     { title: "Wall Stencils for DIY Home Décor", intro: "Easy to use, economical, and a better alternative to wallpaper or decals.", collection: "wall-and-canvas-stencils", banner: "/images/rows/wall-stencils.jpg", count: 8 },
@@ -170,7 +185,7 @@ export const HOME_DEFAULTS: StoreHome = {
   latestTitle: "Latest Designs",
   hours: "Mon | 10am – 9pm\nTue | 11am – 9pm\nWed | 11am – 5pm\nThu | 11am – 9pm\nFri | 10am – 9pm\nSat | 11am – 9pm\nSun | Closed",
   mapQuery: "",
-  newsletterTitle: "Get new designs and offers first",
+  newsletterTitle: "A little creative inspiration?",
 };
 
 const cleanText = (v: unknown, max: number) => String(v ?? "").replace(/[<>]/g, "").trim().slice(0, max);
@@ -195,7 +210,7 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     count: Math.max(2, Math.min(12, Math.round(Number(r.count)) || 8)),
   })).filter((r) => r.title && r.collection);
   const chips = (input.chips ?? prev.chips)
-    .map((c) => ({ label: cleanText(c.label, 40), href: cleanLink(c.href, "/shop"), image: cleanUrl(c.image), baked: Boolean(c.baked) && Boolean(c.image) }))
+    .map((c) => ({ label: cleanText(c.label, 40), href: cleanLink(c.href, "/shop"), image: cleanUrl(c.image), baked: false, eyebrow: cleanText(c.eyebrow, 40), desc: cleanText(c.desc, 90), cta: cleanText(c.cta, 30) }))
     .filter((c) => c.label)
     .slice(0, 12);
   const f = { ...prev.feature, ...(input.feature ?? {}) };
@@ -208,7 +223,18 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     bullets: (f.bullets ?? []).map((x) => cleanText(x, 60)).filter(Boolean).slice(0, 6),
     baked: Boolean(f.baked) && Boolean(f.image),
   };
+  const sec = <T extends object>(k: "shop" | "custom" | "story", d: T): T => ({ ...d, ...((prev as unknown as Record<string, object>)[k] ?? {}), ...(((input as Record<string, object>)[k]) ?? {}) }) as T;
+  const shop = sec("shop", HOME_DEFAULTS.shop), custom = sec("custom", HOME_DEFAULTS.custom), story = sec("story", HOME_DEFAULTS.story);
+  const str = (o: Record<string, string>, max = 300) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, k === "image" ? cleanUrl(v) : cleanText(v, max)])) as never;
   return {
+    heroButton2: cleanText(input.heroButton2 ?? prev.heroButton2 ?? HOME_DEFAULTS.heroButton2, 30),
+    circle1: cleanUrl(input.circle1 ?? prev.circle1 ?? HOME_DEFAULTS.circle1),
+    circle2: cleanUrl(input.circle2 ?? prev.circle2 ?? HOME_DEFAULTS.circle2),
+    deptEyebrow: cleanText(input.deptEyebrow ?? prev.deptEyebrow ?? HOME_DEFAULTS.deptEyebrow, 60),
+    deptTitle: cleanText(input.deptTitle ?? prev.deptTitle ?? HOME_DEFAULTS.deptTitle, 80),
+    shop: str(shop, 200), custom: str(custom, 400), story: str(story, 500),
+    benefits: (input.benefits ?? prev.benefits ?? HOME_DEFAULTS.benefits).map((b) => ({ t: cleanText(b.t, 50), d: cleanText(b.d, 160) })).filter((b) => b.t).slice(0, 6),
+    newsletterSub: cleanText(input.newsletterSub ?? prev.newsletterSub ?? HOME_DEFAULTS.newsletterSub, 140),
     feature,
     eyebrow: cleanText(input.eyebrow ?? prev.eyebrow, 40),
     headline: cleanText(input.headline ?? prev.headline, 80) || HOME_DEFAULTS.headline,

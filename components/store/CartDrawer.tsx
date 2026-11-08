@@ -18,14 +18,14 @@ export function CartDrawer() {
 
   return (
     <div className={`fixed inset-0 z-[60] overflow-hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
-      <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} onClick={() => setOpen(false)} />
+      <div className={`absolute inset-0 bg-stone/55 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} onClick={() => setOpen(false)} />
       <aside
         role="dialog"
-        aria-label="Shopping cart"
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-line bg-bg shadow-2xl transition-transform duration-300 ease-brand ${open ? "translate-x-0" : "translate-x-full"}`}
+        aria-label="Shopping bag"
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l-2 border-mustard bg-bg shadow-2xl transition-transform duration-300 ease-brand ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="text-lg font-bold">Just added to your cart</h2>
+          <h2 className="font-display text-[30px] font-bold leading-none">Your bag</h2>
           <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)} aria-label="Close cart"><X size={16} /></button>
         </header>
 
@@ -42,7 +42,7 @@ export function CartDrawer() {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {lines.length === 0 && (
             <div className="py-16 text-center text-ink2">
-              <p className="mb-4">Your cart is empty.</p>
+              <p className="mb-4">Your bag is empty. Add a stencil, gift, tee or print to get started.</p>
               <Link href="/shop" className="btn btn-primary" onClick={() => setOpen(false)}>Continue shopping</Link>
             </div>
           )}

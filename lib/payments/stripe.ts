@@ -21,7 +21,7 @@ export async function createStripeCheckout(order: Order, token: string) {
       line_items: [
         {
           quantity: 1,
-          price_data: { currency: order.currency.toLowerCase(), unit_amount: Number(order.total), product_data: { name: `Creative Corner order ${order.number}` } },
+          price_data: { currency: order.currency.toLowerCase(), unit_amount: Number(order.total), product_data: { name: `Stencil and Gift Studio order ${order.number}` } },
         },
       ],
       success_url: `${SITE()}/order/${order.number}?t=${token}&session_id={CHECKOUT_SESSION_ID}`,

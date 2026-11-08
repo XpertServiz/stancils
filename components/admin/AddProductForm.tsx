@@ -3,17 +3,30 @@ import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { compressImage } from "./compress";
 import { quickAddProduct, type QR } from "@/app/admin/actions/quick";
+import { SIZE_SETS, SET_KEYS, sizeSetFor, type SizeSetKey } from "@/lib/sizes";
 
 export type Cat = { id: string; name: string };
 
-export function CategoryPicker({ cats, current }: { cats: Cat[]; current?: string }) {
+/** Size dropdown choice: stencil sizes, T-shirt sizes (S, M, L, XL …), gift sizes or one size. */
+export function SizeSelect({ value, onChange }: { value: SizeSetKey; onChange: (v: SizeSetKey) => void }) {
+  return (
+    <div>
+      <select name="sizeSet" value={value} onChange={(e) => onChange(e.target.value as SizeSetKey)} className="select" aria-label="Size options">
+        {SET_KEYS.map((k) => <option key={k} value={k}>{SIZE_SETS[k].label}</option>)}
+      </select>
+      <p className="mt-1 text-xs text-ink3">Shoppers pick from: {SIZE_SETS[value].options.map((o) => o.label).join(", ")}</p>
+    </div>
+  );
+}
+
+export function CategoryPicker({ cats, current, onPick }: { cats: Cat[]; current?: string; onPick?: (name: string) => void }) {
   return (
     <div className="space-y-2">
-      <select name="collectionId" defaultValue={current ?? ""} className="select">
+      <select name="collectionId" defaultValue={current ?? ""} className="select" onChange={(e) => onPick?.(cats.find((c) => c.id === e.target.value)?.name ?? "")}>
         <option value="">Choose a category…</option>
         {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
-      <input name="newCategory" maxLength={80} placeholder="…or type a new category" className="input" aria-label="New category" />
+      <input name="newCategory" maxLength={80} placeholder="…or type a new category" className="input" aria-label="New category" onChange={(e) => e.target.value && onPick?.(e.target.value)} />
     </div>
   );
 }
@@ -32,6 +45,7 @@ export function AddProductForm({ cats, base }: { cats: Cat[]; base: string }) {
   const [state, setState] = useState<QR>(null);
   const [pending, start] = useTransition();
   const [picked, setPicked] = useState<string[]>([]);
+  const [sizeSet, setSizeSet] = useState<SizeSetKey>("stencil");
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,16 +71,16 @@ export function AddProductForm({ cats, base }: { cats: Cat[]; base: string }) {
   return (
     <form ref={form} onSubmit={submit} className="space-y-5">
       <L n="1" label="What is it called?"><input name="name" required maxLength={120} placeholder="e.g. Rose Vine Wall Stencil" className="input" /></L>
-      <L n="2" label="Which category?" hint="This decides where it shows on your website."><CategoryPicker cats={cats} /></L>
-      <L n="3" label={`Price (${base})`} hint="For the smallest size. Bigger sizes are worked out for you."><input name="price" required inputMode="decimal" placeholder="e.g. 1500" className="input max-w-[220px]" /></L>
-      <L n="4" label="Photos" hint="Pick one or more pictures from your phone or computer. The first one is the main picture.">
+      <L n="2" label="Which category?" hint="This decides where it shows on your website."><CategoryPicker cats={cats} onPick={(n) => n && setSizeSet(sizeSetFor(n))} /></L>
+      <L n="3" label="Which sizes?" hint="Picked for you from the category. Stencils: 4×4 to 16×16 in · T-shirts: XS to 5XL · Gifts: Small to Deluxe."><SizeSelect value={sizeSet} onChange={setSizeSet} /></L>
+      <L n="4" label={`Price (${base})`} hint="For the first (smallest) size. The other sizes are worked out for you."><input name="price" required inputMode="decimal" placeholder="e.g. 1500" className="input max-w-[220px]" /></L>
+      <L n="5" label="Photos" hint="Pick one or more pictures from your phone or computer. The first one is the main picture.">
         <input name="photos" type="file" accept="image/*" multiple className="input" onChange={(e) => setPicked([...(e.target.files ?? [])].map((f) => f.name))} />
         {picked.length > 0 && <p className="mt-1 text-xs text-ink2">{picked.length} photo{picked.length === 1 ? "" : "s"} chosen</p>}
       </L>
       <details className="rounded-xl border border-line p-3 text-sm">
         <summary className="cursor-pointer font-semibold">More options (you can skip these)</summary>
         <div className="mt-3 space-y-3">
-          <label className="flex items-start gap-2"><input type="checkbox" name="sizes" defaultChecked className="mt-1" /><span>Offer 4 sizes (12, 18, 24 and 36 inches)<span className="block text-xs text-ink3">Untick for items that come in one size, like paint or brushes.</span></span></label>
           <label className="block"><span className="mb-1 block font-semibold">Old price ({base}) — to show a sale</span><input name="oldPrice" inputMode="decimal" placeholder="e.g. 3000" className="input max-w-[220px]" /><span className="text-xs text-ink3">Shows crossed out, with a discount tag.</span></label>
           <label className="block"><span className="mb-1 block font-semibold">A few words about it</span><textarea name="description" rows={3} maxLength={600} className="textarea" /></label>
         </div>

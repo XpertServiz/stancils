@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
   if (n.count !== 1) return new Response("Download limit reached.", { status: 410 });
   const p = dl.orderItem.variant?.product;
   const svg = (p?.designSvg ?? "").replace(/var\(--l\d,currentColor\)/g, "#000000");
-  const licence = `<!-- Creative Corner · ${p?.name} · Personal-use licence for order ${dl.orderItem.order.number} (${dl.orderItem.order.email}). Not for resale. -->\n`;
+  const licence = `<!-- Stencil and Gift Studio · ${p?.name} · Personal-use licence for order ${dl.orderItem.order.number} (${dl.orderItem.order.email}). Not for resale. -->\n`;
   return new Response(licence + svg, {
     headers: {
       "Content-Type": "image/svg+xml",

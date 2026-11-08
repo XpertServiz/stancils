@@ -5,6 +5,7 @@ import { Footer } from "@/components/store/Footer";
 import { Announcement } from "@/components/store/Announcement";
 import { WhatsAppBubble } from "@/components/store/WhatsApp";
 import { Track } from "@/components/store/Track";
+import { NavProgress } from "@/components/store/NavProgress";
 import { getSettings } from "@/lib/settings";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <CartProvider>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-onaccent">Skip to content</a>
+      <NavProgress />
       <Announcement />
       <Header />
       <main id="main">{children}</main>

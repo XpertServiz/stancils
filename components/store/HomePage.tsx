@@ -1,243 +1,137 @@
-import fs from "node:fs";
-import path from "node:path";
 import Link from "next/link";
-import { ArrowRight, Check, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrency } from "@/lib/currency";
-import { cardInclude, listProducts, SHOWN, toCard, type Card } from "@/lib/catalog";
-import { getHome, getMenu, parseHours, slugsFor, type HomeRow, type StoreHome } from "@/lib/storefront";
-import { getLiveSales } from "@/lib/sales";
+import { listProducts } from "@/lib/catalog";
+import { getHome } from "@/lib/storefront";
 import { ProductGrid } from "./ProductCard";
 import { ReviewCarousel, type ReviewItem } from "./ReviewCarousel";
 import { NewsletterForm } from "./NewsletterForm";
 import { WriteReview } from "./WriteReview";
+import { Tilt3D } from "./Tilt3D";
 
-/** A photo in /public that the owner may not have added yet: show a tidy placeholder instead of a broken image. */
-const exists = (url: string) => {
-  if (!url) return false;
-  if (/^https?:\/\//.test(url)) return true;
-  if (url.startsWith("/uploads/")) return true; // uploaded through the admin (stored on the CDN / disk at runtime)
-  try { return fs.existsSync(path.join(process.cwd(), "public", url.replace(/^\//, ""))); } catch { return false; }
-};
-
-function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
-  return (
-    <div className="mb-6 text-center">
-      <h2 className="font-display text-[28px] font-bold md:text-[36px]">{children}</h2>
-      <span className="mx-auto mt-2 block h-[3px] w-12 rounded bg-accent" />
-      {sub && <p className="mx-auto mt-3 max-w-2xl text-ink2">{sub}</p>}
-    </div>
-  );
-}
-
-function Hero({ h, off }: { h: StoreHome; off: string }) {
-  const img = exists(h.heroImage) ? h.heroImage : "";
-  if (h.heroLayout === "banner") {
-    return (
-      <section>
-        <h1 className="sr-only">{h.headline}{h.sub ? ` — ${h.sub}` : ""}</h1>
-        <Link href={h.cta.href} className="relative block bg-s1" aria-label={`${h.cta.label}: ${h.headline}`}>
-          {img ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={img} srcSet={img === "/images/hero-banner.jpg" ? "/images/hero-banner-900.jpg 900w, /images/hero-banner.jpg 2000w" : undefined} sizes="100vw" alt={`${h.headline}. ${h.sub}`} fetchPriority="high" decoding="async" className="aspect-[4/3] w-full object-cover object-center sm:aspect-[2000/1116]" />
-          ) : (
-            <div className="diag grid aspect-[4/3] w-full place-items-center text-sm font-semibold text-ink3 sm:aspect-[2000/1116]">Hero image coming soon</div>
-          )}
-          {off && <span className="absolute left-3 top-3 -rotate-6 rounded-lg bg-mustard px-3 py-1.5 text-sm font-extrabold text-[#1c1b1a] shadow-lg sm:left-6 sm:top-6 sm:px-4 sm:py-2 sm:text-lg">{off}</span>}
-        </Link>
-        <div className="border-b border-line bg-s1">
-          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5 md:px-6">
-            {h.checklist.length > 0 && (
-              <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium">
-                {h.checklist.map((c) => <li key={c} className="flex items-center gap-2"><span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-onaccent"><Check size={12} strokeWidth={3} /></span>{c}</li>)}
-              </ul>
-            )}
-            <Link href={h.cta.href} className="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-7 font-semibold text-onaccent transition hover:-translate-y-px hover:brightness-90">{h.cta.label}<ArrowRight size={17} /></Link>
-          </div>
-        </div>
-      </section>
-    );
-  }
-  return (
-    <section className="overflow-hidden bg-s1">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-8 px-4 py-10 md:px-6 lg:grid-cols-2 lg:gap-12 lg:py-16 [&>*]:min-w-0">
-        <div className="order-2 lg:order-1">
-          {h.eyebrow && <span className="inline-block rounded-full bg-accent/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-accent">{h.eyebrow}</span>}
-          <h1 className="mt-4 text-[34px] font-bold leading-[1.1] md:text-[52px]">{h.headline}</h1>
-          {h.sub && <p className="mt-4 max-w-xl text-lg text-ink2">{h.sub}</p>}
-          {h.checklist.length > 0 && (
-            <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
-              {h.checklist.map((c) => (
-                <li key={c} className="flex items-center gap-2.5 font-medium"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-onaccent"><Check size={14} strokeWidth={3} /></span>{c}</li>
-              ))}
-            </ul>
-          )}
-          <Link href={h.cta.href} className="mt-8 inline-flex h-12 items-center gap-2 rounded-lg bg-accent px-8 font-semibold text-onaccent transition hover:-translate-y-px hover:brightness-90">{h.cta.label}<ArrowRight size={18} /></Link>
-        </div>
-        <div className="relative order-1 mx-auto w-full max-w-[460px] lg:order-2 lg:max-w-none">
-          <span aria-hidden className="absolute -right-6 -top-6 h-[70%] w-[70%] rounded-full bg-accent opacity-15" />
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-s1 md:aspect-[5/6]">
-            {img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={img} alt={`${h.headline} — a smiling woman in a green outfit`} fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-top" />
-            ) : (
-              <div className="diag absolute inset-0 grid place-items-center text-sm font-semibold text-ink3">Hero image coming soon</div>
-            )}
-          </div>
-          {(off || h.badge) && <span className="absolute -left-2 top-4 -rotate-6 rounded-lg bg-mustard px-4 py-2 text-lg font-extrabold text-[#1c1b1a] shadow-lg">{off || h.badge}</span>}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** “Our Collections”: picture tiles. Clicking one opens that collection's products. */
-/** The Kiswa feature banner. The picture has the writing and an OPEN button drawn on it; we lay a real, clickable button over it. */
-const BAKED_BUTTON = { left: "5.4%", top: "64.2%", width: "10%", height: "7.4%" }; // where OPEN sits on the original banner picture
-function FeatureBanner({ f }: { f: StoreHome["feature"] }) {
-  if (!f.enabled) return null;
-  const img = exists(f.image) ? f.image : "";
-  const label = `Open — ${f.title}`;
-  const textBlock = (
-    <div className="mx-auto max-w-xl px-4 py-10 text-center sm:text-left md:px-6">
-      <h2 className="font-display text-[26px] font-bold leading-tight text-[#14224a] md:text-[32px]">{f.title}</h2>
-      {f.text && <p className="mt-3 text-ink2">{f.text}</p>}
-      {f.bullets.length > 0 && <ul className="mt-4 space-y-1 text-sm font-medium">{f.bullets.map((b) => <li key={b}>- {b}</li>)}</ul>}
-      <Link href={f.href} className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#14224a] px-9 text-sm font-bold uppercase tracking-wider text-white transition hover:-translate-y-px hover:brightness-125">Open</Link>
-    </div>
-  );
-  if (!img) return <section className="bg-[#f2f2f2]">{textBlock}</section>;
-  return (
-    <section className="bg-[#f2f2f2]" aria-label={f.title}>
-      {/* big screens: the whole picture, with a real button over the OPEN drawn on it */}
-      <div className="relative mx-auto hidden max-w-[2000px] sm:block">
-        <h2 className="sr-only">{f.title}</h2>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={img} alt={`${f.title}. ${f.text}`} loading="lazy" decoding="async" className="block h-auto w-full" />
-        {f.baked ? (
-          <Link href={f.href} aria-label={label} style={BAKED_BUTTON} className="absolute rounded-[10px] outline-offset-2 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" />
-        ) : (
-          <Link href={f.href} className="absolute bottom-[12%] left-[5.5%] inline-flex h-11 items-center rounded-xl bg-[#14224a] px-9 text-sm font-bold uppercase tracking-wider text-white transition hover:brightness-125">Open</Link>
-        )}
-      </div>
-      {/* phones: the picture is cropped to the girl and the door, and the words are real text */}
-      <div className="sm:hidden">
-        <Link href={f.href} aria-label={label} className="block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={img} alt="" loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover object-[78%_50%]" />
-        </Link>
-        {textBlock}
-      </div>
-    </section>
-  );
-}
-
-function Chips({ chips }: { chips: StoreHome["chips"] }) {
-  if (!chips.length) return null;
-  return (
-    <section className="fade-up" aria-labelledby="collections-h">
-      <div className="mx-auto max-w-[1100px] px-4 pb-4 pt-12 md:px-6 md:pt-16">
-        <h2 id="collections-h" className="mb-8 text-center text-[13px] font-bold uppercase tracking-[.2em] text-ink2">Our Collections</h2>
-        <ul className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
-          {chips.map((c, i) => {
-            const img = exists(c.image ?? "") ? c.image : "";
-            return (
-              <li key={c.label + i}>
-                <Link href={c.href} className="group relative block aspect-square overflow-hidden bg-s1 [container-type:inline-size]" aria-label={`${c.label} — view the collection`}>
-                  {img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={img} alt={c.label} loading={i < 3 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]" />
-                  ) : (
-                    <span className="absolute inset-0 bg-gradient-to-br from-accent to-[rgb(var(--band-stone))]" />
-                  )}
-                  {(!c.baked || !img) && (
-                    <span className="pointer-events-none absolute inset-x-2 top-[78%] -translate-y-1/2 text-center [font-size:5.8cqw] font-bold leading-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,.55)]">{c.label}</span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/** One product section: the girl banner first (title and text are written on it), then the products. */
-function Row({ row, cards }: { row: HomeRow; cards: Card[] }) {
-  const banner = exists(row.banner) ? row.banner : "";
-  return (
-    <section className="fade-up">
-      <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-6 md:py-12">
-        {banner ? (
-          <>
-            {/* on a phone the writing on the picture is too small, so the title and text are shown as normal text there */}
-            <div className="mb-3 sm:sr-only">
-              <h2 className="text-center font-display text-[26px] font-bold">{row.title}</h2>
-              {row.intro && <p className="mt-2 text-center text-ink2">{row.intro}</p>}
-            </div>
-            <Link href={`/c/${row.collection}`} className="mb-6 block" aria-label={`${row.title} — view the collection`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={banner} alt={`${row.title}. ${row.intro}`} loading="lazy" decoding="async" className="h-auto w-full mix-blend-multiply" />
-            </Link>
-          </>
-        ) : (
-          <SectionTitle sub={row.intro}>{row.title}</SectionTitle>
-        )}
-        <ProductGrid cards={cards} />
-        <div className="mt-8 text-center">
-          <Link href={`/c/${row.collection}`} className="inline-flex h-11 items-center rounded-lg border-2 border-accent px-6 font-semibold text-accent transition hover:-translate-y-px hover:bg-accent hover:text-onaccent">View all</Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+const eyebrow = "text-sm uppercase tracking-[.14em] text-goldink";
+const h2 = "font-display text-[38px] font-semibold leading-none sm:text-[52px]";
+const arch = "overflow-hidden rounded-t-[999px] rounded-b-md";
 
 export async function HomePage() {
-  const [h, menu, s, { cur, base }, sales] = await Promise.all([getHome(), getMenu(), getSettings(), getActiveCurrency(), getLiveSales()]);
-  const best = sales.reduce<number>((b, x) => Math.max(b, x.percent), 0);
-
-  const [rowCards, latest, reviewRows, agg] = await Promise.all([
-    Promise.all(h.rows.map((r) => listProducts({ collections: slugsFor(r.collection, menu), perPage: r.count }, cur, base).then((x) => x.cards))),
-    db.product.findMany({ where: SHOWN, include: cardInclude, orderBy: { createdAt: "desc" }, take: 8 }),
+  const [h, s, { cur, base }] = await Promise.all([getHome(), getSettings(), getActiveCurrency()]);
+  const [{ cards }, reviewRows, agg] = await Promise.all([
+    listProducts({ sort: "", perPage: 8 }, cur, base),
     db.review.findMany({ where: { status: "published" }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }], take: 12 }),
     db.review.aggregate({ where: { status: "published" }, _avg: { rating: true }, _count: true }),
   ]);
-  const latestCards = latest.map((p) => toCard(p, cur, base));
   const reviews: ReviewItem[] = reviewRows.map((r) => ({
     id: r.id, name: r.name, rating: r.rating, title: r.title ?? "", body: r.body, verified: r.verified,
     date: r.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
   }));
-
-  const hours = parseHours(h.hours);
-  const today = new Date().toLocaleDateString("en-US", { weekday: "short", timeZone: s.business.timezone });
-  const mapQ = encodeURIComponent(h.mapQuery || s.business.address);
-
-  let shown = h.rows.map((r, i) => ({ r, cards: rowCards[i] })).filter((x) => x.cards.length > 0);
-  if (shown.length === 0) {
-    // none of the configured rows has products yet (new store, or collections not filled): show the busiest collections instead
-    const busy = await db.collection.findMany({
-      where: { products: { some: { product: SHOWN } } },
-      orderBy: { products: { _count: "desc" } }, take: 4, select: { slug: true, name: true },
-    });
-    const fb = await Promise.all(busy.map((c) => listProducts({ collection: c.slug, perPage: 6 }, cur, base).then((x) => ({ r: { title: c.name, intro: "", collection: c.slug, banner: "", count: 6 }, cards: x.cards }))));
-    shown = fb.filter((x) => x.cards.length > 0);
-  }
+  const wrap = "mx-auto max-w-[1200px] px-5 sm:px-10";
   return (
     <>
-      <Hero h={h} off={best ? `${Math.round(best)}% OFF` : ""} />
-      <FeatureBanner f={h.feature} />
-      <Chips chips={h.chips} />
-            {shown.map(({ r, cards }) => <Row key={r.title} row={r} cards={cards} />)}
-      {shown.length === 0 && latestCards.length === 0 && (
-        <section className="mx-auto max-w-[1280px] px-4 py-24 text-center md:px-6"><p className="text-lg text-ink2">Our new designs are on their way. Check back soon.</p></section>
-      )}
+      {/* hero */}
+      <section className="bg-stone text-[#E8EFEA]">
+        <div className={`${wrap} flex flex-wrap items-center gap-12 pb-[72px] pt-14`}>
+          <div className="flex flex-[1_1_420px] flex-col gap-6">
+            <span className="text-sm uppercase tracking-[.14em] text-mustard">{h.eyebrow}</span>
+            <h1 className="font-display text-[48px] font-semibold leading-[.95] [text-wrap:balance] sm:text-[84px]">{h.headline}</h1>
+            <p className="max-w-[500px] text-[19px] leading-[1.55] text-[#C9D8D1]">{h.sub}</p>
+            <div className="flex flex-wrap gap-3.5">
+              <Link href={h.cta.href} className="rounded-[2px] bg-mustard px-7 py-[15px] font-semibold text-[#0E2F28] transition hover:brightness-110">{h.cta.label}</Link>
+              <Link href="/custom-stencils" className="rounded-[2px] border border-mustard px-7 py-3.5 text-base text-mustard transition hover:bg-mustard/10">{h.heroButton2}</Link>
+            </div>
+          </div>
+          <Tilt3D className="relative flex flex-[1_1_360px] justify-center">
+            <div className="aspect-[11/13.5] w-full max-w-[440px] rounded-t-[999px] border-2 border-mustard bg-[#1B5A4B] p-2.5">
+              <div className="h-full w-full overflow-hidden rounded-t-[999px] border border-mustard">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={h.heroImage} alt="Ornate decorative stencil design" fetchPriority="high" className="block h-full w-full object-cover" />
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={h.circle1} alt="Gift arrangement" className="absolute bottom-9 left-[-10px] h-[130px] w-[130px] rounded-full border-[3px] border-mustard bg-stone object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={h.circle2} alt="Personalized custom T-shirt" className="absolute right-[-6px] top-[70px] h-[112px] w-[112px] rounded-full border-[3px] border-mustard bg-stone object-cover" />
+          </Tilt3D>
+        </div>
+      </section>
 
-      <section id="reviews" className="fade-up bg-s1" aria-labelledby="reviews-h">
-        <div className="mx-auto max-w-[1280px] px-4 py-12 md:px-6 md:py-16">
+      <section className="bg-mint">
+        <div className={`${wrap} flex flex-wrap justify-between gap-x-8 gap-y-3 py-[18px] text-[15px] uppercase tracking-[.08em] text-[#E8EFEA]`}>
+          {h.checklist.map((c) => <span key={c}>✦ {c}</span>)}
+        </div>
+      </section>
+
+      {/* four departments */}
+      <section id="collections" className="pb-6 pt-[84px]">
+        <div className={`${wrap} flex flex-col gap-10`}>
+          <div className="flex flex-col items-center gap-2 text-center"><span className={eyebrow}>{h.deptEyebrow}</span><h2 className={h2}>{h.deptTitle}</h2></div>
+          <div className="grid gap-7 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+            {h.chips.map((c) => (
+              <Link key={c.label} href={c.href} className="group flex flex-col gap-4 text-ink">
+                <div className={`${arch} aspect-[3/4] w-full border border-line bg-s1`}>
+                  {c.image && (/* eslint-disable-next-line @next/next/no-img-element */ <img src={c.image} alt={c.label} loading="lazy" className="block h-full w-full object-cover transition duration-500 group-hover:scale-105" />)}
+                </div>
+                <div className="flex flex-col gap-1.5 text-center">
+                  {c.eyebrow && <span className="text-xs uppercase tracking-[.14em] text-goldink">{c.eyebrow}</span>}
+                  <span className="font-display text-[32px] font-bold leading-none">{c.label}</span>
+                  {c.desc && <span className="text-base text-ink2">{c.desc}</span>}
+                  <span className="text-[15px] font-semibold text-accent">{c.cta || "Explore"} ↗</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* shop */}
+      <section id="shop" className="pb-6 pt-[72px]">
+        <div className={`${wrap} flex flex-col gap-7`}>
+          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
+            <div className="flex flex-col gap-2"><span className={eyebrow}>{h.shop.eyebrow}</span><h2 className={h2}>{h.shop.title}</h2></div>
+            <p className="max-w-[380px] text-base leading-normal text-ink2">{h.shop.intro} Prices shown in {cur.code}.</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5 border-y border-t-ink border-b-line py-3.5" style={{ borderTopColor: "rgb(var(--ink))" }}>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/shop" className="rounded-full border border-ink bg-stone px-[18px] py-2.5 text-[15px] font-medium text-mustard">Shop all</Link>
+              {h.chips.map((c) => <Link key={c.label} href={c.href} className="rounded-full border border-accent px-[18px] py-2.5 text-[15px] font-medium text-accent hover:bg-s1">{c.label}</Link>)}
+            </div>
+            <Link href="/shop?sort=price_asc" className="text-sm text-ink2 underline">Sort by price</Link>
+          </div>
+          <ProductGrid cards={cards} />
+          <div className="flex justify-center pt-2"><Link href="/shop" className="rounded-[2px] border border-ink px-[30px] py-3.5 text-base font-semibold hover:bg-ink hover:text-bg">Show more products ↓</Link></div>
+        </div>
+      </section>
+
+      {/* custom */}
+      <section id="custom" className="pt-[72px]">
+        <div className={wrap}>
+          <div className="flex flex-wrap items-center justify-between gap-x-12 gap-y-8 rounded-md border-2 border-mustard bg-stone p-8 text-[#E8EFEA] sm:p-14">
+            <div className="flex flex-[1_1_380px] flex-col gap-[18px]">
+              <span className="text-sm uppercase tracking-[.14em] text-mustard">{h.custom.eyebrow}</span>
+              <h2 className="font-display text-[40px] font-semibold leading-none sm:text-[56px]">{h.custom.title}</h2>
+              <p className="max-w-[520px] text-lg leading-[1.55] text-[#C9D8D1]">{h.custom.text}</p>
+            </div>
+            <Link href="/custom-stencils" className="rounded-[2px] bg-mustard px-8 py-[17px] text-[17px] font-semibold text-[#0E2F28] transition hover:brightness-110">{h.custom.button}</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* benefits */}
+      <section className="py-[72px]">
+        <div className={`${wrap} grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(230px,1fr))]`}>
+          {h.benefits.map((b) => (
+            <div key={b.t} className="flex flex-col gap-1.5 border-t border-ink pt-4"><b className="font-display text-2xl">{b.t}</b><span className="text-base leading-normal text-ink2">{b.d}</span></div>
+          ))}
+        </div>
+      </section>
+
+      {/* reviews */}
+      <section id="reviews" className="bg-s1" aria-labelledby="reviews-h">
+        <div className={`${wrap} py-16`}>
           <div className="mb-8 text-center">
-            <h2 id="reviews-h" className="text-[13px] font-bold uppercase tracking-[.2em] text-ink2 md:text-[15px]">Let customers speak for us</h2>
+            <span className={eyebrow}>Let customers speak for us</span>
+            <h2 id="reviews-h" className={`${h2} mt-2`}>Kind words</h2>
             {agg._count > 0 && (
               <p className="mt-3 flex flex-col items-center gap-1 text-sm text-ink2">
                 <span className="flex">{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={20} className={i <= Math.round(agg._avg.rating ?? 0) ? "fill-mustard text-mustard" : "text-line"} />)}</span>
@@ -245,55 +139,35 @@ export async function HomePage() {
               </p>
             )}
           </div>
-          {reviews.length > 0 ? (
-            <ReviewCarousel reviews={reviews} />
-          ) : (
-            <p className="mx-auto max-w-md text-center text-ink2">No reviews yet — be the first to tell others about your experience.</p>
-          )}
+          {reviews.length > 0 ? <ReviewCarousel reviews={reviews} /> : <p className="mx-auto max-w-md text-center text-ink2">No reviews yet — be the first to tell others about your experience.</p>}
           <div className="mt-8 text-center"><WriteReview label="Write a review" /></div>
         </div>
       </section>
 
-      {latestCards.length > 0 && (
-        <section className="fade-up">
-          <div className="mx-auto max-w-[1280px] px-4 py-12 md:px-6 md:py-16">
-            <SectionTitle>{h.latestTitle}</SectionTitle>
-            <ProductGrid cards={latestCards} />
-            <div className="mt-8 text-center"><Link href="/shop?sort=new" className="inline-flex h-11 items-center rounded-lg border-2 border-accent px-6 font-semibold text-accent transition hover:-translate-y-px hover:bg-accent hover:text-onaccent">View all</Link></div>
+      {/* story */}
+      <section id="story" className="bg-s1 py-[84px]" style={{ background: "#E3EAE5" }}>
+        <div className={`${wrap} flex flex-wrap items-center gap-x-[72px] gap-y-10`}>
+          <div className="flex flex-[1_1_420px] flex-col gap-5">
+            <span className={eyebrow}>{h.story.eyebrow}</span>
+            <h2 className="font-display text-[40px] font-semibold leading-none sm:text-[56px]">{h.story.title}</h2>
+            <p className="max-w-[540px] text-lg leading-[1.6] text-ink2">{h.story.text}</p>
+            <Link href="/#collections" className="font-semibold text-accent">{h.story.link}</Link>
           </div>
-        </section>
-      )}
-
-      <section className="fade-up bg-s1">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-8 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-2 [&>*]:min-w-0">
-          <div>
-            <h2 className="font-display text-[28px] font-bold md:text-[36px]">Our store</h2>
-            <span className="mt-2 block h-[3px] w-12 rounded bg-accent" />
-            <p className="mt-4 text-ink2">{s.business.address}</p>
-            <table className="mt-4 w-full max-w-sm text-sm">
-              <tbody>
-                {hours.map((x) => (
-                  <tr key={x.day} className={x.day.slice(0, 3).toLowerCase() === today.toLowerCase() ? "bg-accent/10 font-bold" : ""}>
-                    <td className="px-3 py-1.5">{x.day}</td><td className="px-3 py-1.5">{x.time}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <a href={`https://www.google.com/maps/search/?api=1&query=${mapQ}`} target="_blank" rel="noopener" className="mt-5 inline-flex h-11 items-center rounded-lg bg-accent px-6 font-semibold text-onaccent transition hover:-translate-y-px hover:brightness-90">Get Direction</a>
-          </div>
-          <div className="min-h-[280px] overflow-hidden rounded-[10px] border border-line bg-bg">
-            <iframe title="Map of our store" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-full min-h-[280px] w-full border-0" src={`https://www.google.com/maps?q=${mapQ}&output=embed`} />
+          <div className={`${arch} aspect-[3/4] max-w-[380px] flex-[1_1_320px] border-2 border-accent`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={h.story.image} alt="Detailed black ink alternative art sketch" loading="lazy" className="block h-full w-full object-cover" />
           </div>
         </div>
       </section>
 
-      <section className="bg-accent/15">
-        <div className="mx-auto max-w-[1280px] px-4 py-12 text-center md:px-6">
-          <h2 className="font-display text-[26px] font-bold md:text-[32px]">{h.newsletterTitle}</h2>
-          <p className="mb-5 mt-2 text-ink2">Join our list and get 10% off your first order.</p>
-          <NewsletterForm wide />
+      {/* newsletter */}
+      <section className="bg-mint text-[#F3F5F1]">
+        <div className={`${wrap} flex flex-wrap items-center justify-between gap-x-12 gap-y-6 py-14`}>
+          <div className="flex flex-[1_1_320px] flex-col gap-2"><h2 className="font-display text-[34px] font-semibold sm:text-[40px]">{h.newsletterTitle}</h2><span className="text-[17px] text-[#D3E0D9]">{h.newsletterSub}</span></div>
+          <div className="flex-[1_1_360px]"><NewsletterForm wide /></div>
         </div>
       </section>
+      <span className="sr-only">{s.business.name}</span>
     </>
   );
 }

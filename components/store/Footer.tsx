@@ -1,56 +1,53 @@
 import Link from "next/link";
-import { Facebook, Instagram } from "lucide-react";
 import { getSettings } from "@/lib/settings";
 import { getActiveCurrency } from "@/lib/currency";
-import { CurrencySelect, FooterColumn } from "./Chrome";
-import { NewsletterForm } from "./NewsletterForm";
+import { getMenu } from "@/lib/storefront";
+import { CurrencySelect } from "./Chrome";
+import { LogoMark } from "./BrandLogo";
 
-const QUICK: [string, string][] = [["Search", "/shop"], ["Contact Us", "/contact"], ["Terms of Service", "/legal/terms"], ["Refund Policy", "/legal/refunds"]];
-const HELP: [string, string][] = [["How to Order", "/faq"], ["Returns & Exchanges", "/legal/returns"], ["Shipping Details", "/legal/shipping"], ["Privacy Policy", "/legal/privacy"], ["FAQ", "/faq"], ["Track an order", "/track"]];
+const head = "text-[13px] font-bold uppercase tracking-[.08em] text-[#E8EFEA]";
+const link = "text-[15px] text-[#A9BDB5] hover:text-mustard";
 
 export async function Footer() {
-  const [s, { cur, enabled }] = await Promise.all([getSettings(), getActiveCurrency()]);
+  const [s, { cur, enabled }, menu] = await Promise.all([getSettings(), getActiveCurrency(), getMenu()]);
   const b = s.business;
   return (
-    <footer className="bg-stone text-stone-ink">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-x-10 px-4 py-10 md:grid-cols-3 md:px-6 md:py-14 [&>*]:min-w-0">
-        <FooterColumn title="Quick links">
-          <ul className="space-y-2 opacity-90">
-            {QUICK.map(([l, h]) => <li key={l}><Link href={h} className="hover:text-mustard">{l}</Link></li>)}
-            {b.whatsapp && <li><a href={`https://wa.me/${b.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener" className="hover:text-mustard">WhatsApp</a></li>}
-            {b.facebook && <li><a href={b.facebook} target="_blank" rel="noopener" className="hover:text-mustard">Facebook</a></li>}
-            {b.instagram && <li><a href={b.instagram} target="_blank" rel="noopener" className="hover:text-mustard">Instagram</a></li>}
-          </ul>
-        </FooterColumn>
-        <FooterColumn title="Help">
-          <ul className="space-y-2 opacity-90">{HELP.map(([l, h]) => <li key={l}><Link href={h} className="hover:text-mustard">{l}</Link></li>)}</ul>
-        </FooterColumn>
-        <FooterColumn title="Contact">
-          <p className="opacity-80">{b.address}</p>
-          {b.phone && <p className="mt-2"><a href={`tel:${b.phone.replace(/\s/g, "")}`} className="hover:text-mustard">{b.phone}</a></p>}
-          <p className="mt-1"><a href={`mailto:${b.email}`} className="hover:text-mustard">{b.email}</a></p>
-          <div className="mt-4 text-ink"><NewsletterForm dark /></div>
-        </FooterColumn>
-      </div>
-      <div className="border-t border-white/15">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-4 text-xs md:px-6">
-          <p className="opacity-80">© {new Date().getFullYear()} {b.name}</p>
-          <div className="flex items-center gap-3 text-ink">
-            <select className="rounded-md border border-line bg-bg px-2 py-1.5 text-xs text-ink" defaultValue="en" aria-label="Language">
-              <option value="en">English</option>
-              <option value="es" disabled>Español (soon)</option>
-            </select>
-            <CurrencySelect currencies={enabled.map((c) => c.code)} current={cur.code} />
+    <footer className="bg-stone text-[#A9BDB5]">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 pb-7 pt-14 sm:px-10">
+        <div className="grid gap-8 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+          <div className="flex flex-col gap-3">
+            <span className="flex items-center gap-2.5"><LogoMark size={44} /><span className="font-display text-[26px] font-bold leading-none text-[#F3F5F1]">{b.name}</span></span>
+            <span className="max-w-[260px] text-[15px] leading-normal">Curious minds. Personal gifts. Bold designs. Everyday creativity.</span>
+            {b.email && <a href={`mailto:${b.email}`} className={link}>{b.email}</a>}
+            {b.whatsapp && <a href={`https://wa.me/${b.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener" className={link}>WhatsApp us</a>}
           </div>
-          <div className="flex gap-3">
-            {b.facebook && <a href={b.facebook} aria-label="Facebook" target="_blank" rel="noopener" className="hover:text-mustard"><Facebook size={18} /></a>}
-            {b.instagram && <a href={b.instagram} aria-label="Instagram" target="_blank" rel="noopener" className="hover:text-mustard"><Instagram size={18} /></a>}
+          <div className="flex flex-col gap-2.5">
+            <b className={head}>Shop</b>
+            {menu.map((m) => <Link key={m.label} href={m.href} className={link}>{m.label}</Link>)}
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <b className={head}>Explore</b>
+            <Link href="/collections" className={link}>All Collections</Link>
+            <Link href="/custom-stencils" className={link}>Custom Orders</Link>
+            <Link href="/about" className={link}>Our Story</Link>
+            <Link href="/track" className={link}>Track an order</Link>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <b className={head}>Important</b>
+            <Link href="/legal/shipping" className={link}>Shipping Information</Link>
+            <Link href="/legal/returns" className={link}>Returns &amp; Exchanges</Link>
+            <Link href="/legal/privacy" className={link}>Privacy &amp; Contact</Link>
+            <Link href="/faq" className={link}>FAQ</Link>
+            <Link href="/contact" className={link}>Contact Us</Link>
           </div>
         </div>
-      </div>
-      <div className="border-t border-white/10 py-3 text-center text-[11px]">
-        {/* a normal <a>, not <Link>: it loads the admin panel fresh, with its own splash screen */}
-        <a href="/admin/login" className="opacity-70 hover:text-mustard hover:opacity-100">Admin login</a>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[#2A4A41] pt-5 text-[13px]">
+          <span>© {new Date().getFullYear()} {b.name}. All rights reserved.</span>
+          <CurrencySelect currencies={enabled.map((c) => c.code)} current={cur.code} />
+          <span>Designed to be different ✦</span>
+          {/* a normal <a>, not <Link>: it loads the admin panel fresh, with its own splash screen */}
+          <a href="/admin/login" className="opacity-70 hover:text-mustard hover:opacity-100">Admin login</a>
+        </div>
       </div>
     </footer>
   );

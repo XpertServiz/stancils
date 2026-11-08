@@ -5,8 +5,8 @@ import type { CurrencyInfo } from "./money";
 
 export const DEFAULT_SETTINGS = {
   business: {
-    name: "Creative Corner",
-    tagline: "Reusable Stencils & Art Supplies",
+    name: "Stencil and Gift Studio",
+    tagline: "Stencils · Gifts · Custom tees · Art",
     email: "hello@creativecorner.shop",
     phone: "+92 300 0000000",
     whatsapp: "923000000000",
@@ -18,21 +18,21 @@ export const DEFAULT_SETTINGS = {
     facebook: "",
     youtube: "",
   },
-  theme: { preset: "corner", accent: "", header: "", highlight: "", displayFont: "Fraunces", bodyFont: "Inter" },
+  theme: { preset: "naqsh", accent: "", header: "", highlight: "", displayFont: "Cormorant Garamond", bodyFont: "Jost" },
   hero: {
     mode: "collage", // collage | 3d | video | image
-    eyebrow: "Your ideas, our creative touch",
+    eyebrow: "Stencils · Gifts · Custom tees · Cybersigilism art",
     headline: "Make something *beautifully yours.*", // *text* = italic accent
     sub: "Expressive stencils, joyful gifts, custom T-shirts and bold artwork. Designed with personality and made for the moments that matter.",
     primaryCta: { label: "Explore collections", href: "/#collections" },
     secondaryCta: { label: "Make something custom", href: "/custom-stencils" },
     featuredSlug: "",
     videoUrl: "",
-    imageUrl: "/hero/studio-collage.webp",
+    imageUrl: "/naqsh/stencils.jpg",
     trust: ["Made to order", "USA & Canada"],
   },
-  splash: { enabled: true, style: "cube" as "cube" | "laser" | "layers" | "spray" },
-  announcement: { enabled: true, text: "Exclusive Offer: 50% Flat Discount" },
+  splash: { enabled: true, style: "naqsh" as "naqsh" | "cube" | "laser" | "layers" | "spray" },
+  announcement: { enabled: true, text: "Your ideas, made real" },
   tax: { ratePct: 0, inclusive: true, label: "Tax" },
   payments: {
     demoCard: true,
@@ -45,8 +45,8 @@ export const DEFAULT_SETTINGS = {
   orders: { expiryHours: 24, lowStockDefault: 5 },
   studio: { baseFeeBase: 50000, complexityPerMeterBase: 8000, setupFeeBase: 0, minMm: 30, maxMm: 1200 },
   seo: {
-    title: "Creative Corner — Custom & Ready-made Stencils",
-    description: "Laser-cut reusable stencils for walls, furniture, cakes, coffee and signs. Make a custom stencil from your logo in minutes. Ships worldwide.",
+    title: "Stencil and Gift Studio — Stencils, Gifts, Custom Tees & Art",
+    description: "Reusable stencils, thoughtful gift baskets, custom T-shirts and bold cybersigilism art. Your favorite ideas, made into real things.",
   },
   units: { defaultUnit: "cm", inchCountries: ["US", "LR", "MM"] },
 };

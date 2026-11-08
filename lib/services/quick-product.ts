@@ -2,6 +2,7 @@ import { db } from "../db";
 import { getCurrencies } from "../settings";
 import { parseMajor } from "../money";
 import { slugify } from "../storefront";
+import { SIZE_SETS, type SizeSetKey } from "../sizes";
 
 /**
  * The beginner path for creating a product: a name, a category, a price and photos — nothing else.
@@ -46,6 +47,8 @@ export type QuickInput = {
   collectionId: string;
   price: number; // in the store's base currency (major units)
   oldPrice?: number | null; // struck-through price; omit for none
+  /** which size dropdown the product gets (default: stencil sizes when `sizes` is true, otherwise one size) */
+  sizeSet?: SizeSetKey;
   sizes?: boolean;
   description?: string;
   imageUrls?: string[];
@@ -61,12 +64,11 @@ export async function createQuickProduct(i: QuickInput) {
   const sku = `CC-${Date.now().toString(36).toUpperCase().slice(-5)}${rand()}`;
   const slug = await uniqueSlug(name);
   const col = await db.collection.findUniqueOrThrow({ where: { id: i.collectionId }, select: { id: true, name: true } });
-  const variants = i.sizes
-    ? SIZE_STEPS.map((s, k) => {
-        const p = money(i.price * s.mult);
-        return { sku: `${sku}-${s.tag}`, name: s.label, widthMm: s.mm, heightMm: s.mm, basePrice: minor(p), compareAt: i.oldPrice ? minor(money(i.oldPrice * s.mult)) : null, sort: k };
-      })
-    : [{ sku: `${sku}-1`, name: "Standard", basePrice: minor(i.price), compareAt: i.oldPrice ? minor(i.oldPrice) : null, sort: 0 }];
+  const set = SIZE_SETS[i.sizeSet ?? (i.sizes ? "stencil" : "single")];
+  const variants = set.options.map((s, k) => ({
+    sku: `${sku}-${s.tag}`, name: s.label, ...(s.mm ? { widthMm: s.mm, heightMm: s.mm } : {}),
+    basePrice: minor(money(i.price * s.mult)), compareAt: i.oldPrice ? minor(money(i.oldPrice * s.mult)) : null, sort: k,
+  }));
   const product = await db.product.create({
     data: {
       name, slug, type: "MADE_TO_ORDER", status: "ACTIVE", source: "MANUAL",

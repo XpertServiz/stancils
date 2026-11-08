@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { compressImage } from "./compress";
-import { CategoryPicker, type Cat } from "./AddProductForm";
+import { CategoryPicker, SizeSelect, type Cat } from "./AddProductForm";
+import { sizeSetFor, type SizeSetKey } from "@/lib/sizes";
 import { quickAddFromPhoto } from "@/app/admin/actions/quick";
 
 type Row = { file: string; status: "wait" | "busy" | "ok" | "fail"; msg?: string; id?: string };
@@ -10,6 +11,7 @@ type Row = { file: string; status: "wait" | "busy" | "ok" | "fail"; msg?: string
 /** Pick many photos → one product per photo. Names come from the file names and can be fixed afterwards in one table. */
 export function BulkPhotoAdd({ cats, base }: { cats: Cat[]; base: string }) {
   const [rows, setRows] = useState<Row[]>([]);
+  const [sizeSet, setSizeSet] = useState<SizeSetKey>("stencil");
   const [pending, start] = useTransition();
   const [finished, setFinished] = useState<string[] | null>(null);
 
@@ -46,12 +48,12 @@ export function BulkPhotoAdd({ cats, base }: { cats: Cat[]; base: string }) {
       <form onSubmit={run} className="space-y-5">
         <div>
           <p className="mb-1.5 text-sm font-semibold"><span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-onaccent">1</span>Which category are these in?</p>
-          <CategoryPicker cats={cats} />
+          <CategoryPicker cats={cats} onPick={(n) => n && setSizeSet(sizeSetFor(n))} />
         </div>
         <div>
           <p className="mb-1.5 text-sm font-semibold"><span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-onaccent">2</span>Starting price ({base})</p>
           <input name="price" required inputMode="decimal" placeholder="e.g. 1500" className="input max-w-[220px]" />
-          <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="sizes" defaultChecked />Offer 4 sizes (12, 18, 24, 36 inches)</label>
+          <div className="mt-2"><SizeSelect value={sizeSet} onChange={setSizeSet} /></div>
           <p className="mt-1 text-xs text-ink3">You can change each price after this, in one table.</p>
         </div>
         <div>

@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: p.seoDesc,
     keywords: p.keywords.split(",").map((k) => k.trim()).filter(Boolean),
     alternates: { canonical: "/" },
-    openGraph: { type: "website", title: p.seoTitle, description: p.seoDesc, url: site, images: [{ url: "/images/hero-banner.jpg" }] },
+    openGraph: { type: "website", title: p.seoTitle, description: p.seoDesc, url: site, images: [{ url: "/naqsh/stencils.jpg" }] },
     twitter: { card: "summary_large_image", title: p.seoTitle, description: p.seoDesc },
   };
 }

@@ -7,7 +7,7 @@ import { PageHeader, Panel, Field } from "@/components/admin/ui";
 import { WebsiteTabs } from "@/components/admin/WebsiteTabs";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { saveLandingPage } from "@/app/admin/actions/landing";
-import { saveFeature, saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
+import { saveHomeRows, saveHomeTop } from "@/app/admin/actions/storefront";
 
 export default async function LandingProducts() {
   await requireStaff("content.edit");
@@ -17,7 +17,6 @@ export default async function LandingProducts() {
     db.review.count({ where: { status: "pending" } }),
     db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], select: { name: true, slug: true } }),
   ]);
-  const rows = [...home.rows, { title: "", intro: "", collection: "", banner: "", count: 8 }];
   return (
     <div>
       <PageHeader title="Homepage" sub="Everything on your homepage in one place. Changes go live within about 30 seconds." />
@@ -35,114 +34,65 @@ export default async function LandingProducts() {
         <Panel title="2. Top of the page">
           <ActionForm action={saveHomeTop}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Small label above the headline"><input name="eyebrow" maxLength={40} defaultValue={home.eyebrow} className="input" /></Field>
-              <Field label="Badge on the photo" hint="e.g. 50% OFF. Shows your sale % automatically while a sale is on."><input name="badge" maxLength={16} defaultValue={home.badge} className="input" /></Field>
+              <Field label="Small label above the headline"><input name="eyebrow" maxLength={60} defaultValue={home.eyebrow} className="input" /></Field>
               <Field label="Big headline"><input name="headline" maxLength={80} defaultValue={home.headline} className="input" /></Field>
-              <Field label="One line under it"><input name="sub" maxLength={140} defaultValue={home.sub} className="input" /></Field>
-              <Field label="Tick list" hint="One short line per tick (up to 6)." className="sm:col-span-2"><textarea name="checklist" rows={4} maxLength={400} defaultValue={home.checklist.join("\n")} className="textarea" /></Field>
-              <Field label="Button text"><input name="cta_label" maxLength={24} defaultValue={home.cta.label} className="input" /></Field>
-              <Field label="Button goes to" hint="e.g. /shop or /c/mandala-designs"><input name="cta_href" defaultValue={home.cta.href} className="input" /></Field>
-              <Field label="How should the top look?" className="sm:col-span-2">
-                <select name="heroLayout" defaultValue={home.heroLayout} className="select">
-                  <option value="banner">One wide banner picture (like a poster)</option>
-                  <option value="split">Words on the left, tall photo on the right</option>
-                </select>
-              </Field>
-              <Field label="Top picture" hint="Banner: a wide picture, about 2000 × 1100. Split: a tall photo. JPG or PNG." className="sm:col-span-2"><input name="heroPhoto" type="file" accept="image/*" className="input" /></Field>
-              {home.heroImage && (
-                <label className="flex items-center gap-2 text-sm sm:col-span-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={home.heroImage} alt="" className="h-14 w-12 rounded object-cover" />
-                  <input type="checkbox" name="remove_hero" /> Go back to the original banner
-                </label>
-              )}
+              <Field label="Text under the headline" className="sm:col-span-2"><textarea name="sub" rows={2} maxLength={200} defaultValue={home.sub} className="textarea" /></Field>
+              <Field label="Green strip under the top (one per line, up to 6)" className="sm:col-span-2"><textarea name="checklist" rows={4} maxLength={400} defaultValue={home.checklist.join("\n")} className="textarea" /></Field>
+              <Field label="Gold button text"><input name="cta_label" maxLength={24} defaultValue={home.cta.label} className="input" /></Field>
+              <Field label="Gold button goes to" hint="e.g. /shop or /c/stencils"><input name="cta_href" defaultValue={home.cta.href} className="input" /></Field>
+              <Field label="Outline button text (opens Custom Order)"><input name="button2" maxLength={30} defaultValue={home.heroButton2} className="input" /></Field>
+              <Field label="Big arch picture" hint="A tall picture, about 880 × 1080. JPG or PNG."><input name="heroPhoto" type="file" accept="image/*" className="input" /></Field>
             </div>
             <button className="btn btn-primary">Save top of page</button>
           </ActionForm>
         </Panel>
 
-        <Panel title="Kiswa banner (above “Our Collections”)">
-          <ActionForm action={saveFeature}>
-            <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="f_enabled" defaultChecked={home.feature.enabled} />Show this banner</label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Heading"><input name="f_title" maxLength={90} defaultValue={home.feature.title} className="input" /></Field>
-              <Field label="The OPEN button goes to" hint="Paste a page link, e.g. /p/your-kiswa-product or /c/kaaba-inspired-calligraphy"><input name="f_href" defaultValue={home.feature.href} className="input" /></Field>
-              <Field label="A few words" className="sm:col-span-2"><textarea name="f_text" rows={2} maxLength={300} defaultValue={home.feature.text} className="textarea" /></Field>
-              <Field label="Tick points (one per line)"><textarea name="f_bullets" rows={4} defaultValue={home.feature.bullets.join("\n")} className="textarea" /></Field>
-              <div className="space-y-2">
-                <Field label={home.feature.image ? "Replace the banner picture" : "Banner picture"} hint="A wide picture, about 2000 × 1100."><input name="featureImage" type="file" accept="image/*" className="input" /></Field>
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="f_baked" defaultChecked={home.feature.baked} />The picture already has an OPEN button drawn on it</label>
-                {home.feature.image && <label className="flex items-center gap-2 text-sm text-danger"><input type="checkbox" name="f_remove" />Remove the picture</label>}
-              </div>
-            </div>
-            <p className="text-xs text-ink3">On phones the words are shown as normal text under the picture, so they stay easy to read.</p>
-            <button className="btn btn-primary">Save banner</button>
-          </ActionForm>
-        </Panel>
-
-        <Panel title="3. Product rows on the homepage">
+        <Panel title="3. “Four ways to create joy” and the other sections">
           <ActionForm action={saveHomeRows}>
-            <p className="text-sm text-ink2">Each row shows products from one collection with a banner beside it. Rows alternate left and right. Use the empty box at the bottom to add a new row.</p>
-            <div className="space-y-4">
-              {rows.map((r, i) => (
-                <fieldset key={i} className="rounded-xl border border-line p-4">
-                  <legend className="px-1 text-xs font-bold uppercase tracking-wider text-ink3">{r.title ? `Row ${i + 1}` : "Add a new row"}</legend>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Row heading"><input name={`title_${i}`} maxLength={80} defaultValue={r.title} placeholder="e.g. Persian Carpet Stencils" className="input" /></Field>
-                    <Field label="Show products from">
-                      <select name={`collection_${i}`} defaultValue={r.collection} className="select">
-                        {!cols.some((c) => c.slug === r.collection) && <option value={r.collection}>{r.collection || "Choose a collection…"}</option>}
-                        {cols.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Short line under the heading" className="sm:col-span-2"><input name={`intro_${i}`} maxLength={200} defaultValue={r.intro} className="input" /></Field>
-                    <Field label="How many products"><input name={`count_${i}`} type="number" min={2} max={12} defaultValue={r.count} className="input" /></Field>
-                    <Field label="Banner picture (shown above the products)" hint="A wide picture with the title written on it, about 2000 × 1100. Without one, the heading is shown as text."><input name={`banner_${i}`} type="file" accept="image/*" className="input" /></Field>
-                    <input type="hidden" name={`keep_${i}`} value={r.banner} />
-                    {r.title && (
-                      <div className="flex flex-wrap items-center gap-4 text-sm sm:col-span-2">
-                        {r.banner && <label className="flex items-center gap-2"><input type="checkbox" name={`nobanner_${i}`} />Remove the banner photo</label>}
-                        <label className="flex items-center gap-2 text-danger"><input type="checkbox" name={`remove_${i}`} />Delete this row</label>
-                      </div>
-                    )}
-                  </div>
-                </fieldset>
-              ))}
-            </div>
-            <div className="space-y-3">
-              <p className="text-sm font-semibold">“Our Collections” pictures</p>
-              <p className="text-sm text-ink2">Each picture opens its collection when a customer clicks it. Use the empty box at the bottom to add another.</p>
-              {[...home.chips, { label: "", href: "", image: "", baked: false }].map((c, i) => (
-                <fieldset key={i} className="rounded-xl border border-line p-4">
-                  <legend className="px-1 text-xs font-bold uppercase tracking-wider text-ink3">{c.label ? `Picture ${i + 1}` : "Add a new picture"}</legend>
-                  <div className="grid gap-3 sm:grid-cols-[96px_1fr_1fr]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {c.image ? <img src={c.image} alt="" className="h-24 w-24 rounded-lg object-cover" /> : <span className="grid h-24 w-24 place-items-center rounded-lg bg-s1 text-xs text-ink3">No picture</span>}
-                    <Field label="Name"><input name={`tile_label_${i}`} defaultValue={c.label} maxLength={40} className="input" placeholder="e.g. Mandala Stencils" /></Field>
-                    <Field label="Opens collection">
-                      <select name={`tile_href_${i}`} defaultValue={c.href} className="select">
-                        {c.href && !cols.some((k) => `/c/${k.slug}` === c.href) && <option value={c.href}>{c.href}</option>}
-                        <option value="">Choose…</option>
-                        {cols.map((k) => <option key={k.slug} value={`/c/${k.slug}`}>{k.name}</option>)}
-                      </select>
-                    </Field>
-                    <div className="sm:col-span-3 grid gap-2">
-                      <Field label={c.image ? "Replace the picture" : "Picture"} hint="Square or 4:3 works best (JPG or PNG)."><input name={`tile_img_${i}`} type="file" accept="image/*" className="input" /></Field>
-                      <input type="hidden" name={`tile_keep_${i}`} value={c.image ?? ""} />
-                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name={`tile_baked_${i}`} defaultChecked={c.baked} />The name is already written on the picture (do not add it again)</label>
-                      {c.label && <label className="flex items-center gap-2 text-sm text-danger"><input type="checkbox" name={`tile_remove_${i}`} />Delete this picture</label>}
-                    </div>
-                  </div>
-                </fieldset>
-              ))}
-            </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Heading for the newest products"><input name="latestTitle" maxLength={60} defaultValue={home.latestTitle} className="input" /></Field>
-              <Field label="Heading above the email box"><input name="newsletterTitle" maxLength={80} defaultValue={home.newsletterTitle} className="input" /></Field>
-              <Field label="Store opening hours" hint="One per line: Day | hours. Shown on the homepage and footer."><textarea name="hours" rows={7} defaultValue={home.hours} className="textarea font-mono text-sm" /></Field>
-              <Field label="Address for the map" hint="Leave empty to use your business address (Settings)."><input name="mapQuery" maxLength={160} defaultValue={home.mapQuery} className="input" /></Field>
+              <Field label="Small label"><input name="deptEyebrow" maxLength={60} defaultValue={home.deptEyebrow} className="input" /></Field>
+              <Field label="Heading"><input name="deptTitle" maxLength={80} defaultValue={home.deptTitle} className="input" /></Field>
             </div>
-            <button className="btn btn-primary">Save rows</button>
+            <p className="text-sm text-ink2">The arch pictures. Each opens a category when clicked. Use the empty box at the bottom to add another.</p>
+            {[...home.chips, { label: "", href: "", image: "", eyebrow: "", desc: "", cta: "" }].map((c, i) => (
+              <fieldset key={i} className="rounded-xl border border-line p-4">
+                <legend className="px-1 text-xs font-bold uppercase tracking-wider text-ink3">{c.label ? `Picture ${i + 1}` : "Add a new picture"}</legend>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Name"><input name={`tile_label_${i}`} defaultValue={c.label} maxLength={40} className="input" placeholder="e.g. Stencils" /></Field>
+                  <Field label="Opens category">
+                    <select name={`tile_href_${i}`} defaultValue={c.href} className="select">
+                      {c.href && !cols.some((k) => `/c/${k.slug}` === c.href) && <option value={c.href}>{c.href}</option>}
+                      <option value="">Choose…</option>
+                      {cols.map((k) => <option key={k.slug} value={`/c/${k.slug}`}>{k.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Small label above the name"><input name={`tile_eyebrow_${i}`} defaultValue={c.eyebrow} maxLength={40} className="input" placeholder="01 / Get creative" /></Field>
+                  <Field label="One line under the name"><input name={`tile_desc_${i}`} defaultValue={c.desc} maxLength={90} className="input" /></Field>
+                  <Field label="Link text"><input name={`tile_cta_${i}`} defaultValue={c.cta} maxLength={30} className="input" placeholder="Explore stencils" /></Field>
+                  <Field label={c.image ? "Replace the picture" : "Picture"} hint="Tall (3:4) works best."><input name={`tile_img_${i}`} type="file" accept="image/*" className="input" /></Field>
+                  <input type="hidden" name={`tile_keep_${i}`} value={c.image ?? ""} />
+                  {c.label && <label className="flex items-center gap-2 text-sm text-danger"><input type="checkbox" name={`tile_remove_${i}`} />Delete this picture</label>}
+                </div>
+              </fieldset>
+            ))}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field label="Shop section: label"><input name="shop_eyebrow" maxLength={60} defaultValue={home.shop.eyebrow} className="input" /></Field>
+              <Field label="Shop section: heading"><input name="shop_title" maxLength={80} defaultValue={home.shop.title} className="input" /></Field>
+              <Field label="Shop section: sentence"><input name="shop_intro" maxLength={200} defaultValue={home.shop.intro} className="input" /></Field>
+              <Field label="Custom box: label"><input name="custom_eyebrow" maxLength={60} defaultValue={home.custom.eyebrow} className="input" /></Field>
+              <Field label="Custom box: heading"><input name="custom_title" maxLength={80} defaultValue={home.custom.title} className="input" /></Field>
+              <Field label="Custom box: button"><input name="custom_button" maxLength={40} defaultValue={home.custom.button} className="input" /></Field>
+              <Field label="Custom box: text" className="sm:col-span-3"><textarea name="custom_text" rows={2} maxLength={400} defaultValue={home.custom.text} className="textarea" /></Field>
+              <Field label="Four benefits (one per line: Title | sentence)" className="sm:col-span-3"><textarea name="benefits" rows={5} defaultValue={home.benefits.map((b) => `${b.t} | ${b.d}`).join("\n")} className="textarea" /></Field>
+              <Field label="Story: label"><input name="story_eyebrow" maxLength={80} defaultValue={home.story.eyebrow} className="input" /></Field>
+              <Field label="Story: heading" className="sm:col-span-2"><input name="story_title" maxLength={90} defaultValue={home.story.title} className="input" /></Field>
+              <Field label="Story: text" className="sm:col-span-3"><textarea name="story_text" rows={3} maxLength={500} defaultValue={home.story.text} className="textarea" /></Field>
+              <Field label="Story: link text"><input name="story_link" maxLength={40} defaultValue={home.story.link} className="input" /></Field>
+              <Field label="Story: arch picture" className="sm:col-span-2"><input name="storyPhoto" type="file" accept="image/*" className="input" /></Field>
+              <Field label="Email box: heading"><input name="newsletterTitle" maxLength={80} defaultValue={home.newsletterTitle} className="input" /></Field>
+              <Field label="Email box: sentence" className="sm:col-span-2"><input name="newsletterSub" maxLength={140} defaultValue={home.newsletterSub} className="input" /></Field>
+            </div>
+            <button className="btn btn-primary">Save sections</button>
           </ActionForm>
         </Panel>
 

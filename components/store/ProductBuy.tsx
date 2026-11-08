@@ -1,7 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Check, Download, MessageCircle } from "lucide-react";
+import Link from "next/link";
 import { useCart } from "./CartContext";
+import { sizeFieldLabel } from "@/lib/sizes";
 
 export type BuyVariant = {
   id: string; name: string; price: string; compareAt: string | null; isDigital: boolean;
@@ -31,7 +33,7 @@ export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: st
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-2xl font-bold tabular text-accent">{v?.price}</span>
+        <span className="text-[22px] font-bold tabular text-goldink">{v?.price}</span>
         {v?.compareAt && <span className="text-xl font-semibold text-ink3 line-through tabular">{v.compareAt}</span>}
         {(v?.compareAt || sale) && <span className="rounded bg-accent px-2 py-1 text-[11px] font-bold uppercase text-onaccent">Sale</span>}
       </div>
@@ -39,10 +41,11 @@ export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: st
 
       {physical.length > 0 && (
         <div>
-          <label htmlFor="size" className="mb-1.5 block text-sm">Sizes &amp; Prices</label>
+          <label htmlFor="size" className="mb-1.5 block text-sm font-semibold text-ink2">{sizeFieldLabel(physical.map((x) => x.name))}</label>
           <select id="size" className="select w-full max-w-sm" value={vid} onChange={(e) => setVid(e.target.value)}>
             {physical.map((x) => <option key={x.id} value={x.id}>{label(x)}</option>)}
           </select>
+          {sizeFieldLabel(physical.map((x) => x.name)) === "Stencil size" && <p className="mt-1.5 text-xs text-ink2">Need a different size? <Link href="/custom-stencils" className="underline">Request a custom size quote</Link>.</p>}
         </div>
       )}
       <div>
@@ -52,11 +55,11 @@ export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: st
       <p className={`text-sm ${out ? "text-danger" : "text-mint"}`}>{v?.stockLabel}</p>
 
       <div className="space-y-2.5">
-        <button className="h-12 w-full rounded-lg border-2 border-ink text-sm font-bold uppercase tracking-[.15em] transition hover:bg-ink hover:text-bg disabled:opacity-50" disabled={out} onClick={() => doAdd()}>
-          {added ? <span className="inline-flex items-center gap-2"><Check size={16} />Added to cart</span> : out ? "Sold out" : "Add to cart"}
+        <button className="h-12 w-full rounded-[2px] bg-stone text-sm font-semibold uppercase tracking-[.12em] text-mustard transition hover:brightness-125 disabled:opacity-50" disabled={out} onClick={() => doAdd()}>
+          {added ? <span className="inline-flex items-center gap-2"><Check size={16} />Added to bag</span> : out ? "Sold out" : "Add to bag"}
         </button>
         <button
-          className="h-12 w-full rounded-lg bg-mustard text-sm font-bold uppercase tracking-[.15em] text-[#1c1b1a] transition hover:brightness-95 disabled:opacity-50"
+          className="h-12 w-full rounded-[2px] border border-stone bg-transparent text-sm font-semibold uppercase tracking-[.12em] text-ink transition hover:brightness-95 disabled:opacity-50"
           disabled={out}
           onClick={() => { doAdd(vid, q, false); window.location.href = "/checkout"; }}
         >
@@ -81,7 +84,7 @@ export function ProductBuy({ name, variants, units, whatsapp, sale }: { name: st
 
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-line bg-bg/95 p-3 backdrop-blur lg:hidden">
         <span className="font-bold tabular">{v?.price}</span>
-        <button className="btn btn-primary flex-1" disabled={out} onClick={() => doAdd()}>{out ? "Sold out" : "Add to cart"}</button>
+        <button className="btn btn-primary flex-1" disabled={out} onClick={() => doAdd()}>{out ? "Sold out" : "Add to bag"}</button>
       </div>
     </div>
   );

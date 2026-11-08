@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { saveUpload } from "@/lib/storage";
 import { pingIndexNow } from "@/lib/seo";
-import { cleanHome, DEFAULT_MENU_TEXT, ensureMenuCollections, getHome, parseMenu, saveHome, saveMenuText, type HomeRow } from "@/lib/storefront";
+import { cleanHome, DEFAULT_MENU_TEXT, ensureMenuCollections, getHome, parseMenu, saveHome, saveMenuText, type Chip } from "@/lib/storefront";
 
 type R = { ok: boolean; msg: string } | null;
 
@@ -55,7 +55,7 @@ export async function resetMenu(_: R): Promise<R> {
   }
 }
 
-/** The top of the homepage: headline, photo, checklist, button, badge, plus the product rows and the store hours. */
+/** The top of the homepage: label, headline, text, strip, buttons and the big arch picture. */
 export async function saveHomeTop(_: R, fd: FormData): Promise<R> {
   try {
     const s = await requirePermission("content.publish");
@@ -68,9 +68,8 @@ export async function saveHomeTop(_: R, fd: FormData): Promise<R> {
         sub: String(fd.get("sub") ?? ""),
         checklist: String(fd.get("checklist") ?? "").split(/\r?\n/),
         cta: { label: String(fd.get("cta_label") ?? ""), href: String(fd.get("cta_href") ?? "") },
-        badge: String(fd.get("badge") ?? ""),
-        heroImage: up ?? (fd.get("remove_hero") === "on" ? "/images/hero-banner.jpg" : prev.heroImage),
-        heroLayout: fd.get("heroLayout") === "split" ? "split" : "banner",
+        heroButton2: String(fd.get("button2") ?? ""),
+        heroImage: up ?? prev.heroImage,
       },
       prev,
     );
@@ -83,77 +82,46 @@ export async function saveHomeTop(_: R, fd: FormData): Promise<R> {
   }
 }
 
-/** The feature banner above “Our Collections” (the Kiswa banner). */
-export async function saveFeature(_: R, fd: FormData): Promise<R> {
-  try {
-    const s = await requirePermission("content.publish");
-    const prev = await getHome();
-    const up = await photo(fd.get("featureImage"));
-    const next = cleanHome(
-      {
-        feature: {
-          enabled: fd.get("f_enabled") === "on",
-          image: up ?? (fd.get("f_remove") === "on" ? "" : prev.feature.image),
-          href: String(fd.get("f_href") ?? ""),
-          title: String(fd.get("f_title") ?? ""),
-          text: String(fd.get("f_text") ?? ""),
-          bullets: String(fd.get("f_bullets") ?? "").split(/\r?\n/),
-          // a picture you upload yourself gets a normal button under it; the original banner has its OPEN button drawn on it
-          baked: up ? fd.get("f_baked") === "on" : fd.get("f_baked") === "on",
-        },
-      },
-      prev,
-    );
-    await saveHome(next);
-    await audit(s.id, "storefront.home.feature", "settings", "storeHome");
-    refreshAll();
-    return { ok: true, msg: "Saved. The banner is updated." };
-  } catch (e) {
-    return { ok: false, msg: (e as Error).message };
-  }
-}
-
-/** The product rows ("Persian Carpet Stencils", …). The last, empty row in the form adds a new one. */
+/** The arch pictures, the shop/custom/story/benefit texts and the email box. The last, empty picture box adds a new one. */
 export async function saveHomeRows(_: R, fd: FormData): Promise<R> {
   try {
     const s = await requirePermission("content.publish");
     const prev = await getHome();
-    const rows: HomeRow[] = [];
-    for (let i = 0; fd.has(`title_${i}`); i++) {
-      if (fd.get(`remove_${i}`) === "on") continue;
-      const title = String(fd.get(`title_${i}`) ?? "").trim();
-      if (!title) continue;
-      const up = await photo(fd.get(`banner_${i}`));
-      rows.push({
-        title,
-        intro: String(fd.get(`intro_${i}`) ?? ""),
-        collection: String(fd.get(`collection_${i}`) ?? ""),
-        banner: up ?? (fd.get(`nobanner_${i}`) === "on" ? "" : String(fd.get(`keep_${i}`) ?? "")),
-        count: Number(fd.get(`count_${i}`) || 8),
-      });
-    }
-    const chips: { label: string; href: string; image: string; baked: boolean }[] = [];
+    const chips: Chip[] = [];
     for (let i = 0; fd.has(`tile_label_${i}`); i++) {
       if (fd.get(`tile_remove_${i}`) === "on") continue;
       const label = String(fd.get(`tile_label_${i}`) ?? "").trim();
       if (!label) continue;
       const up = await photo(fd.get(`tile_img_${i}`));
       chips.push({
-        label,
-        href: String(fd.get(`tile_href_${i}`) ?? "").trim() || "/shop",
-        image: up ?? String(fd.get(`tile_keep_${i}`) ?? ""),
-        baked: up ? fd.get(`tile_baked_${i}`) === "on" : fd.get(`tile_baked_${i}`) === "on",
+        label, href: String(fd.get(`tile_href_${i}`) ?? "").trim() || "/shop", image: up ?? String(fd.get(`tile_keep_${i}`) ?? ""),
+        eyebrow: String(fd.get(`tile_eyebrow_${i}`) ?? ""), desc: String(fd.get(`tile_desc_${i}`) ?? ""), cta: String(fd.get(`tile_cta_${i}`) ?? ""),
       });
     }
+    const f = (k: string) => String(fd.get(k) ?? "");
+    const storyPhoto = await photo(fd.get("storyPhoto"));
     const next = cleanHome(
-      { rows, chips, latestTitle: String(fd.get("latestTitle") ?? ""), hours: String(fd.get("hours") ?? ""), mapQuery: String(fd.get("mapQuery") ?? ""), newsletterTitle: String(fd.get("newsletterTitle") ?? "") },
+      {
+        chips,
+        deptEyebrow: f("deptEyebrow"), deptTitle: f("deptTitle"),
+        shop: { eyebrow: f("shop_eyebrow"), title: f("shop_title"), intro: f("shop_intro") },
+        custom: { eyebrow: f("custom_eyebrow"), title: f("custom_title"), text: f("custom_text"), button: f("custom_button") },
+        story: { eyebrow: f("story_eyebrow"), title: f("story_title"), text: f("story_text"), link: f("story_link"), image: storyPhoto ?? prev.story.image },
+        benefits: f("benefits").split(/\r?\n/).map((l) => l.split("|")).filter((q) => q[0]?.trim()).map((q) => ({ t: q[0].trim(), d: (q[1] ?? "").trim() })),
+        newsletterTitle: f("newsletterTitle"), newsletterSub: f("newsletterSub"),
+      },
       prev,
     );
     await saveHome(next);
-    await audit(s.id, "storefront.home.rows", "settings", "storeHome", { rows: prev.rows.length }, { rows: next.rows.length });
+    await audit(s.id, "storefront.home.sections", "settings", "storeHome", { chips: prev.chips.length }, { chips: next.chips.length });
     refreshAll();
-    return { ok: true, msg: `Saved. ${next.rows.length} product row${next.rows.length === 1 ? "" : "s"} on the homepage.` };
+    return { ok: true, msg: "Saved. The homepage sections are updated." };
   } catch (e) {
     return { ok: false, msg: (e as Error).message };
   }
+}
+
+/** Kept so older imports still compile: the old feature banner is no longer on the homepage. */
+export async function saveFeature(_: R, __: FormData): Promise<R> {
+  return { ok: true, msg: "This banner is no longer used." };
 }

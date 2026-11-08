@@ -13,5 +13,5 @@ prisma generate
 prisma migrate deploy
 tsx prisma/seed-if-empty.ts
 tsx prisma/catalog-refresh.ts
-tsx prisma/home-banners.ts
+tsx prisma/naqsh-refresh.ts
 next build

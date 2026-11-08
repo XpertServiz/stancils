@@ -7,6 +7,9 @@ import { saveUpload } from "@/lib/storage";
 import { getCurrencies } from "@/lib/settings";
 import { parseMajor } from "@/lib/money";
 import { collectionByName, createQuickProduct, nameFromFile } from "@/lib/services/quick-product";
+import { SET_KEYS, type SizeSetKey } from "@/lib/sizes";
+
+const setOf = (fd: FormData): SizeSetKey => (SET_KEYS.includes(fd.get("sizeSet") as SizeSetKey) ? (fd.get("sizeSet") as SizeSetKey) : "single");
 
 export type QR = { ok: boolean; msg: string; id?: string; name?: string } | null;
 
@@ -50,7 +53,7 @@ export async function quickAddProduct(_: QR, fd: FormData): Promise<QR> {
       collectionId: await pickCollection(fd),
       price,
       oldPrice: oldPrice > 0 ? oldPrice : null,
-      sizes: fd.get("sizes") === "on",
+      sizeSet: setOf(fd),
       description: String(fd.get("description") ?? ""),
       imageUrls: urls,
     });
@@ -74,7 +77,7 @@ export async function quickAddFromPhoto(_: QR, fd: FormData): Promise<QR> {
       collectionId: await pickCollection(fd),
       price: num(fd.get("price")),
       oldPrice: num(fd.get("oldPrice")) > 0 ? num(fd.get("oldPrice")) : null,
-      sizes: fd.get("sizes") === "on",
+      sizeSet: setOf(fd),
       imageUrls: [url],
     });
     await audit(s.id, "product.quick_add", "product", p.id, undefined, { name: p.name, bulk: true });

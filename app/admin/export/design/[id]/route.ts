@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const svg = d.svg
     .replace(/style="fill:var\(--l\d,currentColor\)"/g, 'fill="#000"')
     .replace("<svg ", `<svg width="${d.widthMm}mm" height="${d.heightMm}mm" `);
-  return new Response(`<!-- Creative Corner custom design ${d.id} · ${d.material.name} · ${d.widthMm}×${d.heightMm} mm -->\n${svg}`, {
+  return new Response(`<!-- Stencil and Gift Studio custom design ${d.id} · ${d.material.name} · ${d.widthMm}×${d.heightMm} mm -->\n${svg}`, {
     headers: { "Content-Type": "image/svg+xml", "Content-Disposition": `attachment; filename="custom-${d.id.slice(-8)}-${d.widthMm}x${d.heightMm}mm.svg"` },
   });
 }

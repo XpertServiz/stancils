@@ -64,7 +64,7 @@ async function applyStudioLookOnce(db: PrismaClient) {
   await merge("splash", { enabled: false });
   await merge("hero", {
     mode: "collage",
-    imageUrl: "/hero/studio-collage.webp",
+    imageUrl: "/naqsh/stencils.jpg",
     eyebrow: "Your ideas, our creative touch",
     headline: "Make something *beautifully yours.*",
     sub: "Expressive stencils, joyful gifts, custom T-shirts and bold artwork. Designed with personality and made for the moments that matter.",

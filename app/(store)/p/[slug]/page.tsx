@@ -115,7 +115,8 @@ export default async function ProductPage({ params }: P) {
         />
         <div className="space-y-5">
           <div>
-            <h1 className="text-[26px] font-bold leading-tight md:text-[32px]">{p.name}</h1>
+            {first && <span className="mb-1 block text-xs uppercase tracking-[.1em] text-goldink">{first.name}</span>}
+            <h1 className="font-display text-[34px] font-bold leading-[1.05] md:text-[40px]">{p.name}</h1>
             {p.ratingCount > 0 && <a href="#reviews" className="mt-2 flex items-center gap-1 text-sm text-ink2"><Star size={14} className="fill-mustard text-mustard" />{p.ratingAvg.toFixed(1)} · {p.ratingCount} reviews</a>}
           </div>
           <ProductBuy name={p.name} variants={variants} units={units} whatsapp={settings.business.whatsapp} sale={onSale} />
