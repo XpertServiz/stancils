@@ -131,8 +131,8 @@ export async function HomePage() {
       <section id="reviews" className="bg-s1" aria-labelledby="reviews-h">
         <div className={`${wrap} py-16`}>
           <div className="mb-8 text-center">
-            <span className={eyebrow}>Let customers speak for us</span>
-            <h2 id="reviews-h" className={`${h2} mt-2`}>Kind words</h2>
+            <span className={eyebrow}>Real reviews from real customers</span>
+            <h2 id="reviews-h" className={`${h2} mt-2`}>What customers say about us</h2>
             {agg._count > 0 && (
               <p className="mt-3 flex flex-col items-center gap-1 text-sm text-ink2">
                 <span className="flex">{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={20} className={i <= Math.round(agg._avg.rating ?? 0) ? "fill-mustard text-mustard" : "text-line"} />)}</span>
@@ -141,7 +141,10 @@ export async function HomePage() {
             )}
           </div>
           {reviews.length > 0 ? <ReviewCarousel reviews={reviews} /> : <p className="mx-auto max-w-md text-center text-ink2">No reviews yet — be the first to tell others about your experience.</p>}
-          <div className="mt-8 text-center"><WriteReview label="Write a review" /></div>
+          <div className="mt-8 text-center">
+            <WriteReview label="Write a review" />
+            <p className="mt-3 text-xs text-ink3">Bought from us? Your review appears here once we approve it.</p>
+          </div>
         </div>
       </section>
 

@@ -6,6 +6,7 @@ import { banksFor, getSettings } from "@/lib/settings";
 import { DesignArt } from "../DesignArt";
 import { BankDetailsCard } from "./BankDetailsCard";
 import { PaymentProofForm } from "./PaymentProofForm";
+import { ReviewForm } from "./ReviewForm";
 
 export type OrderFull = Prisma.OrderGetPayload<{
   include: { items: { include: { downloads: true; jobs: true; customDesign: true; variant: { include: { product: true } } } }; events: true };
@@ -121,7 +122,12 @@ export async function OrderView({ order, exponent, token }: { order: OrderFull; 
           </div>
         )}
         <Link href="/shop" className="btn btn-ghost w-full">Continue shopping</Link>
-        {order.paymentStatus === "paid" && <Link href={`/reviews/new?order=${order.number}`} className="btn btn-soft w-full">Review your order</Link>}
+        {order.paymentStatus === "paid" && (
+          <div className="pt-2">
+            <p className="mb-2 text-sm text-ink2">Happy with your order? Your review appears in &ldquo;What customers say about us&rdquo; on our homepage once we approve it.</p>
+            <ReviewForm orderNumber={order.number} defaultName={order.name ?? undefined} defaultEmail={order.email ?? undefined} />
+          </div>
+        )}
       </aside>
     </div>
   );

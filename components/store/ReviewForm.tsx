@@ -3,7 +3,7 @@ import { useActionState, useState } from "react";
 import { Star } from "lucide-react";
 import { submitReview } from "@/app/actions/store";
 
-export function ReviewForm({ productId, orderNumber }: { productId?: string; orderNumber?: string }) {
+export function ReviewForm({ productId, orderNumber, defaultName, defaultEmail }: { productId?: string; orderNumber?: string; defaultName?: string; defaultEmail?: string }) {
   const [state, action, pending] = useActionState(submitReview, null as null | { ok: boolean; msg: string });
   const [rating, setRating] = useState(5);
   if (state?.ok) return <div className="card p-6 text-mint">{state.msg}</div>;
@@ -20,8 +20,8 @@ export function ReviewForm({ productId, orderNumber }: { productId?: string; ord
         ))}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <input name="name" required placeholder="Your name" className="input" aria-label="Name" />
-        <input name="email" type="email" required placeholder="Email (not shown)" className="input" aria-label="Email" />
+        <input name="name" required defaultValue={defaultName} placeholder="Your name" className="input" aria-label="Name" />
+        <input name="email" type="email" required defaultValue={defaultEmail} placeholder="Email (not shown)" className="input" aria-label="Email" />
       </div>
       <input name="title" placeholder="Headline (optional)" className="input" aria-label="Headline" />
       <textarea name="body" required minLength={10} rows={4} placeholder="How did your project turn out?" className="textarea" aria-label="Review" />
