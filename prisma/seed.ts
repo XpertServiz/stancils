@@ -9,7 +9,7 @@ import { CHART, ACC, postJournal } from "../lib/accounting";
 import * as D from "../lib/designs";
 
 const db = new PrismaClient({ datasourceUrl: databaseUrl() });
-const BASE = (process.env.SEED_BASE_CURRENCY || "PKR").toUpperCase();
+const BASE = (process.env.SEED_BASE_CURRENCY || "USD").toUpperCase();
 
 // rates expressed as "units per 1 PKR"; re-based below if another base is chosen
 const PER_PKR: Record<string, number> = { PKR: 1, USD: 1 / 280, EUR: 1 / 303, GBP: 1 / 356, AED: 1 / 76.2, CAD: 1 / 203, AUD: 1 / 184, SAR: 1 / 74.6 };

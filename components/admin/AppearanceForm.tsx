@@ -167,7 +167,7 @@ export function AppearanceForm({ themes, fonts, current }: Props) {
                 <div key={i} className="rounded-xl p-3" style={{ background: rgb(v.s1), border: `1px solid ${rgb(v.line)}` }}>
                   <div className="mb-2 h-10 rounded-lg" style={{ background: rgb(v.s2) }} />
                   <p className="text-xs font-semibold">Mandala</p>
-                  <p className="text-xs" style={{ color: accentCss }}>Rs 1,800</p>
+                  <p className="text-xs" style={{ color: accentCss }}>$24.00</p>
                 </div>
               ))}
             </div>
