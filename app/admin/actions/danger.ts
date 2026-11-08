@@ -91,3 +91,51 @@ export async function deleteCatalogue(_: R, fd: FormData): Promise<R> {
     return { ok: false, msg: (e as Error).message };
   }
 }
+
+/**
+ * Switch the store's base (accounting) currency to US dollars: every base-currency amount (prices, costs, shipping rates,
+ * credit limits, studio fees …) is multiplied by the stored PKR→USD rate, all exchange rates are re-based, then the ledger is
+ * cleared and opening balances are re-posted in dollars. Refuses to run if any order exists (those would need converting too).
+ * DECISION: owner-only and typed-confirmation, because it rewrites money columns; the data changes run in ONE transaction.
+ */
+export async function switchBaseToUsd(_: R, fd: FormData): Promise<R> {
+  try {
+    const s = await requireOwner();
+    if (String(fd.get("confirm")).trim().toUpperCase() !== "USD") return { ok: false, msg: "Type USD to confirm." };
+    const [base, usd, orders] = await Promise.all([db.currency.findFirst({ where: { isBase: true } }), db.currency.findUnique({ where: { code: "USD" } }), db.order.count()]);
+    if (!base || !usd) return { ok: false, msg: "Currencies are not set up (USD is missing)." };
+    if (base.code === "USD") return { ok: true, msg: "The base currency is already USD." };
+    if (orders > 0) return { ok: false, msg: `There are ${orders} orders. Clear the test orders first (Clear test transactions), or ask your developer to migrate real orders.` };
+    if (base.exponent !== usd.exponent) return { ok: false, msg: "The currencies use different decimal places; this switch needs a developer." };
+    const f = usd.rate; // USD per 1 unit of the old base
+    if (!(f > 0)) return { ok: false, msg: "The USD exchange rate is missing. Set it in Settings → Currencies first." };
+    const conv = (table: string, cols: string[]) => cols.map((c) => `UPDATE "${table}" SET "${c}" = ROUND("${c}" * $1::numeric) WHERE "${c}" IS NOT NULL`);
+    const sql = [
+      ...conv("ShippingRate", ["priceBase", "freeOverBase"]), ...conv("BusinessAccount", ["creditLimit"]), ...conv("Material", ["costPerK", "rateCm2Base"]),
+      ...conv("Variant", ["basePrice", "compareAt", "avgCost"]), ...conv("CustomDesign", ["priceBase"]), ...conv("DiscountCode", ["minSubtotalBase"]),
+      ...conv("FixedAsset", ["cost", "salvage"]),
+    ];
+    await db.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`TRUNCATE TABLE ${TRANSACTION_TABLES.map((t) => `"${t}"`).join(", ")} RESTART IDENTITY CASCADE`);
+      for (const q of sql) await tx.$executeRawUnsafe(q, f);
+      for (const c of await tx.currency.findMany()) await tx.currency.update({ where: { code: c.code }, data: { rate: c.code === "USD" ? 1 : c.rate / f, isBase: c.code === "USD", ...(c.code === "USD" ? { rounding: "NONE", enabled: true } : {}) } });
+      await tx.variant.updateMany({ data: { reserved: 0 } });
+      await tx.product.updateMany({ data: { salesCount: 0, ratingAvg: 0, ratingCount: 0 } });
+      await tx.discountCode.updateMany({ data: { used: 0 } });
+      await tx.fixedAsset.updateMany({ data: { depreciated: 0n, lastRunMonth: null } });
+      const row = await tx.setting.findUnique({ where: { key: "studio" } });
+      if (row) {
+        const v = row.value as Record<string, number>;
+        const next = { ...v };
+        for (const k of ["baseFeeBase", "complexityPerMeterBase", "setupFeeBase"]) if (typeof v[k] === "number") next[k] = Math.round(v[k] * f);
+        await tx.setting.update({ where: { key: "studio" }, data: { value: next } });
+      }
+    }, { timeout: 120_000 });
+    await postOpeningBalances(s.id);
+    await audit(s.id, "data.switch_base_usd", "system", null, { from: base.code, factor: f });
+    clearMemo(); revalidatePath("/", "layout"); revalidatePath("/admin", "layout");
+    return { ok: true, msg: `Done. The base currency is now USD (was ${base.code}). Prices and costs were converted at ${f}. Open Settings → Currencies and refresh the exchange rates, and check your prices.` };
+  } catch (e) {
+    return { ok: false, msg: (e as Error).message };
+  }
+}

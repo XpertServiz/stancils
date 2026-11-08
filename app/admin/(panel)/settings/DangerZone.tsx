@@ -1,5 +1,5 @@
 import { ActionForm } from "@/components/admin/ActionForm";
-import { deleteCatalogue, resetTransactions } from "@/app/admin/actions/danger";
+import { deleteCatalogue, resetTransactions, switchBaseToUsd } from "@/app/admin/actions/danger";
 
 export function DangerZone({ counts }: { counts: { orders: number; customers: number; journals: number; products: number } }) {
   return (
@@ -11,6 +11,14 @@ export function DangerZone({ counts }: { counts: { orders: number; customers: nu
         <ActionForm action={resetTransactions} className="mt-3 flex flex-wrap items-center gap-2" confirm="Delete all orders, customers and accounting entries? This cannot be undone.">
           <input name="confirm" placeholder="Type RESET" className="input !w-40" autoComplete="off" />
           <button className="btn btn-danger">Clear test transactions</button>
+        </ActionForm>
+      </section>
+      <section className="card border-mustard/60 p-5">
+        <h2 className="font-semibold">Switch the base currency to US dollars</h2>
+        <p className="mt-1 text-sm text-ink2">Converts every price, cost, shipping rate and credit limit from the current base currency to USD at the stored exchange rate, re-bases all exchange rates and re-posts opening balances in dollars. Only works when there are <b>no orders</b>. Check prices afterwards.</p>
+        <ActionForm action={switchBaseToUsd} className="mt-3 flex flex-wrap items-center gap-2" confirm="Convert all amounts to USD and clear the accounting entries? Take a database backup first.">
+          <input name="confirm" placeholder="Type USD" className="input !w-40" autoComplete="off" />
+          <button className="btn btn-primary">Switch base to USD</button>
         </ActionForm>
       </section>
       <section className="card border-danger/60 p-5">
