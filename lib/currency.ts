@@ -20,7 +20,8 @@ export async function getActiveCurrency() {
   const chosen = (await cookies()).get("cc_currency")?.value;
   let cur = enabled.find((c) => c.code === chosen);
   if (!cur) {
-    cur = enabled.find((c) => c.code === "USD") ?? enabled.find((c) => c.code === COUNTRY_CCY[await getCountry()]) ?? base;
+    const geo = COUNTRY_CCY[await getCountry()];
+    cur = enabled.find((c) => c.code === "USD") ?? enabled.find((c) => c.code === geo) ?? base;
   }
   return { cur: toInfo(cur), base: toInfo(base), enabled: enabled.map(toInfo) };
 }
