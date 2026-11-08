@@ -11,6 +11,7 @@ type Ctx = {
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
   clear: () => void;
+  prune: (keys: string[]) => void;
   ready: boolean;
 };
 
@@ -53,10 +54,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const setQty = useCallback((key: string, qty: number) => setLines((p) => p.map((l) => (lineKey(l) === key ? { ...l, qty: Math.max(1, Math.min(999, qty)) } : l))), []);
   const remove = useCallback((key: string) => setLines((p) => p.filter((l) => lineKey(l) !== key)), []);
   const clear = useCallback(() => setLines([]), []);
+  // DECISION: lines the server says no longer exist (deleted/inactive products, old ids) are dropped so the badge matches the bag.
+  const prune = useCallback((keys: string[]) => setLines((p) => (keys.length ? p.filter((l) => !keys.includes(lineKey(l))) : p)), []);
 
   const value = useMemo(
-    () => ({ lines, count: lines.reduce((a, l) => a + l.qty, 0), open, setOpen, add, setQty, remove, clear, ready }),
-    [lines, open, add, setQty, remove, clear, ready],
+    () => ({ lines, count: lines.reduce((a, l) => a + l.qty, 0), open, setOpen, add, setQty, remove, clear, prune, ready }),
+    [lines, open, add, setQty, remove, clear, prune, ready],
   );
   return <CartCtx.Provider value={value}>{children}</CartCtx.Provider>;
 }

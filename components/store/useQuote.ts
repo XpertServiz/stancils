@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { QuoteJson } from "@/lib/quote-json";
-import type { CartLine } from "./CartContext";
+import { lineKey, useCart, type CartLine } from "./CartContext";
 
 export function useQuote(lines: CartLine[], extra: { discountCode?: string | null; shippingId?: string | null; country?: string; email?: string | null } = {}, enabled = true) {
   const [quote, setQuote] = useState<QuoteJson | null>(null);
   const [loading, setLoading] = useState(false);
+  const { prune } = useCart();
   const sig = JSON.stringify([lines, extra]);
   useEffect(() => {
     if (!enabled) return;
@@ -17,7 +18,12 @@ export function useQuote(lines: CartLine[], extra: { discountCode?: string | nul
     setLoading(true);
     fetch("/api/cart/quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lines, ...extra }), signal: ctl.signal })
       .then((r) => r.json())
-      .then((q) => !q.error && setQuote(q))
+      .then((q) => {
+        if (q.error) return;
+        setQuote(q);
+        const got = new Set<string>((q.lines ?? []).map((x: { key: string }) => x.key));
+        prune(lines.map(lineKey).filter((k) => !got.has(k)));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
     return () => ctl.abort();
