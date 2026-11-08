@@ -36,11 +36,9 @@ export function sizeSetFor(name: string): SizeSetKey {
   return "stencil";
 }
 
-/** Label for the size dropdown on the shop, from the variant names ("S, M, L" → "T-shirt size"). */
+/** Label for the size dropdown on the shop, from the variant names (stencils → "Stencil size", everything else → "Size"). */
 export function sizeFieldLabel(variantNames: string[]): string {
-  const has = (s: string) => variantNames.some((n) => n === s);
-  if (has("XL") || has("M") && has("L") && has("S") && !has("Medium")) return "T-shirt size";
-  if (has("Deluxe") || has("Medium")) return "Gift size";
+  // DECISION: tees and gifts just say "Size" (the category already says what it is); stencils keep "Stencil size" for the custom-size link.
   if (variantNames.some((n) => /×|x\d|inches/i.test(n))) return "Stencil size";
   return "Size";
 }
