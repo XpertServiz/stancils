@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS = {
     phone: "+92 300 0000000",
     whatsapp: "923000000000",
     address: "Online studio — ships worldwide",
-    country: "PK",
+    country: "US",
     timezone: "Asia/Karachi",
     instagram: "",
     pinterest: "",

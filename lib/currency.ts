@@ -14,14 +14,13 @@ export async function getCountry(): Promise<string> {
   return (h.get("x-vercel-ip-country") || h.get("cf-ipcountry") || (await getSettings()).business.country || "US").toUpperCase();
 }
 
-/** Active storefront currency: visitor choice → geo default → base. */
+/** Active storefront currency: visitor choice → US dollars (the store targets the US market) → geo default → base. */
 export async function getActiveCurrency() {
   const { enabled, base } = await getCurrencies();
   const chosen = (await cookies()).get("cc_currency")?.value;
   let cur = enabled.find((c) => c.code === chosen);
   if (!cur) {
-    const geo = COUNTRY_CCY[await getCountry()];
-    cur = enabled.find((c) => c.code === geo) ?? base;
+    cur = enabled.find((c) => c.code === "USD") ?? enabled.find((c) => c.code === COUNTRY_CCY[await getCountry()]) ?? base;
   }
   return { cur: toInfo(cur), base: toInfo(base), enabled: enabled.map(toInfo) };
 }
