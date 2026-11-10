@@ -137,22 +137,6 @@ export async function HomePage() {
         </div>
       </section>
 
-      {/* story */}
-      <section id="story" className="bg-s1 py-[84px]" style={{ background: "#E3EAE5" }}>
-        <div className={`${wrap} flex flex-wrap items-center gap-x-[72px] gap-y-10`}>
-          <div className="flex flex-[1_1_420px] flex-col gap-5">
-            <span className={eyebrow}>{h.story.eyebrow}</span>
-            <h2 className="font-display text-[40px] font-semibold leading-none sm:text-[56px]">{h.story.title}</h2>
-            <p className="max-w-[540px] text-lg leading-[1.6] text-ink2">{h.story.text}</p>
-            <Link href="/#collections" className="font-semibold text-accent">{h.story.link}</Link>
-          </div>
-          <div className={`${arch} aspect-[3/4] max-w-[380px] flex-[1_1_320px] border-2 border-accent`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={h.story.image} alt="Detailed black ink alternative art sketch" loading="lazy" className="block h-full w-full object-cover" />
-          </div>
-        </div>
-      </section>
-
       {/* FAQ (also sent to Google as FAQPage data) */}
       <section id="faq" className="py-[72px]" aria-labelledby="faq-h">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: HOME_FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }).replace(/</g, "\\u003c") }} />
