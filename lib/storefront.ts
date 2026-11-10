@@ -18,6 +18,7 @@ export type StoreHome = {
   heroButton2: string;
   circle1: string;
   circle2: string;
+  circle3: string;
   deptEyebrow: string;
   deptTitle: string;
   shop: { eyebrow: string; title: string; intro: string };
@@ -140,6 +141,7 @@ export const HOME_DEFAULTS: StoreHome = {
   heroButton2: "Make it yours",
   circle1: "/naqsh/gifts.jpg",
   circle2: "/naqsh/tees.jpg",
+  circle3: "/naqsh/cyber.jpg",
   deptEyebrow: "Your next obsession starts here",
   deptTitle: "Four ways to create joy",
   shop: { eyebrow: "The good stuff", title: "Find your new favorite", intro: "Browse the full collection." },
@@ -230,6 +232,7 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     heroButton2: cleanText(input.heroButton2 ?? prev.heroButton2 ?? HOME_DEFAULTS.heroButton2, 30),
     circle1: cleanUrl(input.circle1 ?? prev.circle1 ?? HOME_DEFAULTS.circle1),
     circle2: cleanUrl(input.circle2 ?? prev.circle2 ?? HOME_DEFAULTS.circle2),
+    circle3: cleanUrl(input.circle3 ?? prev.circle3 ?? HOME_DEFAULTS.circle3),
     deptEyebrow: cleanText(input.deptEyebrow ?? prev.deptEyebrow ?? HOME_DEFAULTS.deptEyebrow, 60),
     deptTitle: cleanText(input.deptTitle ?? prev.deptTitle ?? HOME_DEFAULTS.deptTitle, 80),
     shop: str(shop, 200), custom: str(custom, 400), story: str(story, 500),

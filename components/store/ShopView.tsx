@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listProducts, type ListFilters } from "@/lib/catalog";
 import { getActiveCurrency } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { getMenu, slugsFor } from "@/lib/storefront";
+import { getMenu, slugify, slugsFor, type MenuItem } from "@/lib/storefront";
 import { ProductGrid } from "./ProductCard";
 import { SortSelect } from "./SortSelect";
 
@@ -24,15 +24,40 @@ export function parseFilters(sp: SP, collection?: string): ListFilters {
 
 const SORTS: [string, string][] = [["", "Featured"], ["rating", "Best selling"], ["price_asc", "Price, low to high"], ["price_desc", "Price, high to low"], ["new", "Date, new to old"]];
 
+type Side = { title: string; allLabel: string; allHref: string; allSlug?: string; items: { slug: string; name: string }[] };
+
+/**
+ * Sidebar categories. Inside Stencils only the stencil categories show, inside Gifts only gift categories, and so on — and only
+ * categories that really have an active product. On the main shop page the top-level departments that have products are listed.
+ * DECISION: the department is found from the menu; a category the menu does not know is grouped by the products it shares with a department.
+ */
+async function sideCollections(menu: MenuItem[], current?: string): Promise<Side> {
+  const has = (slugs: string[]) => ({ status: "ACTIVE" as const, collections: { some: { collection: { slug: { in: slugs } } } } });
+  const rootSlugs = menu.map((m) => slugify(m.label));
+  const root = current ? menu.find((m) => { const s = slugify(m.label); return s === current || slugsFor(s, menu).includes(current); }) : undefined;
+  if (root) {
+    const rs = slugify(root.label);
+    const set = slugsFor(rs, menu);
+    const items = await db.collection.findMany({
+      where: { slug: { notIn: rootSlugs }, products: { some: { product: has(set) } } },
+      orderBy: [{ sort: "asc" }, { name: "asc" }], take: 40, select: { slug: true, name: true },
+    });
+    return { title: root.label, allLabel: `All ${root.label}`, allHref: `/c/${rs}`, allSlug: rs, items };
+  }
+  const items: Side["items"] = [];
+  for (const m of menu) {
+    const s = slugify(m.label);
+    if (await db.product.count({ where: has(slugsFor(s, menu)) })) items.push({ slug: s, name: m.label });
+  }
+  return { title: "Collections", allLabel: "All products", allHref: "/shop", items };
+}
+
 export async function ShopView({ sp, collection, basePath }: { sp: SP; collection?: string; basePath: string }) {
   const f = parseFilters(sp, collection);
   const menu = await getMenu();
   if (f.collection) f.collections = slugsFor(f.collection, menu);
   const { cur, base } = await getActiveCurrency();
-  const [{ cards, total, page, perPage }, collections] = await Promise.all([
-    listProducts(f, cur, base),
-    db.collection.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }], take: 40, select: { slug: true, name: true } }),
-  ]);
+  const [{ cards, total, page, perPage }, side] = await Promise.all([listProducts(f, cur, base), sideCollections(menu, collection)]);
   const pages = Math.ceil(total / perPage);
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -63,10 +88,10 @@ export async function ShopView({ sp, collection, basePath }: { sp: SP; collectio
           <button className="btn btn-sm w-full border border-line hover:border-accent hover:text-accent">Apply</button>
         </form>
         <div>
-          <p className="mb-2 font-bold uppercase tracking-wider">Collections</p>
+          <p className="mb-2 font-bold uppercase tracking-wider">{side.title}</p>
           <ul className="space-y-1.5">
-            <li><Link href="/shop" className={!collection ? "font-bold text-accent" : "hover:text-accent"}>All stencils</Link></li>
-            {collections.map((c) => <li key={c.slug}><Link href={`/c/${c.slug}`} className={collection === c.slug ? "font-bold text-accent" : "hover:text-accent"}>{c.name}</Link></li>)}
+            <li><Link href={side.allHref} className={collection === side.allSlug ? "font-bold text-accent" : "hover:text-accent"}>{side.allLabel}</Link></li>
+            {side.items.map((c) => <li key={c.slug}><Link href={`/c/${c.slug}`} className={collection === c.slug ? "font-bold text-accent" : "hover:text-accent"}>{c.name}</Link></li>)}
           </ul>
         </div>
       </aside>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { getMenu, slugify, slugsFor } from "@/lib/storefront";
 
 export const metadata: Metadata = {
   title: "All Collections — Stencils, Gifts, T-Shirts & Art",
@@ -10,9 +11,17 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function Collections() {
-  const cols = await db.collection.findMany({
+  const menu = await getMenu();
+  const all = await db.collection.findMany({
     orderBy: [{ sort: "asc" }, { name: "asc" }],
     include: { _count: { select: { products: { where: { product: { images: { some: {} }, status: "ACTIVE" } } } } }, products: { take: 1, where: { product: { images: { some: {} }, status: "ACTIVE" } }, include: { product: { select: { images: { take: 1, orderBy: { sort: "asc" } } } } } } },
+  });
+  // only collections that have products; a department (Stencils, Gifts …) counts its sub-categories too
+  const count = new Map(all.map((c) => [c.slug, c._count.products]));
+  const cols = all.filter((c) => {
+    if (c._count.products > 0) return true;
+    const m = menu.find((x) => slugify(x.label) === c.slug);
+    return !!m && slugsFor(c.slug, menu).some((s) => (count.get(s) ?? 0) > 0);
   });
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-10 md:px-6">

@@ -9,7 +9,7 @@ import { ProductGrid } from "./ProductCard";
 import { ReviewCarousel, type ReviewItem } from "./ReviewCarousel";
 import { NewsletterForm } from "./NewsletterForm";
 import { WriteReview } from "./WriteReview";
-import { Tilt3D } from "./Tilt3D";
+import { HeroStage } from "./HeroStage";
 import { HOME_FAQ } from "@/lib/seo-copy";
 
 const eyebrow = "text-sm uppercase tracking-[.14em] text-goldink";
@@ -42,18 +42,7 @@ export async function HomePage() {
               <Link href="/custom-stencils" className="rounded-[2px] border border-mustard px-7 py-3.5 text-base text-mustard transition hover:bg-mustard/10">{h.heroButton2}</Link>
             </div>
           </div>
-          <Tilt3D className="relative flex flex-[1_1_360px] justify-center">
-            <div className="aspect-[11/13.5] w-full max-w-[440px] rounded-t-[999px] border-2 border-mustard bg-[#1B5A4B] p-2.5">
-              <div className="h-full w-full overflow-hidden rounded-t-[999px] border border-mustard">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={h.heroImage} alt="Ornate decorative stencil design" fetchPriority="high" className="block h-full w-full object-cover" />
-              </div>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={h.circle1} alt="Gift arrangement" className="absolute bottom-9 left-[-10px] h-[130px] w-[130px] rounded-full border-[3px] border-mustard bg-stone object-cover" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={h.circle2} alt="Personalized custom T-shirt" className="absolute right-[-6px] top-[70px] h-[112px] w-[112px] rounded-full border-[3px] border-mustard bg-stone object-cover" />
-          </Tilt3D>
+          <HeroStage heroImage={h.heroImage} gifts={h.circle1} tee={h.circle2} cyber={h.circle3} />
         </div>
       </section>
 
