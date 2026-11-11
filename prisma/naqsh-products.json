@@ -1,0 +1,462 @@
+[
+ {
+  "name": "Wildflower Reusable Stencil",
+  "cat": "Stencils",
+  "sub": "Floral Stencils",
+  "price": 18,
+  "old": 24,
+  "tag": "BESTSELLER",
+  "desc": "A beautiful floral stencil for walls, furniture, crafts and more.",
+  "art": "/naqsh/floral.svg"
+ },
+ {
+  "name": "Celestial Mandala Stencil",
+  "cat": "Stencils",
+  "sub": "Mandala Stencils",
+  "price": 22,
+  "old": 29,
+  "tag": "POPULAR",
+  "desc": "Intricate mandala detailing for mindful, expressive DIY projects.",
+  "art": "/naqsh/mandala.svg"
+ },
+ {
+  "name": "Birthday Joy Gift Basket",
+  "cat": "Gifts",
+  "sub": "Birthday Gift Baskets",
+  "price": 59,
+  "old": 0,
+  "tag": "GIFT FAVORITE",
+  "desc": "A celebratory curated gift basket. Contents may vary and will be confirmed at purchase.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Your Design Custom Tee",
+  "cat": "Custom T-Shirts",
+  "sub": "Custom T-Shirts",
+  "price": 24,
+  "old": 0,
+  "tag": "CUSTOMIZE",
+  "desc": "A comfortable custom t-shirt with your own text, concept or artwork.",
+  "art": "/naqsh/tee.svg"
+ },
+ {
+  "name": "Cyber Sigil Art Print",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Prints",
+  "price": 32,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "An expressive futuristic ornamental artwork for your space.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Modern Geometric Stencil",
+  "cat": "Stencils",
+  "sub": "Geometric Stencils",
+  "price": 20,
+  "old": 0,
+  "tag": "",
+  "desc": "Geometric repeat patterns to refresh home decor and craft projects.",
+  "art": "/naqsh/geometric.svg"
+ },
+ {
+  "name": "Corporate Appreciation Basket",
+  "cat": "Gifts",
+  "sub": "Corporate Gift Baskets",
+  "price": 89,
+  "old": 0,
+  "tag": "FOR TEAMS",
+  "desc": "A thoughtful corporate gifting option for colleagues, clients and partners.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Bold Cybersigilism Tee",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Apparel",
+  "price": 34,
+  "old": 0,
+  "tag": "TRENDING",
+  "desc": "Alternative-inspired apparel with dramatic cybersigilism artwork.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Custom Calligraphy Stencil",
+  "cat": "Stencils",
+  "sub": "Calligraphy Stencils",
+  "price": 26,
+  "old": 0,
+  "tag": "CUSTOM",
+  "desc": "Elegant lettering-inspired stencil. Custom text and sizes available by request.",
+  "art": "/naqsh/calligraphy.svg"
+ },
+ {
+  "name": "Build-Your-Own Gift Basket",
+  "cat": "Gifts",
+  "sub": "Custom Gift Baskets",
+  "price": 69,
+  "old": 0,
+  "tag": "PERSONALIZE",
+  "desc": "Tell us their favorite things and we can design a gift basket around them.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Signature Graphic Tee",
+  "cat": "Custom T-Shirts",
+  "sub": "Custom T-Shirts",
+  "price": 29,
+  "old": 0,
+  "tag": "MADE FOR YOU",
+  "desc": "Choose your own statement, name or graphic placement.",
+  "art": "/naqsh/tee.svg"
+ },
+ {
+  "name": "Custom Cyber Sigil Artwork",
+  "cat": "Cybersigilism Art",
+  "sub": "Custom Cybersigilism",
+  "price": 65,
+  "old": 0,
+  "tag": "COMMISSION",
+  "desc": "Custom art inspired by your individual style; final scope confirmed before production.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Boho Wall Accent Stencil",
+  "cat": "Stencils",
+  "sub": "Wall & Decor Stencils",
+  "price": 24,
+  "old": 0,
+  "tag": "",
+  "desc": "A reusable stencil with playful decorative motifs.",
+  "art": "/naqsh/wall.svg"
+ },
+ {
+  "name": "Wedding Celebration Basket",
+  "cat": "Gifts",
+  "sub": "Wedding & Celebration",
+  "price": 99,
+  "old": 0,
+  "tag": "CELEBRATE",
+  "desc": "A thoughtful gift idea for couples and newlyweds.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Seasonal Holiday Gift Box",
+  "cat": "Gifts",
+  "sub": "Holiday Gifts",
+  "price": 74,
+  "old": 0,
+  "tag": "SEASONAL",
+  "desc": "Holiday-ready presentation with customizable gift options.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Your Logo / Design Stencil",
+  "cat": "Stencils",
+  "sub": "Custom Stencils",
+  "price": 35,
+  "old": 0,
+  "tag": "CUSTOM",
+  "desc": "Bring your design or lettering idea to a custom-cut reusable stencil.",
+  "art": "/naqsh/custom.svg"
+ },
+ {
+  "name": "Meadow Blossom Stencil",
+  "cat": "Stencils",
+  "sub": "Floral Stencils",
+  "price": 18,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative floral stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/floral.svg"
+ },
+ {
+  "name": "Garden Leaf Border Stencil",
+  "cat": "Stencils",
+  "sub": "Floral Stencils",
+  "price": 23,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative floral stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/floral.svg"
+ },
+ {
+  "name": "Sunburst Mandala Stencil",
+  "cat": "Stencils",
+  "sub": "Mandala Stencils",
+  "price": 22,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative mandala stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/mandala.svg"
+ },
+ {
+  "name": "Lotus Circle Mandala Stencil",
+  "cat": "Stencils",
+  "sub": "Mandala Stencils",
+  "price": 27,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative mandala stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/mandala.svg"
+ },
+ {
+  "name": "Modern Script Lettering Stencil",
+  "cat": "Stencils",
+  "sub": "Calligraphy Stencils",
+  "price": 24,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative calligraphy stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/calligraphy.svg"
+ },
+ {
+  "name": "Personalized Name Stencil",
+  "cat": "Stencils",
+  "sub": "Calligraphy Stencils",
+  "price": 29,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative calligraphy stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/calligraphy.svg"
+ },
+ {
+  "name": "Art Deco Pattern Stencil",
+  "cat": "Stencils",
+  "sub": "Geometric Stencils",
+  "price": 19,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative geometric stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/geometric.svg"
+ },
+ {
+  "name": "Minimal Triangle Stencil",
+  "cat": "Stencils",
+  "sub": "Geometric Stencils",
+  "price": 24,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative geometric stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/geometric.svg"
+ },
+ {
+  "name": "Accent Wall Arch Stencil",
+  "cat": "Stencils",
+  "sub": "Wall & Decor Stencils",
+  "price": 23,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative wall & decor stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/wall.svg"
+ },
+ {
+  "name": "Bohemian Border Stencil",
+  "cat": "Stencils",
+  "sub": "Wall & Decor Stencils",
+  "price": 28,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative wall & decor stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/wall.svg"
+ },
+ {
+  "name": "Personalized Monogram Stencil",
+  "cat": "Stencils",
+  "sub": "Custom Stencils",
+  "price": 29,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative custom stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/custom.svg"
+ },
+ {
+  "name": "Custom Business Logo Stencil",
+  "cat": "Stencils",
+  "sub": "Custom Stencils",
+  "price": 34,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative custom stencils design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/custom.svg"
+ },
+ {
+  "name": "Sweet Birthday Treat Basket",
+  "cat": "Gifts",
+  "sub": "Birthday Gift Baskets",
+  "price": 59,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative birthday gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Birthday Self-Care Gift Set",
+  "cat": "Gifts",
+  "sub": "Birthday Gift Baskets",
+  "price": 64,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative birthday gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Client Thank You Gift Box",
+  "cat": "Gifts",
+  "sub": "Corporate Gift Baskets",
+  "price": 79,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative corporate gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "New Hire Welcome Basket",
+  "cat": "Gifts",
+  "sub": "Corporate Gift Baskets",
+  "price": 84,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative corporate gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Build a Cozy Gift Basket",
+  "cat": "Gifts",
+  "sub": "Custom Gift Baskets",
+  "price": 69,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative custom gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Personalized Favorites Gift Box",
+  "cat": "Gifts",
+  "sub": "Custom Gift Baskets",
+  "price": 74,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative custom gift baskets design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Engagement Celebration Gift",
+  "cat": "Gifts",
+  "sub": "Wedding & Celebration",
+  "price": 89,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative wedding & celebration design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Newlywed Keepsake Basket",
+  "cat": "Gifts",
+  "sub": "Wedding & Celebration",
+  "price": 94,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative wedding & celebration design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Festive Holiday Gift Basket",
+  "cat": "Gifts",
+  "sub": "Holiday Gifts",
+  "price": 74,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative holiday gifts design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Winter Cozy Gift Box",
+  "cat": "Gifts",
+  "sub": "Holiday Gifts",
+  "price": 79,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative holiday gifts design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/gift.svg"
+ },
+ {
+  "name": "Personalized Name Graphic Tee",
+  "cat": "Custom T-Shirts",
+  "sub": "Custom T-Shirts",
+  "price": 27,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative custom t-shirts design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/tee.svg"
+ },
+ {
+  "name": "Your Artwork Statement Tee",
+  "cat": "Custom T-Shirts",
+  "sub": "Custom T-Shirts",
+  "price": 32,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative custom t-shirts design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/tee.svg"
+ },
+ {
+  "name": "Chrome Sigil Graphic Tee",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Apparel",
+  "price": 39,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative cybersigilism apparel design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Dark Sigil Hoodie Concept",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Apparel",
+  "price": 44,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative cybersigilism apparel design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Ethereal Sigil Art Poster",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Prints",
+  "price": 32,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative cybersigilism prints design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Midnight Gothic Sigil Print",
+  "cat": "Cybersigilism Art",
+  "sub": "Cybersigilism Prints",
+  "price": 37,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative cybersigilism prints design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Personalized Sigil Art Design",
+  "cat": "Cybersigilism Art",
+  "sub": "Custom Cybersigilism",
+  "price": 65,
+  "old": 0,
+  "tag": "NEW",
+  "desc": "A creative custom cybersigilism design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ },
+ {
+  "name": "Custom Cyber Tribal Illustration",
+  "cat": "Cybersigilism Art",
+  "sub": "Custom Cybersigilism",
+  "price": 70,
+  "old": 0,
+  "tag": "CUSTOM STYLE",
+  "desc": "A creative custom cybersigilism design. Options and specifications are confirmed before fulfillment.",
+  "art": "/naqsh/cyber.svg"
+ }
+]
