@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { saveUpload } from "@/lib/storage";
 import { pingIndexNow } from "@/lib/seo";
+import { socialInfo, youtubeId } from "@/lib/embeds";
 import { cleanHome, DEFAULT_MENU_TEXT, ensureMenuCollections, getHome, parseMenu, saveHome, saveMenuText, type Chip } from "@/lib/storefront";
 
 type R = { ok: boolean; msg: string } | null;
@@ -99,14 +100,12 @@ export async function saveHomeRows(_: R, fd: FormData): Promise<R> {
       });
     }
     const f = (k: string) => String(fd.get(k) ?? "");
-    const storyPhoto = await photo(fd.get("storyPhoto"));
     const next = cleanHome(
       {
         chips,
         deptEyebrow: f("deptEyebrow"), deptTitle: f("deptTitle"),
         shop: { eyebrow: f("shop_eyebrow"), title: f("shop_title"), intro: f("shop_intro") },
         custom: { eyebrow: f("custom_eyebrow"), title: f("custom_title"), text: f("custom_text"), button: f("custom_button") },
-        story: { eyebrow: f("story_eyebrow"), title: f("story_title"), text: f("story_text"), link: f("story_link"), image: storyPhoto ?? prev.story.image },
         benefits: f("benefits").split(/\r?\n/).map((l) => l.split("|")).filter((q) => q[0]?.trim()).map((q) => ({ t: q[0].trim(), d: (q[1] ?? "").trim() })),
         newsletterTitle: f("newsletterTitle"), newsletterSub: f("newsletterSub"),
       },
@@ -116,6 +115,71 @@ export async function saveHomeRows(_: R, fd: FormData): Promise<R> {
     await audit(s.id, "storefront.home.sections", "settings", "storeHome", { chips: prev.chips.length }, { chips: next.chips.length });
     refreshAll();
     return { ok: true, msg: "Saved. The homepage sections are updated." };
+  } catch (e) {
+    return { ok: false, msg: (e as Error).message };
+  }
+}
+
+/** Which categories show as chips under "Find your new favorite": ticked = shown. New categories show by default. */
+export async function saveShopCats(_: R, fd: FormData): Promise<R> {
+  try {
+    const s = await requirePermission("content.publish");
+    const prev = await getHome();
+    const all = fd.getAll("cat_all").map(String);
+    const on = new Set(fd.getAll("cat_on").map(String));
+    const off = new Set(prev.shopCatsOff.filter((x) => !all.includes(x)));
+    for (const slug of all) if (!on.has(slug)) off.add(slug);
+    const next = cleanHome({ shopCatsOff: [...off] }, prev);
+    await saveHome(next);
+    await audit(s.id, "storefront.home.shop_cats", "settings", "storeHome", { off: prev.shopCatsOff.length }, { off: next.shopCatsOff.length });
+    refreshAll();
+    return { ok: true, msg: `Saved. ${all.length - [...off].filter((x) => all.includes(x)).length} categories show on the homepage.` };
+  } catch (e) {
+    return { ok: false, msg: (e as Error).message };
+  }
+}
+
+/** YouTube videos on the homepage (up to 6). Paste any YouTube link: watch, youtu.be, Shorts. */
+export async function saveVideos(_: R, fd: FormData): Promise<R> {
+  try {
+    const s = await requirePermission("content.publish");
+    const prev = await getHome();
+    const items: { url: string; title: string }[] = [];
+    for (let i = 0; i < 6; i++) {
+      const url = String(fd.get(`v_url_${i}`) ?? "").trim();
+      if (!url) continue;
+      if (!youtubeId(url)) return { ok: false, msg: `Video ${i + 1}: that is not a YouTube link. Paste the address from your browser, like https://www.youtube.com/watch?v=… or https://youtu.be/…` };
+      items.push({ url, title: String(fd.get(`v_title_${i}`) ?? "") });
+    }
+    const f = (k: string) => String(fd.get(k) ?? "");
+    const next = cleanHome({ videos: { enabled: fd.get("v_enabled") === "on", eyebrow: f("v_eyebrow"), title: f("v_title"), sub: f("v_sub"), items } }, prev);
+    await saveHome(next);
+    await audit(s.id, "storefront.home.videos", "settings", "storeHome", { n: prev.videos.items.length }, { n: next.videos.items.length });
+    refreshAll();
+    return { ok: true, msg: next.videos.items.length ? `Saved. ${next.videos.items.length} video${next.videos.items.length === 1 ? "" : "s"} on the homepage.` : "Saved. No videos yet, so the section is hidden." };
+  } catch (e) {
+    return { ok: false, msg: (e as Error).message };
+  }
+}
+
+/** Facebook / Instagram / TikTok / YouTube / Pinterest / X links on the homepage (up to 6). Posts and pages are embedded; profiles become follow cards. */
+export async function saveSocial(_: R, fd: FormData): Promise<R> {
+  try {
+    const s = await requirePermission("content.publish");
+    const prev = await getHome();
+    const items: { url: string; label: string }[] = [];
+    for (let i = 0; i < 6; i++) {
+      const url = String(fd.get(`s_url_${i}`) ?? "").trim();
+      if (!url) continue;
+      if (!url.startsWith("https://") || !socialInfo(url)) return { ok: false, msg: `Link ${i + 1}: please paste the full address starting with https://` };
+      items.push({ url, label: String(fd.get(`s_label_${i}`) ?? "") });
+    }
+    const f = (k: string) => String(fd.get(k) ?? "");
+    const next = cleanHome({ social: { enabled: fd.get("s_enabled") === "on", eyebrow: f("s_eyebrow"), title: f("s_title"), sub: f("s_sub"), items } }, prev);
+    await saveHome(next);
+    await audit(s.id, "storefront.home.social", "settings", "storeHome", { n: prev.social.items.length }, { n: next.social.items.length });
+    refreshAll();
+    return { ok: true, msg: next.social.items.length ? `Saved. ${next.social.items.length} social link${next.social.items.length === 1 ? "" : "s"} on the homepage.` : "Saved. No links yet, so the section is hidden." };
   } catch (e) {
     return { ok: false, msg: (e as Error).message };
   }

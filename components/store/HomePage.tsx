@@ -10,6 +10,7 @@ import { ReviewCarousel, type ReviewItem } from "./ReviewCarousel";
 import { NewsletterForm } from "./NewsletterForm";
 import { WriteReview } from "./WriteReview";
 import { HeroStage } from "./HeroStage";
+import { SocialSectionView, VideoSection } from "./HomeMedia";
 import { HOME_FAQ } from "@/lib/seo-copy";
 
 const eyebrow = "text-sm uppercase tracking-[.14em] text-goldink";
@@ -18,11 +19,14 @@ const arch = "overflow-hidden rounded-t-[999px] rounded-b-md";
 
 export async function HomePage() {
   const [h, s, { cur, base }] = await Promise.all([getHome(), getSettings(), getActiveCurrency()]);
-  const [{ cards }, reviewRows, agg] = await Promise.all([
+  const [{ cards }, reviewRows, agg, catRows] = await Promise.all([
     listProducts({ sort: "", perPage: 8 }, cur, base),
     db.review.findMany({ where: { status: "published" }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }], take: 12 }),
     db.review.aggregate({ where: { status: "published" }, _avg: { rating: true }, _count: true }),
+    // every category that has an active product; the owner unticks the ones to leave out (Admin → Website → Homepage)
+    db.collection.findMany({ where: { products: { some: { product: { status: "ACTIVE" } } } }, orderBy: [{ sort: "asc" }, { name: "asc" }], select: { slug: true, name: true } }),
   ]);
+  const shopChips = catRows.filter((c) => !h.shopCatsOff.includes(c.slug));
   const reviews: ReviewItem[] = reviewRows.map((r) => ({
     id: r.id, name: r.name, rating: r.rating, title: r.title ?? "", body: r.body, verified: r.verified,
     date: r.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
@@ -84,7 +88,7 @@ export async function HomePage() {
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3.5 border-y border-t-ink border-b-line py-3.5" style={{ borderTopColor: "rgb(var(--ink))" }}>
             <div className="flex flex-wrap gap-2">
               <Link href="/shop" className="rounded-full border border-ink bg-stone px-[18px] py-2.5 text-[15px] font-medium text-mustard">Shop all</Link>
-              {h.chips.map((c) => <Link key={c.label} href={c.href} className="rounded-full border border-accent px-[18px] py-2.5 text-[15px] font-medium text-accent hover:bg-s1">{c.label}</Link>)}
+              {shopChips.map((c) => <Link key={c.slug} href={`/c/${c.slug}`} className="rounded-full border border-accent px-[18px] py-2.5 text-[15px] font-medium text-accent hover:bg-s1">{c.name}</Link>)}
             </div>
             <Link href="/shop?sort=price_asc" className="text-sm text-ink2 underline">Sort by price</Link>
           </div>
@@ -92,6 +96,9 @@ export async function HomePage() {
           <div className="flex justify-center pt-2"><Link href="/shop" className="rounded-[2px] border border-ink px-[30px] py-3.5 text-base font-semibold hover:bg-ink hover:text-bg">Show more products ↓</Link></div>
         </div>
       </section>
+
+      <VideoSection data={h.videos} />
+      <SocialSectionView data={h.social} />
 
       {/* custom */}
       <section id="custom" className="pt-[72px]">

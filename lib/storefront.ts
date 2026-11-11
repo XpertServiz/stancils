@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { clearMemo, memo } from "./memo";
+import { socialInfo, youtubeId, youtubeWatchUrl } from "./embeds";
 
 /**
  * Storefront configuration the owner edits in the admin panel: the top menu and the homepage layout.
@@ -14,6 +15,10 @@ export type Chip = { label: string; href: string; image?: string; baked?: boolea
 /** A feature banner between the top banner and “Our Collections” (the Kiswa banner). `baked` = the picture already has an OPEN button drawn on it, so we put a real clickable button over it. */
 export type Feature = { enabled: boolean; image: string; href: string; title: string; text: string; bullets: string[]; baked: boolean };
 export type Benefit = { t: string; d: string };
+export type VideoItem = { url: string; title: string };
+export type SocialItem = { url: string; label: string };
+export type VideoSection = { enabled: boolean; eyebrow: string; title: string; sub: string; items: VideoItem[] };
+export type SocialSection = { enabled: boolean; eyebrow: string; title: string; sub: string; items: SocialItem[] };
 export type StoreHome = {
   heroButton2: string;
   circle1: string;
@@ -21,6 +26,10 @@ export type StoreHome = {
   circle3: string;
   deptEyebrow: string;
   deptTitle: string;
+  /** category slugs the owner unticked: they are left out of the category chips under "Find your new favorite" (new categories show by default) */
+  shopCatsOff: string[];
+  videos: VideoSection;
+  social: SocialSection;
   shop: { eyebrow: string; title: string; intro: string };
   custom: { eyebrow: string; title: string; text: string; button: string };
   benefits: Benefit[];
@@ -187,6 +196,9 @@ export const HOME_DEFAULTS: StoreHome = {
   circle3: "/naqsh/cyber.jpg",
   deptEyebrow: "Your next obsession starts here",
   deptTitle: "Four ways to create joy",
+  shopCatsOff: [],
+  videos: { enabled: true, eyebrow: "Watch & get inspired", title: "See it in action", sub: "How our stencils, gifts and tees come to life.", items: [] },
+  social: { enabled: true, eyebrow: "Follow along", title: "Find us on social", sub: "New designs, behind the scenes and customer projects.", items: [] },
   shop: { eyebrow: "The good stuff", title: "Find your new favorite", intro: "Browse the full collection." },
   custom: { eyebrow: "Made for your one-of-a-kind ideas", title: "Have an idea? Let's make it real.", text: "Personalized tees, custom stencils, thoughtful gift baskets, or art that nobody else has. Tell us what you are imagining.", button: "Start a custom request ↗" },
   benefits: [
@@ -246,6 +258,25 @@ const cleanLink = (v: unknown, fallback: string) => {
   return s;
 };
 
+const cleanVideos = (input: Partial<VideoSection> | undefined, prev: VideoSection | undefined): VideoSection => {
+  const v = { ...HOME_DEFAULTS.videos, ...(prev ?? {}), ...(input ?? {}) };
+  const items: VideoItem[] = [];
+  for (const i of v.items ?? []) {
+    const id = youtubeId(String(i?.url ?? ""));
+    if (id) items.push({ url: youtubeWatchUrl(id), title: cleanText(i.title, 80) });
+  }
+  return { enabled: v.enabled !== false, eyebrow: cleanText(v.eyebrow, 60), title: cleanText(v.title, 80), sub: cleanText(v.sub, 160), items: items.slice(0, 6) };
+};
+const cleanSocial = (input: Partial<SocialSection> | undefined, prev: SocialSection | undefined): SocialSection => {
+  const v = { ...HOME_DEFAULTS.social, ...(prev ?? {}), ...(input ?? {}) };
+  const items: SocialItem[] = [];
+  for (const i of v.items ?? []) {
+    const url = String(i?.url ?? "").trim();
+    if (socialInfo(url) && /^https:\/\/[^"'\s<>]*$/.test(url)) items.push({ url, label: cleanText(i.label, 60) });
+  }
+  return { enabled: v.enabled !== false, eyebrow: cleanText(v.eyebrow, 60), title: cleanText(v.title, 80), sub: cleanText(v.sub, 160), items: items.slice(0, 6) };
+};
+
 export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome {
   const rows = (input.rows ?? prev.rows).map((r) => ({
     title: cleanText(r.title, 80),
@@ -278,6 +309,9 @@ export function cleanHome(input: Partial<StoreHome>, prev: StoreHome): StoreHome
     circle3: cleanUrl(input.circle3 ?? prev.circle3 ?? HOME_DEFAULTS.circle3),
     deptEyebrow: cleanText(input.deptEyebrow ?? prev.deptEyebrow ?? HOME_DEFAULTS.deptEyebrow, 60),
     deptTitle: cleanText(input.deptTitle ?? prev.deptTitle ?? HOME_DEFAULTS.deptTitle, 80),
+    shopCatsOff: [...new Set((input.shopCatsOff ?? prev.shopCatsOff ?? []).map((x) => slugify(String(x))).filter(Boolean))].slice(0, 300),
+    videos: cleanVideos(input.videos, prev.videos),
+    social: cleanSocial(input.social, prev.social),
     shop: str(shop, 200), custom: str(custom, 400), story: str(story, 500),
     benefits: (input.benefits ?? prev.benefits ?? HOME_DEFAULTS.benefits).map((b) => ({ t: cleanText(b.t, 50), d: cleanText(b.d, 160) })).filter((b) => b.t).slice(0, 6),
     newsletterSub: cleanText(input.newsletterSub ?? prev.newsletterSub ?? HOME_DEFAULTS.newsletterSub, 140),
