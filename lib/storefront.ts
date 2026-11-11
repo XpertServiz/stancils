@@ -97,7 +97,49 @@ export async function getMenuText(): Promise<string> {
   const t = (row?.value as { text?: string } | null)?.text;
   return typeof t === "string" && t.trim() ? t : DEFAULT_MENU_TEXT;
 }
-export const getMenu = async () => parseMenu(await getMenuText());
+/**
+ * The menu the storefront shows: the owner's menu text, but (1) dropdown entries whose category has no active product are hidden and
+ * (2) any category that has products yet is not in the menu is added to the right department automatically — so uploading a product
+ * into a new category is all it takes for it to appear in the header, the sidebar and the footer.
+ * DECISION: the department is read from the products' size dropdown (stencil inches → Stencils, XS–5XL → T-shirts, Small–Deluxe → Gifts,
+ * anything else → Art), which is more reliable than guessing from the category name.
+ */
+async function withLiveCategories(menu: MenuItem[]): Promise<MenuItem[]> {
+  if (!menu.length) return menu;
+  const live = await memo("sf:menu-live", () =>
+    db.collection.findMany({
+      where: { products: { some: { product: { status: "ACTIVE" } } } },
+      orderBy: [{ sort: "asc" }, { name: "asc" }],
+      select: { slug: true, name: true, products: { where: { product: { status: "ACTIVE" } }, take: 1, select: { product: { select: { variants: { orderBy: { sort: "asc" }, take: 1, select: { name: true } } } } } } },
+    }),
+  ).catch(() => null);
+  if (!live) return menu;
+  const liveSlugs = new Set(live.map((c) => c.slug));
+  const slugOf = (href: string) => /^\/c\/([a-z0-9-]+)$/.exec(href)?.[1];
+  const known = new Set<string>();
+  const out = menu.map((m) => {
+    known.add(slugify(m.label));
+    const rs = slugOf(m.href);
+    if (rs) known.add(rs);
+    for (const c of m.children) { const s = slugOf(c.href); if (s) known.add(s); }
+    return { ...m, children: m.children.filter((c) => { const s = slugOf(c.href); return !s || liveSlugs.has(s); }) };
+  });
+  const deptFor = (variant: string): MenuItem | undefined => {
+    const find = (re: RegExp) => out.find((m) => re.test(m.label));
+    if (/×|\bin\b|inch/i.test(variant)) return find(/stencil/i);
+    if (/^(youth |x{1,3}l|[2-5]xl|xs|s|m|l|xl)$/i.test(variant.trim())) return find(/shirt|tee|apparel/i);
+    if (/^(small|medium|large|deluxe)$/i.test(variant.trim())) return find(/gift/i);
+    return find(/art|print|cyber/i);
+  };
+  for (const c of live) {
+    if (known.has(c.slug)) continue;
+    const dept = deptFor(c.products[0]?.product.variants[0]?.name ?? "") ?? out[0];
+    dept?.children.push({ label: c.name, href: `/c/${c.slug}` });
+  }
+  return out;
+}
+
+export const getMenu = async () => withLiveCategories(parseMenu(await getMenuText()));
 
 export async function saveMenuText(text: string) {
   const value = { text: text.slice(0, 4000) };

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
+import { clearMemo } from "@/lib/memo";
 import { saveUpload } from "@/lib/storage";
 import { getCurrencies } from "@/lib/settings";
 import { parseMajor } from "@/lib/money";
@@ -37,6 +38,7 @@ async function pickCollection(fd: FormData) {
 }
 
 const done = () => {
+  clearMemo("sf:menu-live"); // a new category shows in the header menu straight away
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
 };
