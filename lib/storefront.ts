@@ -124,16 +124,17 @@ async function withLiveCategories(menu: MenuItem[]): Promise<MenuItem[]> {
     for (const c of m.children) { const s = slugOf(c.href); if (s) known.add(s); }
     return { ...m, children: m.children.filter((c) => { const s = slugOf(c.href); return !s || liveSlugs.has(s); }) };
   });
-  const deptFor = (variant: string): MenuItem | undefined => {
+  const deptFor = (variant: string, name: string): MenuItem | undefined => {
     const find = (re: RegExp) => out.find((m) => re.test(m.label));
     if (/×|\bin\b|inch/i.test(variant)) return find(/stencil/i);
     if (/^(youth |x{1,3}l|[2-5]xl|xs|s|m|l|xl)$/i.test(variant.trim())) return find(/shirt|tee|apparel/i);
     if (/^(small|medium|large|deluxe)$/i.test(variant.trim())) return find(/gift/i);
-    return find(/art|print|cyber/i);
+    // one-size items: cybersigilism categories go to Art, everything else (art stencils, tattoos, supplies) stays with Stencils
+    return /cyber|sigil/i.test(name) ? find(/cyber|art|print/i) : find(/stencil/i);
   };
   for (const c of live) {
     if (known.has(c.slug)) continue;
-    const dept = deptFor(c.products[0]?.product.variants[0]?.name ?? "") ?? out[0];
+    const dept = deptFor(c.products[0]?.product.variants[0]?.name ?? "", c.name) ?? out[0];
     dept?.children.push({ label: c.name, href: `/c/${c.slug}` });
   }
   return out;
