@@ -1,6 +1,6 @@
 /**
  * Size options offered when a product is created: stencils (inches), T-shirts (XS–5XL, youth) and gifts (Small–Deluxe).
- * The price the owner types is for the FIRST option; the others are scaled by `mult`.
+ * `mult` is only used by the one-time sample-data scripts. DECISION: shop prices are NEVER derived from it — the owner types every size's price by hand.
  */
 export type SizeOpt = { label: string; tag: string; mult: number; mm?: number };
 export type SizeSetKey = "stencil" | "tee" | "gift" | "single";

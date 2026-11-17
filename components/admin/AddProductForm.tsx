@@ -19,6 +19,20 @@ export function SizeSelect({ value, onChange }: { value: SizeSetKey; onChange: (
   );
 }
 
+/** One price box per size — every price is typed by hand, nothing is calculated from another size. */
+export function SizePrices({ value, base }: { value: SizeSetKey; base: string }) {
+  return (
+    <div key={value} className="grid max-w-xl gap-2 sm:grid-cols-2">
+      {SIZE_SETS[value].options.map((o) => (
+        <label key={o.tag} className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm">
+          <span className="font-medium">{o.label}</span>
+          <span className="flex items-center gap-1.5 text-ink3">{base}<input name={`price_${o.tag}`} required inputMode="decimal" placeholder="0.00" aria-label={`Price for ${o.label}`} className="input !w-24 !py-1.5" /></span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function CategoryPicker({ cats, current, onPick }: { cats: Cat[]; current?: string; onPick?: (name: string) => void }) {
   return (
     <div className="space-y-2">
@@ -73,7 +87,7 @@ export function AddProductForm({ cats, base }: { cats: Cat[]; base: string }) {
       <L n="1" label="What is it called?"><input name="name" required maxLength={120} placeholder="e.g. Rose Vine Wall Stencil" className="input" /></L>
       <L n="2" label="Which category?" hint="This decides where it shows on your website."><CategoryPicker cats={cats} onPick={(n) => n && setSizeSet(sizeSetFor(n))} /></L>
       <L n="3" label="Which sizes?" hint="Picked for you from the category. Stencils: 4×4 to 16×16 in · T-shirts: XS to 5XL · Gifts: Small to Deluxe."><SizeSelect value={sizeSet} onChange={setSizeSet} /></L>
-      <L n="4" label={`Price (${base})`} hint="For the first (smallest) size. The other sizes are worked out for you."><input name="price" required inputMode="decimal" placeholder="e.g. 1500" className="input max-w-[220px]" /></L>
+      <L n="4" label={`Price of each size (${base})`} hint="Type the price for every size yourself. Nothing is calculated for you."><SizePrices value={sizeSet} base={base} /></L>
       <L n="5" label="Photos" hint="Pick one or more pictures from your phone or computer. The first one is the main picture.">
         <input name="photos" type="file" accept="image/*" multiple className="input" onChange={(e) => setPicked([...(e.target.files ?? [])].map((f) => f.name))} />
         {picked.length > 0 && <p className="mt-1 text-xs text-ink2">{picked.length} photo{picked.length === 1 ? "" : "s"} chosen</p>}
@@ -81,7 +95,6 @@ export function AddProductForm({ cats, base }: { cats: Cat[]; base: string }) {
       <details className="rounded-xl border border-line p-3 text-sm">
         <summary className="cursor-pointer font-semibold">More options (you can skip these)</summary>
         <div className="mt-3 space-y-3">
-          <label className="block"><span className="mb-1 block font-semibold">Old price ({base}) — to show a sale</span><input name="oldPrice" inputMode="decimal" placeholder="e.g. 3000" className="input max-w-[220px]" /><span className="text-xs text-ink3">Shows crossed out, with a discount tag.</span></label>
           <label className="block"><span className="mb-1 block font-semibold">A few words about it</span><textarea name="description" rows={3} maxLength={600} className="textarea" /></label>
         </div>
       </details>

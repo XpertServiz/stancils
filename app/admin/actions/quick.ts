@@ -18,6 +18,12 @@ const num = (v: FormDataEntryValue | null) => {
   const n = Number(String(v ?? "").replace(/,/g, "").trim());
   return Number.isFinite(n) ? n : NaN;
 };
+/** Price boxes named price_<size tag> → { tag: price }. Every size has its own price, typed by hand. */
+const pricesOf = (fd: FormData) => {
+  const out: Record<string, number> = {};
+  for (const [k, v] of fd.entries()) if (k.startsWith("price_")) out[k.slice(6)] = num(v);
+  return out;
+};
 const photos = (fd: FormData, key = "photos") => fd.getAll(key).filter((f): f is File => f instanceof File && f.size > 0);
 
 async function upload(files: File[]) {
@@ -47,14 +53,11 @@ const done = () => {
 export async function quickAddProduct(_: QR, fd: FormData): Promise<QR> {
   try {
     const s = await requirePermission("inventory.edit");
-    const price = num(fd.get("price"));
-    const oldPrice = num(fd.get("oldPrice"));
     const urls = await upload(photos(fd));
     const p = await createQuickProduct({
       name: String(fd.get("name") ?? ""),
       collectionId: await pickCollection(fd),
-      price,
-      oldPrice: oldPrice > 0 ? oldPrice : null,
+      prices: pricesOf(fd),
       sizeSet: setOf(fd),
       description: String(fd.get("description") ?? ""),
       imageUrls: urls,
@@ -77,8 +80,7 @@ export async function quickAddFromPhoto(_: QR, fd: FormData): Promise<QR> {
     const p = await createQuickProduct({
       name: String(fd.get("name") || "") || nameFromFile(file.name),
       collectionId: await pickCollection(fd),
-      price: num(fd.get("price")),
-      oldPrice: num(fd.get("oldPrice")) > 0 ? num(fd.get("oldPrice")) : null,
+      prices: pricesOf(fd),
       sizeSet: setOf(fd),
       imageUrls: [url],
     });
@@ -89,7 +91,22 @@ export async function quickAddFromPhoto(_: QR, fd: FormData): Promise<QR> {
   }
 }
 
-/** After a bulk add: fix names and prices for many products in one go. */
+/** Save the price of each size exactly as typed (boxes named vprice_<variant id>). Nothing is scaled or copied to the other sizes. */
+async function saveVariantPrices(fd: FormData, productId: string, exponent: number) {
+  const vs = await db.variant.findMany({ where: { productId, isDigital: false }, select: { id: true, name: true, basePrice: true } });
+  for (const v of vs) {
+    const raw = fd.get(`vprice_${v.id}`);
+    if (raw === null || String(raw).trim() === "") continue;
+    const price = num(raw);
+    if (!(price > 0)) throw new Error(`The price for “${v.name}” must be more than 0.`);
+    const minor = parseMajor(price.toFixed(exponent), exponent);
+    if (minor === v.basePrice) continue;
+    await db.variant.update({ where: { id: v.id }, data: { basePrice: minor } });
+    await db.variantPrice.deleteMany({ where: { variantId: v.id } }); // manual per-currency prices for this size no longer match
+  }
+}
+
+/** After a bulk add: fix names and the price of every size, one product at a time. */
 export async function renameProducts(_: QR, fd: FormData): Promise<QR> {
   try {
     const s = await requirePermission("inventory.edit");
@@ -97,9 +114,9 @@ export async function renameProducts(_: QR, fd: FormData): Promise<QR> {
     let n = 0;
     for (const id of fd.getAll("id").map(String)) {
       const name = String(fd.get(`name_${id}`) ?? "").replace(/[<>]/g, "").trim().slice(0, 120);
-      const price = num(fd.get(`price_${id}`));
       if (!name) continue;
-      await scaleAndRename(id, name, price, base.exponent);
+      await db.product.update({ where: { id }, data: { name } });
+      await saveVariantPrices(fd, id, base.exponent);
       n++;
     }
     await audit(s.id, "product.quick_rename", "product", "many", undefined, { count: n });
@@ -107,24 +124,6 @@ export async function renameProducts(_: QR, fd: FormData): Promise<QR> {
     return { ok: true, msg: `Saved ${n} product${n === 1 ? "" : "s"}.` };
   } catch (e) {
     return { ok: false, msg: (e as Error).message };
-  }
-}
-
-/** Set a new name and (optionally) a new price. With several sizes, every size keeps its relation to the smallest one. */
-async function scaleAndRename(id: string, name: string, price: number, exponent: number) {
-  await db.product.update({ where: { id }, data: { name } });
-  if (!(price > 0)) return;
-  const vs = await db.variant.findMany({ where: { productId: id, isDigital: false }, orderBy: { basePrice: "asc" } });
-  if (!vs.length) return;
-  const newMinor = parseMajor(price.toFixed(exponent), exponent);
-  const ratio = Number(newMinor) / Number(vs[0].basePrice);
-  if (!Number.isFinite(ratio) || ratio <= 0 || Math.abs(ratio - 1) < 1e-9) return;
-  for (const v of vs) {
-    await db.variant.update({
-      where: { id: v.id },
-      data: { basePrice: BigInt(Math.round(Number(v.basePrice) * ratio)), compareAt: v.compareAt ? BigInt(Math.round(Number(v.compareAt) * ratio)) : null },
-    });
-    await db.variantPrice.deleteMany({ where: { variantId: v.id } }); // manual per-currency prices no longer match
   }
 }
 
@@ -136,7 +135,8 @@ export async function quickSaveProduct(_: QR, fd: FormData): Promise<QR> {
     const name = String(fd.get("name") ?? "").replace(/[<>]/g, "").trim().slice(0, 120);
     if (!name) throw new Error("Please type a product name.");
     const { base } = await getCurrencies();
-    await scaleAndRename(id, name, num(fd.get("price")), base.exponent);
+    await db.product.update({ where: { id }, data: { name } });
+    await saveVariantPrices(fd, id, base.exponent);
     const fresh = String(fd.get("newCategory") ?? "").trim();
     const cid = fresh ? (await collectionByName(fresh)).id : String(fd.get("collectionId") ?? "");
     if (cid) {

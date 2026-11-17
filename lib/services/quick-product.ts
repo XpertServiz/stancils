@@ -45,8 +45,8 @@ export async function collectionByName(name: string) {
 export type QuickInput = {
   name: string;
   collectionId: string;
-  price: number; // in the store's base currency (major units)
-  oldPrice?: number | null; // struck-through price; omit for none
+  /** price of each size in the store's base currency (major units), keyed by the size's tag ("4", "XL" …) — typed by the owner, never calculated */
+  prices: Record<string, number>;
   /** which size dropdown the product gets (default: stencil sizes when `sizes` is true, otherwise one size) */
   sizeSet?: SizeSetKey;
   sizes?: boolean;
@@ -57,18 +57,17 @@ export type QuickInput = {
 export async function createQuickProduct(i: QuickInput) {
   const name = i.name.trim().replace(/[<>]/g, "").slice(0, 120);
   if (!name) throw new Error("Please type a product name.");
-  if (!Number.isFinite(i.price) || i.price <= 0 || i.price > 100_000_000) throw new Error("Price must be more than 0.");
-  if (i.oldPrice && i.oldPrice <= i.price) throw new Error("The old price must be higher than the price.");
   const { base } = await getCurrencies();
   const minor = (n: number) => parseMajor(n.toFixed(base.exponent), base.exponent);
   const sku = `CC-${Date.now().toString(36).toUpperCase().slice(-5)}${rand()}`;
   const slug = await uniqueSlug(name);
   const col = await db.collection.findUniqueOrThrow({ where: { id: i.collectionId }, select: { id: true, name: true } });
   const set = SIZE_SETS[i.sizeSet ?? (i.sizes ? "stencil" : "single")];
-  const variants = set.options.map((s, k) => ({
-    sku: `${sku}-${s.tag}`, name: s.label, ...(s.mm ? { widthMm: s.mm, heightMm: s.mm } : {}),
-    basePrice: minor(money(i.price * s.mult)), compareAt: i.oldPrice ? minor(money(i.oldPrice * s.mult)) : null, sort: k,
-  }));
+  const variants = set.options.map((s, k) => {
+    const p = i.prices[s.tag];
+    if (!Number.isFinite(p) || p <= 0 || p > 100_000_000) throw new Error(`Please type a price for size “${s.label}”.`);
+    return { sku: `${sku}-${s.tag}`, name: s.label, ...(s.mm ? { widthMm: s.mm, heightMm: s.mm } : {}), basePrice: minor(money(p)), sort: k };
+  });
   const product = await db.product.create({
     data: {
       name, slug, type: "MADE_TO_ORDER", status: "ACTIVE", source: "MANUAL",

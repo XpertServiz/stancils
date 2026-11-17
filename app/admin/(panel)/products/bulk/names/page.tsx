@@ -13,11 +13,11 @@ export default async function FixNames({ searchParams }: { searchParams: Promise
   const ids = ((await searchParams).ids ?? "").split(",").filter((x) => /^[a-z0-9]{10,40}$/i.test(x)).slice(0, 200);
   const [{ base }, products] = await Promise.all([
     getCurrencies(),
-    db.product.findMany({ where: { id: { in: ids } }, include: { images: { orderBy: { sort: "asc" }, take: 1 }, variants: { where: { isDigital: false }, orderBy: { basePrice: "asc" }, take: 1 } } }),
+    db.product.findMany({ where: { id: { in: ids } }, include: { images: { orderBy: { sort: "asc" }, take: 1 }, variants: { where: { isDigital: false }, orderBy: { sort: "asc" } } } }),
   ]);
   return (
     <div className="max-w-3xl">
-      <PageHeader title="Fix names and prices" sub="Change anything that is not right, then press Save. Products are already live — you can leave this page any time." />
+      <PageHeader title="Fix names and prices" sub="Change any name or any size’s price, then press Save. Each size keeps exactly the price you type. Products are already live — you can leave this page any time." />
       <Panel>
         <ActionForm action={renameProducts}>
           <div className="divide-y divide-line/60">
@@ -27,7 +27,9 @@ export default async function FixNames({ searchParams }: { searchParams: Promise
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {p.images[0] ? <img src={thumb(p.images[0].url)!} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <span className="h-14 w-14 rounded-lg bg-s1" />}
                 <input name={`name_${p.id}`} defaultValue={p.name} aria-label="Product name" className="input min-w-[200px] flex-1" />
-                <label className="flex items-center gap-1.5 text-sm text-ink3">{base.code}<input name={`price_${p.id}`} defaultValue={p.variants[0] ? majorString(p.variants[0].basePrice) : ""} inputMode="decimal" aria-label="Price" className="input !w-28" /></label>
+                <div className="flex w-full flex-wrap gap-2 pl-[68px]">
+                  {p.variants.map((v) => <label key={v.id} className="flex items-center gap-1.5 text-xs text-ink3">{v.name}<input name={`vprice_${v.id}`} defaultValue={majorString(v.basePrice, base.exponent)} inputMode="decimal" aria-label={`Price for ${v.name}`} className="input !w-24 !py-1" /></label>)}
+                </div>
               </div>
             ))}
             {products.length === 0 && <p className="py-6 text-ink2">Nothing to show here.</p>}

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { compressImage } from "./compress";
-import { CategoryPicker, SizeSelect, type Cat } from "./AddProductForm";
+import { CategoryPicker, SizePrices, SizeSelect, type Cat } from "./AddProductForm";
 import { sizeSetFor, type SizeSetKey } from "@/lib/sizes";
 import { quickAddFromPhoto } from "@/app/admin/actions/quick";
 
@@ -51,10 +51,10 @@ export function BulkPhotoAdd({ cats, base }: { cats: Cat[]; base: string }) {
           <CategoryPicker cats={cats} onPick={(n) => n && setSizeSet(sizeSetFor(n))} />
         </div>
         <div>
-          <p className="mb-1.5 text-sm font-semibold"><span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-onaccent">2</span>Starting price ({base})</p>
-          <input name="price" required inputMode="decimal" placeholder="e.g. 1500" className="input max-w-[220px]" />
-          <div className="mt-2"><SizeSelect value={sizeSet} onChange={setSizeSet} /></div>
-          <p className="mt-1 text-xs text-ink3">You can change each price after this, in one table.</p>
+          <p className="mb-1.5 text-sm font-semibold"><span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-onaccent">2</span>Sizes and prices ({base})</p>
+          <SizeSelect value={sizeSet} onChange={setSizeSet} />
+          <div className="mt-3"><SizePrices value={sizeSet} base={base} /></div>
+          <p className="mt-1 text-xs text-ink3">These prices are used for every photo. You can change each product’s prices afterwards.</p>
         </div>
         <div>
           <p className="mb-1.5 text-sm font-semibold"><span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-onaccent">3</span>Choose all the photos</p>

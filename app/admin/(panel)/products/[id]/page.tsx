@@ -58,8 +58,15 @@ export default async function EditProduct({ params, searchParams }: { params: Pr
             <input type="hidden" name="id" value={p.id} />
             <Field label="Name"><input name="name" defaultValue={p.name} required maxLength={120} className="input" /></Field>
             <Field label="Category"><CategoryPicker cats={collections.map((c) => ({ id: c.id, name: c.name }))} current={p.collections[0]?.collectionId} /></Field>
-            <Field label={`Price (${base.code})`} hint={p.variants.filter((v) => !v.isDigital).length > 1 ? "For the smallest size — the bigger sizes follow automatically." : undefined}>
-              <input name="price" defaultValue={p.variants.filter((v) => !v.isDigital)[0] ? majorString(p.variants.filter((v) => !v.isDigital).reduce((a, v) => (v.basePrice < a ? v.basePrice : a), p.variants.filter((v) => !v.isDigital)[0].basePrice), base.exponent) : ""} inputMode="decimal" className="input max-w-[220px]" />
+            <Field label={`Price of each size (${base.code})`} hint="Every size has its own price. Change only the ones you want — the others stay as they are.">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {p.variants.filter((v) => !v.isDigital).map((v) => (
+                  <label key={v.id} className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm">
+                    <span className="font-medium">{v.name}</span>
+                    <input name={`vprice_${v.id}`} defaultValue={majorString(v.basePrice, base.exponent)} inputMode="decimal" aria-label={`Price for ${v.name}`} className="input !w-24 !py-1.5" />
+                  </label>
+                ))}
+              </div>
             </Field>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="visible" defaultChecked={p.status === "ACTIVE"} />Show on my website</label>
             <button className="btn btn-primary">Save</button>
