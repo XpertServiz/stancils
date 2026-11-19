@@ -127,7 +127,6 @@ export default async function ProductPage({ params }: P) {
             <span className="text-mint">✓</span>
             <span>{fastest ? `Delivery to ${country}: ${fastest.minDays}–${fastest.maxDays} days` : "Ships worldwide"}</span>
           </p>
-          {p.shortDesc && <p className="rounded-lg bg-s1 p-4 text-sm leading-relaxed text-ink2">{p.shortDesc}</p>}
           <div className="text-sm">
             <details open className={tab}><summary className="cursor-pointer font-bold">Description</summary><div className="mt-3">{p.description ? <Markdown text={p.description} /> : <p className="text-ink2">Reusable stencil, cut from durable material for crisp, repeatable results.</p>}</div></details>
             <details className={tab}><summary className="cursor-pointer font-bold">Material &amp; Care</summary><p className="mt-3 text-ink2">Cut from flexible reusable mylar. After use, wipe gently with a damp cloth, dry flat and store without bending. Do not soak or scrub.</p></details>

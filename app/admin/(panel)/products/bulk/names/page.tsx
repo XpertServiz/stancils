@@ -13,7 +13,7 @@ export default async function FixNames({ searchParams }: { searchParams: Promise
   const ids = ((await searchParams).ids ?? "").split(",").filter((x) => /^[a-z0-9]{10,40}$/i.test(x)).slice(0, 200);
   const [{ base }, products] = await Promise.all([
     getCurrencies(),
-    db.product.findMany({ where: { id: { in: ids } }, include: { images: { orderBy: { sort: "asc" }, take: 1 }, variants: { where: { isDigital: false }, orderBy: { sort: "asc" } } } }),
+    db.product.findMany({ where: { id: { in: ids } }, include: { images: { orderBy: { sort: "asc" }, take: 1 }, variants: { where: { isDigital: false, active: true }, orderBy: { sort: "asc" } } } }),
   ]);
   return (
     <div className="max-w-3xl">
@@ -28,7 +28,7 @@ export default async function FixNames({ searchParams }: { searchParams: Promise
                 {p.images[0] ? <img src={thumb(p.images[0].url)!} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <span className="h-14 w-14 rounded-lg bg-s1" />}
                 <input name={`name_${p.id}`} defaultValue={p.name} aria-label="Product name" className="input min-w-[200px] flex-1" />
                 <div className="flex w-full flex-wrap gap-2 pl-[68px]">
-                  {p.variants.map((v) => <label key={v.id} className="flex items-center gap-1.5 text-xs text-ink3">{v.name}<input name={`vprice_${v.id}`} defaultValue={majorString(v.basePrice, base.exponent)} inputMode="decimal" aria-label={`Price for ${v.name}`} className="input !w-24 !py-1" /></label>)}
+                  {p.variants.map((v) => <label key={v.id} className="flex items-center gap-1.5 text-xs text-ink3">{v.name}<input type="hidden" name={`vname_${v.id}`} value={v.name} /><input name={`vprice_${v.id}`} defaultValue={majorString(v.basePrice, base.exponent)} inputMode="decimal" aria-label={`Price for ${v.name}`} className="input !w-24 !py-1" /></label>)}
                 </div>
               </div>
             ))}

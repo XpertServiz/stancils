@@ -8,9 +8,9 @@ import { saveUpload } from "@/lib/storage";
 import { getCurrencies } from "@/lib/settings";
 import { parseMajor } from "@/lib/money";
 import { collectionByName, createQuickProduct, nameFromFile } from "@/lib/services/quick-product";
-import { SET_KEYS, type SizeSetKey } from "@/lib/sizes";
 
-const setOf = (fd: FormData): SizeSetKey => (SET_KEYS.includes(fd.get("sizeSet") as SizeSetKey) ? (fd.get("sizeSet") as SizeSetKey) : "single");
+
+const rand = () => Math.random().toString(36).slice(2, 6).toUpperCase();
 
 export type QR = { ok: boolean; msg: string; id?: string; name?: string } | null;
 
@@ -18,10 +18,15 @@ const num = (v: FormDataEntryValue | null) => {
   const n = Number(String(v ?? "").replace(/,/g, "").trim());
   return Number.isFinite(n) ? n : NaN;
 };
-/** Price boxes named price_<size tag> → { tag: price }. Every size has its own price, typed by hand. */
-const pricesOf = (fd: FormData) => {
-  const out: Record<string, number> = {};
-  for (const [k, v] of fd.entries()) if (k.startsWith("price_")) out[k.slice(6)] = num(v);
+/** Size rows typed in the form (size_name_0 / size_price_0 …): blank rows are ignored. */
+const sizesOf = (fd: FormData) => {
+  const out: { name: string; price: number }[] = [];
+  for (let i = 0; fd.has(`size_name_${i}`); i++) {
+    const name = String(fd.get(`size_name_${i}`) ?? "").trim();
+    const raw = String(fd.get(`size_price_${i}`) ?? "").trim();
+    if (!name && !raw) continue;
+    out.push({ name, price: num(raw) });
+  }
   return out;
 };
 const photos = (fd: FormData, key = "photos") => fd.getAll(key).filter((f): f is File => f instanceof File && f.size > 0);
@@ -57,8 +62,7 @@ export async function quickAddProduct(_: QR, fd: FormData): Promise<QR> {
     const p = await createQuickProduct({
       name: String(fd.get("name") ?? ""),
       collectionId: await pickCollection(fd),
-      prices: pricesOf(fd),
-      sizeSet: setOf(fd),
+      sizes: sizesOf(fd),
       description: String(fd.get("description") ?? ""),
       imageUrls: urls,
     });
@@ -80,8 +84,7 @@ export async function quickAddFromPhoto(_: QR, fd: FormData): Promise<QR> {
     const p = await createQuickProduct({
       name: String(fd.get("name") || "") || nameFromFile(file.name),
       collectionId: await pickCollection(fd),
-      prices: pricesOf(fd),
-      sizeSet: setOf(fd),
+      sizes: sizesOf(fd),
       imageUrls: [url],
     });
     await audit(s.id, "product.quick_add", "product", p.id, undefined, { name: p.name, bulk: true });
@@ -91,18 +94,40 @@ export async function quickAddFromPhoto(_: QR, fd: FormData): Promise<QR> {
   }
 }
 
-/** Save the price of each size exactly as typed (boxes named vprice_<variant id>). Nothing is scaled or copied to the other sizes. */
+/**
+ * Save the sizes of a product exactly as typed: rename, re-price, remove (vdel_<id>) and add new ones (newsize_name_<n> / newsize_price_<n>).
+ * Nothing is scaled or copied to the other sizes. A removed size is hidden from the shop (not deleted) so old orders keep working.
+ */
 async function saveVariantPrices(fd: FormData, productId: string, exponent: number) {
-  const vs = await db.variant.findMany({ where: { productId, isDigital: false }, select: { id: true, name: true, basePrice: true } });
+  const vs = await db.variant.findMany({ where: { productId, isDigital: false }, orderBy: { sort: "asc" } });
+  const toMinor = (v: FormDataEntryValue | null, label: string) => {
+    const price = num(v);
+    if (!(price > 0)) throw new Error(`The price for “${label}” must be more than 0.`);
+    return parseMajor(price.toFixed(exponent), exponent);
+  };
+  let live = vs.filter((v) => v.active).length;
   for (const v of vs) {
-    const raw = fd.get(`vprice_${v.id}`);
-    if (raw === null || String(raw).trim() === "") continue;
-    const price = num(raw);
-    if (!(price > 0)) throw new Error(`The price for “${v.name}” must be more than 0.`);
-    const minor = parseMajor(price.toFixed(exponent), exponent);
-    if (minor === v.basePrice) continue;
-    await db.variant.update({ where: { id: v.id }, data: { basePrice: minor } });
-    await db.variantPrice.deleteMany({ where: { variantId: v.id } }); // manual per-currency prices for this size no longer match
+    if (!fd.has(`vprice_${v.id}`)) continue;
+    const label = String(fd.get(`vname_${v.id}`) ?? v.name).replace(/[<>]/g, "").trim().slice(0, 60) || v.name;
+    if (fd.get(`vdel_${v.id}`) === "on") {
+      if (v.active && live <= 1) throw new Error("A product needs at least one size. Add the new size first, then remove this one.");
+      if (v.active) live--;
+      await db.variant.update({ where: { id: v.id }, data: { active: false } });
+      continue;
+    }
+    const minor = toMinor(fd.get(`vprice_${v.id}`), label);
+    if (minor === v.basePrice && label === v.name) continue;
+    await db.variant.update({ where: { id: v.id }, data: { basePrice: minor, name: label } });
+    if (minor !== v.basePrice) await db.variantPrice.deleteMany({ where: { variantId: v.id } }); // manual per-currency prices for this size no longer match
+  }
+  let sort = vs.reduce((m, v) => Math.max(m, v.sort), 0);
+  const stamp = `${Date.now().toString(36).toUpperCase().slice(-5)}${rand()}`;
+  for (let n = 0; fd.has(`newsize_name_${n}`); n++) {
+    const label = String(fd.get(`newsize_name_${n}`) ?? "").replace(/[<>]/g, "").trim().slice(0, 60);
+    const raw = String(fd.get(`newsize_price_${n}`) ?? "").trim();
+    if (!label && !raw) continue;
+    if (!label) throw new Error("A new size needs a name, like 8 × 8 in or XL.");
+    await db.variant.create({ data: { productId, sku: `CC-${stamp}-N${n + 1}`, name: label, basePrice: toMinor(raw, label), sort: ++sort } });
   }
 }
 

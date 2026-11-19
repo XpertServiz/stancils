@@ -14,21 +14,31 @@ export function SizeSelect({ value, onChange }: { value: SizeSetKey; onChange: (
       <select name="sizeSet" value={value} onChange={(e) => onChange(e.target.value as SizeSetKey)} className="select" aria-label="Size options">
         {SET_KEYS.map((k) => <option key={k} value={k}>{SIZE_SETS[k].label}</option>)}
       </select>
-      <p className="mt-1 text-xs text-ink3">Shoppers pick from: {SIZE_SETS[value].options.map((o) => o.label).join(", ")}</p>
+      
     </div>
   );
 }
 
-/** One price box per size — every price is typed by hand, nothing is calculated from another size. */
+/**
+ * The sizes of a product, typed by the owner: a name and a price per row. Starts from the chosen preset (stencil / T-shirt / gift sizes)
+ * with empty prices; every name can be changed, rows can be removed and new ones added. Nothing is calculated from another size.
+ */
 export function SizePrices({ value, base }: { value: SizeSetKey; base: string }) {
+  const preset = () => SIZE_SETS[value].options.map((o) => o.label);
+  const [rows, setRows] = useState<string[]>(preset);
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) { setSeen(value); setRows(preset()); }
   return (
-    <div key={value} className="grid max-w-xl gap-2 sm:grid-cols-2">
-      {SIZE_SETS[value].options.map((o) => (
-        <label key={o.tag} className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm">
-          <span className="font-medium">{o.label}</span>
-          <span className="flex items-center gap-1.5 text-ink3">{base}<input name={`price_${o.tag}`} required inputMode="decimal" placeholder="0.00" aria-label={`Price for ${o.label}`} className="input !w-24 !py-1.5" /></span>
-        </label>
+    <div className="max-w-xl space-y-2">
+      {rows.map((name, i) => (
+        <div key={`${value}-${i}`} className="flex items-center gap-2">
+          <input name={`size_name_${i}`} defaultValue={name} placeholder="Size, e.g. 8 × 8 in or XL" aria-label="Size name" className="input flex-1 !py-1.5" />
+          <span className="text-sm text-ink3">{base}</span>
+          <input name={`size_price_${i}`} inputMode="decimal" placeholder="Price" aria-label={`Price for ${name || "size"}`} className="input !w-24 !py-1.5" />
+          <button type="button" onClick={() => setRows((r) => r.filter((_, k) => k !== i))} aria-label="Remove this size" className="px-2 text-danger">✕</button>
+        </div>
       ))}
+      <button type="button" onClick={() => setRows((r) => [...r, ""])} className="btn btn-ghost btn-sm">+ Add a size</button>
     </div>
   );
 }
@@ -86,8 +96,8 @@ export function AddProductForm({ cats, base }: { cats: Cat[]; base: string }) {
     <form ref={form} onSubmit={submit} className="space-y-5">
       <L n="1" label="What is it called?"><input name="name" required maxLength={120} placeholder="e.g. Rose Vine Wall Stencil" className="input" /></L>
       <L n="2" label="Which category?" hint="This decides where it shows on your website."><CategoryPicker cats={cats} onPick={(n) => n && setSizeSet(sizeSetFor(n))} /></L>
-      <L n="3" label="Which sizes?" hint="Picked for you from the category. Stencils: 4×4 to 16×16 in · T-shirts: XS to 5XL · Gifts: Small to Deluxe."><SizeSelect value={sizeSet} onChange={setSizeSet} /></L>
-      <L n="4" label={`Price of each size (${base})`} hint="Type the price for every size yourself. Nothing is calculated for you."><SizePrices value={sizeSet} base={base} /></L>
+      <L n="3" label="Start from these sizes" hint="Only a starting list — you can rename, remove or add sizes in the next step."><SizeSelect value={sizeSet} onChange={setSizeSet} /></L>
+      <L n="4" label={`Sizes and their prices (${base})`} hint="Write each size and its price yourself. Nothing is calculated for you."><SizePrices value={sizeSet} base={base} /></L>
       <L n="5" label="Photos" hint="Pick one or more pictures from your phone or computer. The first one is the main picture.">
         <input name="photos" type="file" accept="image/*" multiple className="input" onChange={(e) => setPicked([...(e.target.files ?? [])].map((f) => f.name))} />
         {picked.length > 0 && <p className="mt-1 text-xs text-ink2">{picked.length} photo{picked.length === 1 ? "" : "s"} chosen</p>}

@@ -45,11 +45,8 @@ export async function collectionByName(name: string) {
 export type QuickInput = {
   name: string;
   collectionId: string;
-  /** price of each size in the store's base currency (major units), keyed by the size's tag ("4", "XL" …) — typed by the owner, never calculated */
-  prices: Record<string, number>;
-  /** which size dropdown the product gets (default: stencil sizes when `sizes` is true, otherwise one size) */
-  sizeSet?: SizeSetKey;
-  sizes?: boolean;
+  /** the sizes and their prices (store base currency, major units) — names and prices are typed by the owner, nothing is calculated */
+  sizes: { name: string; price: number }[];
   description?: string;
   imageUrls?: string[];
 };
@@ -62,16 +59,19 @@ export async function createQuickProduct(i: QuickInput) {
   const sku = `CC-${Date.now().toString(36).toUpperCase().slice(-5)}${rand()}`;
   const slug = await uniqueSlug(name);
   const col = await db.collection.findUniqueOrThrow({ where: { id: i.collectionId }, select: { id: true, name: true } });
-  const set = SIZE_SETS[i.sizeSet ?? (i.sizes ? "stencil" : "single")];
-  const variants = set.options.map((s, k) => {
-    const p = i.prices[s.tag];
-    if (!Number.isFinite(p) || p <= 0 || p > 100_000_000) throw new Error(`Please type a price for size “${s.label}”.`);
-    return { sku: `${sku}-${s.tag}`, name: s.label, ...(s.mm ? { widthMm: s.mm, heightMm: s.mm } : {}), basePrice: minor(money(p)), sort: k };
+  if (!i.sizes.length) throw new Error("Please add at least one size with a price.");
+  const variants = i.sizes.map((z, k) => {
+    const label = z.name.replace(/[<>]/g, "").trim().slice(0, 60);
+    if (!label) throw new Error("Every size needs a name, like 8 × 8 in or XL.");
+    if (!Number.isFinite(z.price) || z.price <= 0 || z.price > 100_000_000) throw new Error(`Please type a price for size “${label}”.`);
+    const dim = /(d+(?:.d+)?)s*(?:x|×)s*(d+(?:.d+)?)s*(in|inch|inches|"|cm|mm)?/i.exec(label);
+    const mm = (n: number) => Math.round(n * (/cm/i.test(dim?.[3] ?? "") ? 10 : /mm/i.test(dim?.[3] ?? "") ? 1 : 25.4));
+    return { sku: `${sku}-${k + 1}`, name: label, ...(dim ? { widthMm: mm(Number(dim[1])), heightMm: mm(Number(dim[2])) } : {}), basePrice: minor(money(z.price)), sort: k };
   });
   const product = await db.product.create({
     data: {
       name, slug, type: "MADE_TO_ORDER", status: "ACTIVE", source: "MANUAL",
-      shortDesc: (i.description?.trim() || `${name} — ${col.name}`).slice(0, 200),
+      shortDesc: i.description?.trim().slice(0, 200) || null,
       description: i.description?.trim() || null,
       tags: [slugify(col.name)],
       seoTitle: name,
