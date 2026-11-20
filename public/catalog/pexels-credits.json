@@ -1,0 +1,208 @@
+{
+  "carpet": [
+    {
+      "file": "/catalog/carpet-1.jpg",
+      "pexels": "https://www.pexels.com/photo/6044743/"
+    },
+    {
+      "file": "/catalog/carpet-2.jpg",
+      "pexels": "https://www.pexels.com/photo/10488435/"
+    },
+    {
+      "file": "/catalog/carpet-3.jpg",
+      "pexels": "https://www.pexels.com/photo/6786958/"
+    },
+    {
+      "file": "/catalog/carpet-4.jpg",
+      "pexels": "https://www.pexels.com/photo/6069832/"
+    },
+    {
+      "file": "/catalog/carpet-5.jpg",
+      "pexels": "https://www.pexels.com/photo/28390199/"
+    },
+    {
+      "file": "/catalog/carpet-6.jpg",
+      "pexels": "https://www.pexels.com/photo/6964261/"
+    },
+    {
+      "file": "/catalog/carpet-7.jpg",
+      "pexels": "https://www.pexels.com/photo/19747450/"
+    },
+    {
+      "file": "/catalog/carpet-8.jpg",
+      "pexels": "https://www.pexels.com/photo/6045295/"
+    },
+    {
+      "file": "/catalog/carpet-9.jpg",
+      "pexels": "https://www.pexels.com/photo/6045290/"
+    }
+  ],
+  "tribal": [
+    {
+      "file": "/catalog/tribal-3.jpg",
+      "pexels": "https://www.pexels.com/photo/10352361/"
+    },
+    {
+      "file": "/catalog/tribal-4.jpg",
+      "pexels": "https://www.pexels.com/photo/28389852/"
+    }
+  ],
+  "mandala": [
+    {
+      "file": "/catalog/mandala-2.jpg",
+      "pexels": "https://www.pexels.com/photo/7181644/"
+    },
+    {
+      "file": "/catalog/mandala-3.jpg",
+      "pexels": "https://www.pexels.com/photo/7182162/"
+    },
+    {
+      "file": "/catalog/mandala-4.jpg",
+      "pexels": "https://www.pexels.com/photo/820673/"
+    }
+  ],
+  "pattern": [
+    {
+      "file": "/catalog/pattern-4.jpg",
+      "pexels": "https://www.pexels.com/photo/29849649/"
+    },
+    {
+      "file": "/catalog/pattern-5.jpg",
+      "pexels": "https://www.pexels.com/photo/16375743/"
+    },
+    {
+      "file": "/catalog/pattern-6.jpg",
+      "pexels": "https://www.pexels.com/photo/31085604/"
+    },
+    {
+      "file": "/catalog/pattern-7.jpg",
+      "pexels": "https://www.pexels.com/photo/7698078/"
+    },
+    {
+      "file": "/catalog/pattern-8.jpg",
+      "pexels": "https://www.pexels.com/photo/33840919/"
+    }
+  ],
+  "calligraphy": [
+    {
+      "file": "/catalog/calligraphy-6.jpg",
+      "pexels": "https://www.pexels.com/photo/11206681/"
+    },
+    {
+      "file": "/catalog/calligraphy-7.jpg",
+      "pexels": "https://www.pexels.com/photo/29319229/"
+    },
+    {
+      "file": "/catalog/calligraphy-8.jpg",
+      "pexels": "https://www.pexels.com/photo/29319232/"
+    },
+    {
+      "file": "/catalog/calligraphy-9.jpg",
+      "pexels": "https://www.pexels.com/photo/11135854/"
+    },
+    {
+      "file": "/catalog/calligraphy-10.jpg",
+      "pexels": "https://www.pexels.com/photo/29486706/"
+    },
+    {
+      "file": "/catalog/calligraphy-11.jpg",
+      "pexels": "https://www.pexels.com/photo/29486694/"
+    }
+  ],
+  "supplies": [
+    {
+      "file": "/catalog/supplies-1.jpg",
+      "pexels": "https://www.pexels.com/photo/11625890/"
+    },
+    {
+      "file": "/catalog/supplies-2.jpg",
+      "pexels": "https://www.pexels.com/photo/4348396/"
+    },
+    {
+      "file": "/catalog/supplies-3.jpg",
+      "pexels": "https://www.pexels.com/photo/30698567/"
+    },
+    {
+      "file": "/catalog/supplies-4.jpg",
+      "pexels": "https://www.pexels.com/photo/296392/"
+    },
+    {
+      "file": "/catalog/supplies-5.jpg",
+      "pexels": "https://www.pexels.com/photo/7885377/"
+    },
+    {
+      "file": "/catalog/supplies-6.jpg",
+      "pexels": "https://www.pexels.com/photo/12042181/"
+    }
+  ],
+  "wall": [
+    {
+      "file": "/catalog/wall-1.jpg",
+      "pexels": "https://www.pexels.com/photo/5493653/"
+    },
+    {
+      "file": "/catalog/wall-2.jpg",
+      "pexels": "https://www.pexels.com/photo/7218011/"
+    },
+    {
+      "file": "/catalog/wall-3.jpg",
+      "pexels": "https://www.pexels.com/photo/1253951/"
+    },
+    {
+      "file": "/catalog/wall-4.jpg",
+      "pexels": "https://www.pexels.com/photo/5691592/"
+    }
+  ],
+  "furniture": [
+    {
+      "file": "/catalog/furniture-1.jpg",
+      "pexels": "https://www.pexels.com/photo/7484801/"
+    },
+    {
+      "file": "/catalog/furniture-2.jpg",
+      "pexels": "https://www.pexels.com/photo/7482657/"
+    },
+    {
+      "file": "/catalog/furniture-3.jpg",
+      "pexels": "https://www.pexels.com/photo/961969/"
+    },
+    {
+      "file": "/catalog/furniture-4.jpg",
+      "pexels": "https://www.pexels.com/photo/7303151/"
+    },
+    {
+      "file": "/catalog/furniture-5.jpg",
+      "pexels": "https://www.pexels.com/photo/6963787/"
+    },
+    {
+      "file": "/catalog/furniture-6.jpg",
+      "pexels": "https://www.pexels.com/photo/6752293/"
+    }
+  ],
+  "fabric": [
+    {
+      "file": "/catalog/fabric-1.jpg",
+      "pexels": "https://www.pexels.com/photo/28389703/"
+    },
+    {
+      "file": "/catalog/fabric-2.jpg",
+      "pexels": "https://www.pexels.com/photo/3185223/"
+    },
+    {
+      "file": "/catalog/fabric-3.jpg",
+      "pexels": "https://www.pexels.com/photo/8751904/"
+    },
+    {
+      "file": "/catalog/fabric-4.jpg",
+      "pexels": "https://www.pexels.com/photo/7405299/"
+    },
+    {
+      "file": "/catalog/fabric-5.jpg",
+      "pexels": "https://www.pexels.com/photo/16132469/"
+    },
+    {
+      "file": "/catalog/fabric-6.jpg",
+      "pexels": "https://www.pexels.com/photo/28272812/"
+    }
+  ]
+}

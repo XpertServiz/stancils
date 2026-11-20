@@ -1,0 +1,1 @@
+Catalogue photos: free to use. Pexels photos are listed with their page links in pexels-credits.json (Pexels licence, no attribution required). The other photos are CC0 / public-domain images found through Openverse (rawpixel, Wikimedia Commons and similar).
