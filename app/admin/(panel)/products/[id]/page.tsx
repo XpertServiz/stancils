@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SizeRows } from "@/components/admin/SizeRows";
 import { notFound } from "next/navigation";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -58,23 +59,8 @@ export default async function EditProduct({ params, searchParams }: { params: Pr
             <input type="hidden" name="id" value={p.id} />
             <Field label="Name"><input name="name" defaultValue={p.name} required maxLength={120} className="input" /></Field>
             <Field label="Category"><CategoryPicker cats={collections.map((c) => ({ id: c.id, name: c.name }))} current={p.collections[0]?.collectionId} /></Field>
-            <Field label={`Sizes and prices (${base.code})`} hint="Change a size name or price, tick Remove to hide a size, or fill an empty row to add a new size. Every size keeps exactly the price you type.">
-              <div className="space-y-2">
-                {p.variants.filter((v) => !v.isDigital && v.active).map((v) => (
-                  <div key={v.id} className="flex items-center gap-2">
-                    <input name={`vname_${v.id}`} defaultValue={v.name} aria-label="Size name" className="input flex-1 !py-1.5" />
-                    <input name={`vprice_${v.id}`} defaultValue={majorString(v.basePrice, base.exponent)} inputMode="decimal" aria-label={`Price for ${v.name}`} className="input !w-24 !py-1.5" />
-                    <label className="flex items-center gap-1 text-xs text-danger"><input type="checkbox" name={`vdel_${v.id}`} />Remove</label>
-                  </div>
-                ))}
-                {[0, 1, 2].map((n) => (
-                  <div key={n} className="flex items-center gap-2">
-                    <input name={`newsize_name_${n}`} placeholder="New size, e.g. 12 × 12 in" aria-label="New size name" className="input flex-1 !py-1.5" />
-                    <input name={`newsize_price_${n}`} inputMode="decimal" placeholder="Price" aria-label="New size price" className="input !w-24 !py-1.5" />
-                    <span className="w-[62px]" />
-                  </div>
-                ))}
-              </div>
+            <Field label={`Sizes and prices (${base.code})`} hint="Drag ⠿ to re-order, change any name or price, Remove hides a size, + Add a size for more. Every size keeps exactly the price you type.">
+              <SizeRows scope={p.id} mode="edit" base={base.code} initial={p.variants.filter((v) => !v.isDigital && v.active).map((v) => ({ id: v.id, name: v.name, price: majorString(v.basePrice, base.exponent) }))} />
             </Field>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="visible" defaultChecked={p.status === "ACTIVE"} />Show on my website</label>
             <button className="btn btn-primary">Save</button>

@@ -105,6 +105,8 @@ async function saveVariantPrices(fd: FormData, productId: string, exponent: numb
     if (!(price > 0)) throw new Error(`The price for “${label}” must be more than 0.`);
     return parseMajor(price.toFixed(exponent), exponent);
   };
+  const order = fd.getAll(`order_${productId}`).map(String);
+  const pos = (t: string) => { const i = order.indexOf(t); return i < 0 ? 999 : i; };
   let live = vs.filter((v) => v.active).length;
   for (const v of vs) {
     if (!fd.has(`vprice_${v.id}`)) continue;
@@ -116,18 +118,21 @@ async function saveVariantPrices(fd: FormData, productId: string, exponent: numb
       continue;
     }
     const minor = toMinor(fd.get(`vprice_${v.id}`), label);
-    if (minor === v.basePrice && label === v.name) continue;
-    await db.variant.update({ where: { id: v.id }, data: { basePrice: minor, name: label } });
+    const sort = order.length ? pos(`v:${v.id}`) : v.sort;
+    if (minor === v.basePrice && label === v.name && sort === v.sort) continue;
+    await db.variant.update({ where: { id: v.id }, data: { basePrice: minor, name: label, sort } });
     if (minor !== v.basePrice) await db.variantPrice.deleteMany({ where: { variantId: v.id } }); // manual per-currency prices for this size no longer match
   }
-  let sort = vs.reduce((m, v) => Math.max(m, v.sort), 0);
   const stamp = `${Date.now().toString(36).toUpperCase().slice(-5)}${rand()}`;
-  for (let n = 0; fd.has(`newsize_name_${n}`); n++) {
-    const label = String(fd.get(`newsize_name_${n}`) ?? "").replace(/[<>]/g, "").trim().slice(0, 60);
-    const raw = String(fd.get(`newsize_price_${n}`) ?? "").trim();
+  const prefix = `newsize_name_${productId}_`;
+  let n = 0;
+  for (const k of [...fd.keys()].filter((x) => x.startsWith(prefix))) {
+    const key = k.slice(prefix.length);
+    const label = String(fd.get(k) ?? "").replace(/[<>]/g, "").trim().slice(0, 60);
+    const raw = String(fd.get(`newsize_price_${productId}_${key}`) ?? "").trim();
     if (!label && !raw) continue;
     if (!label) throw new Error("A new size needs a name, like 8 × 8 in or XL.");
-    await db.variant.create({ data: { productId, sku: `CC-${stamp}-N${n + 1}`, name: label, basePrice: toMinor(raw, label), sort: ++sort } });
+    await db.variant.create({ data: { productId, sku: `CC-${stamp}-N${++n}`, name: label, basePrice: toMinor(raw, label), sort: pos(`n:${key}`) } });
   }
 }
 

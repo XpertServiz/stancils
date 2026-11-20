@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { compressImage } from "./compress";
 import { quickAddProduct, type QR } from "@/app/admin/actions/quick";
+import { SizeRows } from "./SizeRows";
 import { SIZE_SETS, SET_KEYS, sizeSetFor, type SizeSetKey } from "@/lib/sizes";
 
 export type Cat = { id: string; name: string };
@@ -19,26 +20,11 @@ export function SizeSelect({ value, onChange }: { value: SizeSetKey; onChange: (
   );
 }
 
-/**
- * The sizes of a product, typed by the owner: a name and a price per row. Starts from the chosen preset (stencil / T-shirt / gift sizes)
- * with empty prices; every name can be changed, rows can be removed and new ones added. Nothing is calculated from another size.
- */
+/** Sizes + prices typed by the owner (drag to re-order, add as many as you like). The preset only fills in the names to start with. */
 export function SizePrices({ value, base }: { value: SizeSetKey; base: string }) {
-  const preset = () => SIZE_SETS[value].options.map((o) => o.label);
-  const [rows, setRows] = useState<string[]>(preset);
-  const [seen, setSeen] = useState(value);
-  if (seen !== value) { setSeen(value); setRows(preset()); }
   return (
-    <div className="max-w-xl space-y-2">
-      {rows.map((name, i) => (
-        <div key={`${value}-${i}`} className="flex items-center gap-2">
-          <input name={`size_name_${i}`} defaultValue={name} placeholder="Size, e.g. 8 × 8 in or XL" aria-label="Size name" className="input flex-1 !py-1.5" />
-          <span className="text-sm text-ink3">{base}</span>
-          <input name={`size_price_${i}`} inputMode="decimal" placeholder="Price" aria-label={`Price for ${name || "size"}`} className="input !w-24 !py-1.5" />
-          <button type="button" onClick={() => setRows((r) => r.filter((_, k) => k !== i))} aria-label="Remove this size" className="px-2 text-danger">✕</button>
-        </div>
-      ))}
-      <button type="button" onClick={() => setRows((r) => [...r, ""])} className="btn btn-ghost btn-sm">+ Add a size</button>
+    <div className="max-w-xl">
+      <SizeRows key={value} scope="new" mode="create" base={base} initial={SIZE_SETS[value].options.map((o) => ({ name: o.label, price: "" }))} />
     </div>
   );
 }
